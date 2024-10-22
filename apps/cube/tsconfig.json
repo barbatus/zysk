@@ -1,0 +1,21 @@
+{
+  "display": "cube",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "lib": ["ES2023", "DOM"],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "es2022",
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "esModuleInterop": false,
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["shared/*.ts", "reset.d.ts", "index.ts"],
+  "exclude": ["node_modules"]
+}

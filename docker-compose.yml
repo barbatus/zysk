@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:15.5-bookworm
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pgpassword
+      POSTGRES_DB: postgres
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./docker/postgres
+    shm_size: "8gb"
+    ports:
+      - "5432:5432"
+    entrypoint: docker-entrypoint.sh -c jit=off
+
+volumes:
+  pg-data: {}
+  redis-data: {}

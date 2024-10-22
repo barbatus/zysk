@@ -1,0 +1,30 @@
+{
+  "name": "@zysk/cube",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "start": "docker compose up -d",
+    "build": "tsc",
+    "dev": "npm-run-all --parallel dev:tsc copy-model",
+    "dev:tsc": "tsc --watch",
+    "lint": "eslint . --ext .ts --color",
+    "lint:fix": "pnpm lint --fix",
+    "copy-model": "cpx dist/shared/constants.js model/shared --watch",
+    "generate": "npx cubejs-cli generate"
+  },
+  "devDependencies": {
+    "@total-typescript/ts-reset": "^0.6.1",
+    "cpx": "^1.5.0",
+    "cubejs-cli": "^0.36.6",
+    "npm-run-all": "^4.1.5"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}

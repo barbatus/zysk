@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1727965554616,
+      "tag": "0000_user_and_ticker",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1728054072290,
+      "tag": "0001_quote",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1728306895679,
+      "tag": "0002_rl_quote",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1728307530958,
+      "tag": "0003_rl_quote_updated_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1728310935906,
+      "tag": "0004_user_uuid",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1729190585095,
+      "tag": "0005_user_ticker_closed_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1729551961333,
+      "tag": "0006_add_open_and_close_prices",
+      "breakpoints": true
+    }
+  ]
+}

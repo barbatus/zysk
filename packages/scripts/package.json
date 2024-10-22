@@ -1,0 +1,21 @@
+{
+  "name": "@zysk/scripts",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@zysk/db": "workspace:*",
+    "axios": "^1.7.7",
+    "date-fns": "^4.1.0",
+    "kysely": "^0.27.4",
+    "pg": "^8.13.0"
+  },
+  "scripts": {
+    "lint": "eslint . --ext .ts --color",
+    "lint:fix": "pnpm lint --fix",
+    "alpha-vantage": "pnpm dlx dotenv-cli -e ../../apps/web/.env.development -- ts-node src/alpha-vantage.ts"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10",
+    "ts-node": "^10.9.2"
+  }
+}
