@@ -1,23 +1,25 @@
-import { UserTickerView } from "./metrics";
+import { uniq } from "lodash";
 
-const views = [UserTickerView];
+import { ALL_VIEWS } from "./metrics";
 
 export function resolveViews(metricNames: [string, ...string[]]) {
-  return metricNames.map((m) => {
-    const metricViews = views.filter((v) => v.resolveMetric(m));
-    if (!metricViews.length) {
-      throw new Error(`${m} metric is not found`);
-    }
+  return uniq(
+    metricNames.map((m) => {
+      const metricViews = ALL_VIEWS.filter((v) => v.resolveMetric(m));
+      if (!metricViews.length) {
+        throw new Error(`${m} metric is not found`);
+      }
 
-    if (metricViews.length >= 2) {
-      throw new Error(`${m} metric is not unique`);
-    }
-    return metricViews[0];
-  });
+      if (metricViews.length >= 2) {
+        throw new Error(`${m} metric is not unique`);
+      }
+      return metricViews[0];
+    }),
+  );
 }
 
 export function resolveMetric(metricName: string) {
-  const targetViews = views.filter(
+  const targetViews = ALL_VIEWS.filter(
     (v) => v.metrics.filter((m) => m.name === metricName).length,
   );
 

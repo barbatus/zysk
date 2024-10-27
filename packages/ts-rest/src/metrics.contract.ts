@@ -16,13 +16,17 @@ const MetricsRequestSchema = z.object({
   metrics: z.array(MetricNameSchema).nonempty(),
   filters: z.array(MetricFilterSchema).optional(),
   groupBys: z.array(z.array(DimensionNameSchema)),
+  timezone: z.string().optional(),
 });
 
 export type MetricsRequest = z.infer<typeof MetricsRequestSchema>;
 
 const MetricValueSchema = z.number().or(z.string()).nullable();
 
+const MetricObjectSchema = z.record(z.number()).nullable();
+
 export type MetricValue = z.infer<typeof MetricValueSchema>;
+export type MetricObject = z.infer<typeof MetricObjectSchema>;
 
 const QueryResultSetSchema = z.object({
   columns: z.array(z.string()),

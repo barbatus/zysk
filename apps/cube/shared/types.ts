@@ -6,7 +6,9 @@ const MetricSchema = z.object({
   name: z.string(),
   title: z.string(),
   description: z.string().optional(),
-  period: z.enum(["last month", "last 3 months"]).optional(),
+  period: z
+    .enum(["last month", "last 3 months", "today", "yesterday"])
+    .optional(),
 });
 
 export type Metric = z.infer<typeof MetricSchema>;

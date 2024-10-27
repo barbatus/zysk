@@ -15,9 +15,9 @@ cube(`User`, {
   },
 
   joins: {
-    UserTickers: {
+    PortfolioCube: {
       relationship: `many_to_one`,
-      sql: `${CUBE}.id = ${UserTickers.userId}`,
+      sql: `${CUBE.id} = ${PortfolioCube.userId}`,
     },
   },
 });

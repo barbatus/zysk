@@ -1,12 +1,17 @@
-import { METRIC_NAME_USER_TICKER_GAIN_LOSS_LAST_MONTH } from './shared/constants';
+import {
+  METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH,
+  METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS,
+  METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY,
+} from "./shared/constants";
 
-cube(`UserTickers`, {
+cube(`PortfolioCube`, {
+  public: false,
 
   sql: `
-    WITH period_query AS (
+    WITH pq AS (
       SELECT *, ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY date ASC) row
       FROM quote
-      WHERE ${FILTER_PARAMS.UserTickers.period.filter("date")}
+      WHERE ${FILTER_PARAMS.Portfolio.period.filter("date")}
     )
 
     SELECT
@@ -18,12 +23,12 @@ cube(`UserTickers`, {
     FROM user_tickers ut
     JOIN quote q1 ON ut.symbol = q1.symbol AND ut.opened_at::date = q1.date
     LEFT JOIN quote q2 ON ut.symbol = q2.symbol AND ut.closed_at::date = q2.date
-    JOIN period_query pq ON pq.symbol = ut.symbol AND pq.row = 1
+    JOIN pq ON pq.symbol = ut.symbol AND pq.row = 1
   `,
 
   joins: {
     User: {
-      sql: `${CUBE}.user_id = ${User}.id`,
+      sql: `${CUBE.userId} = ${User.id}`,
       relationship: `many_to_one`
     },
 
@@ -36,7 +41,7 @@ cube(`UserTickers`, {
   dimensions: {
     id: {
       type: `string`,
-      sql: `${CUBE}.user_id || '-' || ${CUBE}.symbol`,
+      sql: `${CUBE.userId} || '-' || ${CUBE.symbol}`,
       primaryKey: true,
     },
 
@@ -99,9 +104,32 @@ cube(`UserTickers`, {
         END
       `,
     },
-    [METRIC_NAME_USER_TICKER_GAIN_LOSS_LAST_MONTH]: {
-      type: `sum`,
-      sql: `${CUBE.amount} * (${CUBE.closeValue} - ${CUBE.openValue})`,
-    },
+    ...([
+      METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS,
+      METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH,
+      METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY
+    ].reduce((acc, metricName) => {
+      acc[metricName] = {
+        type: `sum`,
+        sql: `${CUBE.amount} * (${CUBE.closeValue} - ${CUBE.openValue})`,
+      };
+      return acc;
+    }, {})),
   },
 });
+
+view(`Portfolio`, {
+  cubes: [
+    {
+      join_path: PortfolioCube,
+      includes: [
+        `symbol`,
+        `period`,
+        METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS,
+        METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH,
+        METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY,
+      ],
+    },
+  ],
+});
+

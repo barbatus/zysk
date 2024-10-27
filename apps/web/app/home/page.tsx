@@ -4,7 +4,7 @@ import Grid from "@mui/joy/Grid";
 import Stack from "@mui/joy/Stack";
 import Typography from "@mui/joy/Typography";
 
-import { TickerTable } from "./ticker-table";
+import { TickerTable } from "./portfolio-table";
 
 // export const metadata = { title: `Overview | Dashboard | ${config.site.name}` } satisfies Metadata;
 

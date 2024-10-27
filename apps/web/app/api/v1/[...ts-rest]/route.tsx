@@ -10,7 +10,7 @@ const handler = createNextHandler(
     evalQuery: async ({ query }) => {
       const service = resolve(MetricsService);
       return {
-        status: 201,
+        status: 200,
         body: await service.evalQuery(query),
       };
     },

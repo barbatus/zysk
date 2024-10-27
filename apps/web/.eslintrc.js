@@ -6,4 +6,7 @@ module.exports = {
     require.resolve('@vercel/style-guide/eslint/next'),
     "@zysk/eslint-config/node-eslint.js",
   ],
+  rules: {
+    "@typescript-eslint/no-unnecessary-condition": "off",
+  },
 };

@@ -6,6 +6,7 @@ import {
   type MetricValue,
 } from "@zysk/ts-rest";
 import { sign, verify } from "jsonwebtoken";
+import { groupBy, intersection, merge } from "lodash";
 
 let cubeToken = "";
 const getToken = () => {
@@ -24,6 +25,7 @@ export class MetricsService {
     metrics,
     filters = [],
     groupBys,
+    timezone,
   }: MetricsRequest): Promise<MetricsResponse> {
     const cubeApi = cube(getToken(), {
       apiUrl: process.env.CUBE_API_URL!,
@@ -42,10 +44,14 @@ export class MetricsService {
             return resolved;
           });
         });
-        const metricsWPeriods = metrics
+        const viewMetrics = intersection(
+          v.metrics.map((m) => m.name),
+          metrics,
+        );
+        const metricsWPeriods = viewMetrics
           .filter((m) => v.resolveMetricPeriod(m))
           .filter(Boolean);
-        const otherMetrics = metrics
+        const otherMetrics = viewMetrics
           .filter((m) => !v.resolveMetricPeriod(m))
           .filter(Boolean);
 
@@ -63,17 +69,18 @@ export class MetricsService {
           } as BinaryFilter;
         });
 
-        return groupingSets.flatMap((set) => {
+        return groupingSets.flatMap((gset) => {
           const promises = otherMetrics.length
             ? [
                 cubeApi.load({
-                  dimensions: set,
+                  dimensions: gset,
                   measures: otherMetrics.map((m) => v.resolveMetric(m)!),
                   filters: [
                     {
                       or: cubeFilters,
                     },
                   ],
+                  timezone,
                 }),
               ]
             : [];
@@ -81,10 +88,11 @@ export class MetricsService {
           return promises.concat(
             metricsWPeriods.flatMap((m) => {
               return cubeApi.load({
-                dimensions: set,
+                dimensions: gset,
                 measures: [v.resolveMetric(m)!],
                 filters: [{ or: cubeFilters }],
                 timeDimensions: [v.resolveMetricPeriod(m)!],
+                timezone,
               });
             }),
           );
@@ -92,17 +100,35 @@ export class MetricsService {
       }),
     );
 
-    return {
-      results: results.map((res) => {
-        const query = res.query();
-        const columns = query.dimensions!.concat(query.measures!);
-        return {
-          columns: columns.map((c) => parseName(c)),
-          rows: res.rawData().map((row) => {
-            return columns.map((c) => row[c]);
-          }) as MetricValue[][],
-        };
-      }),
-    };
+    const groupResults = groupBy(results, (r) =>
+      r.query().dimensions!.join(","),
+    );
+
+    const finalResults = Object.keys(groupResults).map((key) => {
+      const group = key.split(",").filter(Boolean);
+
+      const rows = groupBy(
+        groupResults[key].flatMap((r) => r.rawData()),
+        (r) => group.map((d) => r[d]).join(","),
+      );
+
+      const resultRows = Object.values(rows).map((row) => {
+        return merge({}, ...row) as Record<string, string | number | boolean>;
+      });
+
+      const allMeasures = groupResults[key].flatMap(
+        (res) => res.query().measures!,
+      );
+      const columns = group.concat(allMeasures);
+
+      return {
+        columns: columns.map((c) => parseName(c)),
+        rows: resultRows.map((row) =>
+          columns.map((c) => row[c]),
+        ) as MetricValue[][],
+      };
+    });
+
+    return { results: finalResults };
   }
 }
