@@ -34,7 +34,7 @@ export function resolveMetric(metricName: string) {
   return targetViews[0].resolveMetric(metricName);
 }
 
-export function parseName(fullDimensionOrMetricName: string) {
-  const [_, name] = fullDimensionOrMetricName.split(".");
-  return name;
+export function stripViewName(fullDimensionOrMetricName: string) {
+  const [nameOrView, name] = fullDimensionOrMetricName.split(".");
+  return name || nameOrView;
 }

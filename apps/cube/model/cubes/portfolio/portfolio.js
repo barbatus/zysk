@@ -2,6 +2,9 @@ import {
   METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH,
   METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS,
   METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY,
+  DIMENSION_NAME_POSITION_ID,
+  DIMENSION_NAME_PERIOD,
+  DIMENSION_NAME_TICKER,
 } from "./shared/constants";
 
 cube(`PortfolioCube`, {
@@ -16,10 +19,10 @@ cube(`PortfolioCube`, {
 
     SELECT
       ut.*,
-      q1.open_price as open_day_price,
-      q2.close_price as close_day_price,
-      pq.date as period,
-      pq.open_price as period_open_price
+      q1.open_price as ticker_open_price,
+      q2.close_price as ticker_close_price,
+      pq.date as start_date,
+      pq.open_price as start_price
     FROM user_tickers ut
     JOIN quote q1 ON ut.symbol = q1.symbol AND ut.opened_at::date = q1.date
     LEFT JOIN quote q2 ON ut.symbol = q2.symbol AND ut.closed_at::date = q2.date
@@ -39,9 +42,9 @@ cube(`PortfolioCube`, {
   },
 
   dimensions: {
-    id: {
+    [DIMENSION_NAME_POSITION_ID]: {
       type: `string`,
-      sql: `${CUBE.userId} || '-' || ${CUBE.symbol}`,
+      sql: `id`,
       primaryKey: true,
     },
 
@@ -50,7 +53,7 @@ cube(`PortfolioCube`, {
       sql: `user_id`,
     },
 
-    symbol: {
+    [DIMENSION_NAME_TICKER]: {
       type: `string`,
       sql: `symbol`,
     },
@@ -82,7 +85,7 @@ cube(`PortfolioCube`, {
 
     period: {
       type: `time`,
-      sql: `period`,
+      sql: `start_date`,
     },
   },
 
@@ -90,15 +93,15 @@ cube(`PortfolioCube`, {
     openValue: {
       type: `number`,
       sql: `
-        CASE WHEN ${CUBE.openedAt} >= ${CUBE.period} THEN COALESCE(${CUBE.openPrice}, ${CUBE}.open_day_price)
-             ELSE ${CUBE}.period_open_price
+        CASE WHEN ${CUBE.openedAt} >= ${CUBE.period} THEN COALESCE(${CUBE.openPrice}, ${CUBE}.ticker_open_price)
+             ELSE ${CUBE}.start_price
         END
       `,
     },
     closeValue: {
       type: `number`,
       sql: `
-        CASE WHEN ${CUBE.closedAt} >= ${CUBE.period} THEN COALESCE(${CUBE.closePrice}, ${CUBE}.close_day_price)
+        CASE WHEN ${CUBE.closedAt} >= ${CUBE.period} THEN COALESCE(${CUBE.closePrice}, ${CUBE}.ticker_close_price)
              WHEN ${CUBE.closedAt} IS NULL THEN ${CurrentQuote.price}
              ELSE NULL
         END
@@ -123,8 +126,9 @@ view(`Portfolio`, {
     {
       join_path: PortfolioCube,
       includes: [
-        `symbol`,
-        `period`,
+        DIMENSION_NAME_POSITION_ID,
+        DIMENSION_NAME_TICKER,
+        DIMENSION_NAME_PERIOD,
         METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS,
         METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH,
         METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY,

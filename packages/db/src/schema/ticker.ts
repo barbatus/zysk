@@ -2,7 +2,6 @@ import {
   jsonb,
   numeric,
   pgTable,
-  primaryKey,
   text,
   timestamp,
   uuid,
@@ -34,28 +33,23 @@ export const tickerTable = pgTable("ticker", {
   foundedAt: timestamp("founded_at", { withTimezone: true }),
 });
 
-export const userTickersTable = pgTable(
-  "user_tickers",
-  {
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => userTable.id, {
-        onDelete: "restrict",
-        onUpdate: "cascade",
-      }),
-    symbol: varchar("symbol", { length: 10 })
-      .notNull()
-      .references(() => tickerTable.symbol, {
-        onDelete: "restrict",
-        onUpdate: "cascade",
-      }),
-    amount: numeric("amount"),
-    openedAt: timestamp("opened_at", { withTimezone: true }).notNull(),
-    openPrice: numeric("open_price"),
-    closedAt: timestamp("closed_at", { withTimezone: true }),
-    closePrice: numeric("close_price"),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.userId, table.symbol] }),
-  }),
-);
+export const userTickersTable = pgTable("user_tickers", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => userTable.id, {
+      onDelete: "restrict",
+      onUpdate: "cascade",
+    }),
+  symbol: varchar("symbol", { length: 10 })
+    .notNull()
+    .references(() => tickerTable.symbol, {
+      onDelete: "restrict",
+      onUpdate: "cascade",
+    }),
+  amount: numeric("amount").notNull(),
+  openedAt: timestamp("opened_at", { withTimezone: true }).notNull(),
+  openPrice: numeric("open_price"),
+  closedAt: timestamp("closed_at", { withTimezone: true }),
+  closePrice: numeric("close_price"),
+});

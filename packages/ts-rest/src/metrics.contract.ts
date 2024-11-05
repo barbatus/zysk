@@ -33,6 +33,8 @@ const QueryResultSetSchema = z.object({
   rows: z.array(z.array(MetricValueSchema)),
 });
 
+export type QueryResultSet = z.infer<typeof QueryResultSetSchema>;
+
 const MetricsResponseSchema = z.object({
   results: z.array(QueryResultSetSchema),
 });

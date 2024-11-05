@@ -1,5 +1,5 @@
 import { type Database } from "@zysk/db";
-import { Kysely, PostgresDialect } from "kysely";
+import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
 
 const dialect = new PostgresDialect({
@@ -11,4 +11,5 @@ const dialect = new PostgresDialect({
 
 export const db = new Kysely<Database>({
   dialect,
+  plugins: [new CamelCasePlugin()],
 });

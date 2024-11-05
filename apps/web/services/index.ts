@@ -1,11 +1,14 @@
-import { asClass, createContainer } from "awilix";
+import { asClass, type Constructor, createContainer } from "awilix";
 import { camelCase } from "lodash";
 
 import { MetricsService } from "./metrics.service";
+import { PortfolioService } from "./portfolio.service";
 
 export const container = createContainer();
 
-const services = [MetricsService];
+const services = [MetricsService, PortfolioService] as Constructor<
+  MetricsService | PortfolioService
+>[];
 
 services.forEach((service) => {
   container.register({

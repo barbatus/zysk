@@ -1,5 +1,6 @@
 import {
   DIMENSION_NAME_PERIOD,
+  DIMENSION_NAME_POSITION_ID,
   DIMENSION_NAME_TICKER,
   METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS,
   METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH,
@@ -66,6 +67,10 @@ class BasePortfolioView {
 class UserPortfolioView extends BasePortfolioView {
   name = "Portfolio";
 
+  get dimensions(): string[] {
+    return [DIMENSION_NAME_POSITION_ID, DIMENSION_NAME_TICKER];
+  }
+
   get metrics(): Metric[] {
     return [
       METRIC_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH,
@@ -76,6 +81,10 @@ class UserPortfolioView extends BasePortfolioView {
 }
 class UserPortfolioSegmentsView extends BasePortfolioView {
   name = "PortfolioSegments";
+
+  get dimensions(): string[] {
+    return [];
+  }
 
   get metrics(): Metric[] {
     return [METRIC_USER_PORTFOLIO_SEGMENTS];

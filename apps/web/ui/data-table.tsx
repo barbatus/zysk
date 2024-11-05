@@ -5,49 +5,47 @@ import {
   type ColumnDef,
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   type RowData,
   useReactTable,
 } from "@tanstack/react-table";
 
-// interface Person {
-//   id: number;
-//   name: string;
-//   age: number;
-//   occupation: string;
-// }
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  export interface HeaderContext<TData extends RowData, TValue> {
+    row?: TData;
+  }
+}
 
-// const data: Person[] = [
-//   { id: 1, name: "Alice", age: 28, occupation: "Engineer" },
-//   { id: 2, name: "Bob", age: 34, occupation: "Designer" },
-//   { id: 3, name: "Charlie", age: 25, occupation: "Teacher" },
-// ];
-
-// const columns: ColumnDef<Person>[] = [
-//   { accessorKey: "id", header: "ID" },
-//   { accessorKey: "name", header: "Name" },
-//   { accessorKey: "age", header: "Age" },
-//   { accessorKey: "occupation", header: "Occupation" },
-// ];
-
-export function DataTable<TData extends RowData, TValue>({
+export function DataTable<
+  Entity extends object,
+  TData extends object & { entity?: Entity } & {
+    subRows?: TData[];
+  },
+  TValue,
+>({
   data,
   columns,
+  footerRow,
   ...props
 }: TableProps & {
   data: TData[];
   columns: ColumnDef<TData, TValue>[];
+  footerRow?: TData;
 }) {
   const table = useReactTable({
     data,
     columns,
+    getSubRows: (row) => row.subRows,
     getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
   });
 
   return (
     <Sheet
       variant="outlined"
       sx={{
-        maxWidth: 800,
+        // maxWidth: 1400,
         mx: "auto",
         my: 4,
         p: 2,
@@ -56,13 +54,25 @@ export function DataTable<TData extends RowData, TValue>({
         height: "auto",
       }}
     >
-      <Table borderAxis="header" {...props}>
+      <Table
+        borderAxis="header"
+        {...props}
+        sx={{
+          "--TableCell-footBackground": "transparent",
+        }}
+      >
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <th key={header.id}>
-                  <Typography level="body-sm">
+                <th
+                  key={header.id}
+                  colSpan={header.colSpan}
+                  style={{
+                    width: header.column.getSize(),
+                  }}
+                >
+                  <Typography level="body-sm" whiteSpace="normal">
                     {flexRender(
                       header.column.columnDef.header,
                       header.getContext(),
@@ -84,6 +94,20 @@ export function DataTable<TData extends RowData, TValue>({
             </tr>
           ))}
         </tbody>
+        <tfoot>
+          {table.getFooterGroups().map((footerGroup) => (
+            <tr key={footerGroup.id}>
+              {footerGroup.headers.map((header) => (
+                <td key={header.id}>
+                  {flexRender(header.column.columnDef.footer, {
+                    ...header.getContext(),
+                    row: footerRow,
+                  })}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tfoot>
       </Table>
     </Sheet>
   );

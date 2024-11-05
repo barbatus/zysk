@@ -1,103 +1,153 @@
 "use client";
 
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import Box from "@mui/joy/Box";
+import Chip from "@mui/joy/Chip";
+import IconButton from "@mui/joy/IconButton";
+import Stack from "@mui/joy/Stack";
+import Typography from "@mui/joy/Typography";
 import { type ColumnDef } from "@tanstack/react-table";
 import {
-  type ALL_DIMENSIONS,
-  type ALL_METRICS,
   DIMENSION_NAME_TICKER,
   METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS,
   METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH,
   METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY,
   METRIC_NAME_USER_PORTFOLIO_SEGMENTS,
 } from "@zysk/cube";
-import { type MetricObject, type MetricValue } from "@zysk/ts-rest";
-import { fromPairs, zip } from "lodash";
+import { type Position } from "@zysk/ts-rest";
 
-import { metricsApi } from "#/api/metrics";
-import { getUserTimezone } from "#/lib/time";
+import { type MetricsRow } from "#/api/metrics";
+import { usePortfolio } from "#/api/portfolio";
+import { formatGridTime, formatPercent } from "#/lib/formatters";
 import { DataTable } from "#/ui/data-table";
-
-type MetricsRow = Record<(typeof ALL_DIMENSIONS)[number], string> &
-  Record<
-    Exclude<
-      (typeof ALL_METRICS)[number],
-      typeof METRIC_NAME_USER_PORTFOLIO_SEGMENTS
-    >,
-    MetricValue
-  > & {
-    [METRIC_NAME_USER_PORTFOLIO_SEGMENTS]: MetricObject;
-  };
 
 const columns = [
   {
     id: "ticker",
     header: "Ticker",
-    cell: ({ row }) => (
-      <Box width={64}>{row.original[DIMENSION_NAME_TICKER]}</Box>
+    cell: ({ row }) => {
+      const expandable = row.getCanExpand();
+      return (
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{
+            alignItems: "center",
+            paddingLeft: `${row.depth * 4}rem`,
+          }}
+        >
+          {expandable ? (
+            <IconButton onClick={row.getToggleExpandedHandler()} size="sm">
+              <ChevronRightIcon />
+            </IconButton>
+          ) : null}
+          <Box>{row.original[DIMENSION_NAME_TICKER]}</Box>
+        </Stack>
+      );
+    },
+    footer: () => (
+      <Typography level="body-md" fontWeight="lg" sx={{ paddingLeft: 2 }}>
+        Total
+      </Typography>
     ),
+  },
+  {
+    id: "open",
+    header: "Opened At & Price",
+    cell: ({ row }) => (
+      <Typography level="body-sm" whiteSpace="nowrap">
+        {row.original.entity?.openedAt
+          ? formatGridTime(row.original.entity.openedAt)
+          : ""}
+      </Typography>
+    ),
+    size: 120,
   },
   {
     id: "todayGainLoss",
-    header: "Today's gain/loss",
+    header: "Today's change",
     cell: ({ row }) => (
-      <Box width={64}>
+      <Typography level="body-sm">
         {row.original[METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY]}
-      </Box>
+      </Typography>
     ),
+    footer: ({ row }) =>
+      row ? (
+        <Typography level="body-md">
+          {row[METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY]}
+        </Typography>
+      ) : null,
+    size: 64,
   },
   {
     id: "lastMonthGainLoss",
-    header: "Last month's gain/loss",
+    header: "1m gain/loss",
     cell: ({ row }) => (
-      <Box width={64}>
+      <Typography level="body-sm">
         {row.original[METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH]}
-      </Box>
+      </Typography>
     ),
+    footer: ({ row }) =>
+      row ? (
+        <Typography level="body-sm">
+          {row[METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH]}
+        </Typography>
+      ) : null,
+    size: 64,
   },
   {
     id: "last3MonthsGainLoss",
-    header: "Last 3 months' gain/loss",
+    header: "3m gain/loss",
     cell: ({ row }) => (
-      <Box width={64}>
+      <Typography level="body-sm">
         {row.original[METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS]}
-      </Box>
+      </Typography>
     ),
+    footer: ({ row }) =>
+      row ? (
+        <Typography level="body-sm">
+          {row[METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS]}
+        </Typography>
+      ) : null,
+    size: 64,
   },
-] as ColumnDef<MetricsRow>[];
+  {
+    id: "segments",
+    header: "Segments",
+    footer: ({ row }) => {
+      if (!row?.[METRIC_NAME_USER_PORTFOLIO_SEGMENTS]) {
+        return null;
+      }
 
-export function TickerTable() {
-  const { data } = metricsApi.evalQuery.useQuery({
-    queryKey: ["metrics"],
-    queryData: {
-      query: {
-        metrics: [
-          METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH,
-          METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY,
-          METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS,
-          METRIC_NAME_USER_PORTFOLIO_SEGMENTS,
-        ],
-        groupBys: [[], [DIMENSION_NAME_TICKER]],
-        timezone: getUserTimezone(),
-      },
+      const segments = Object.entries(
+        row[METRIC_NAME_USER_PORTFOLIO_SEGMENTS],
+      ).toSorted((a, b) => b[1] - a[1]);
+      return (
+        <Stack direction="row" gap={0.5}>
+          {segments.map(([segment, value]) => (
+            <Chip
+              key={segment}
+              size="sm"
+              variant="outlined"
+              endDecorator={
+                <Typography level="body-xs" fontWeight="lg">
+                  {formatPercent(value)}
+                </Typography>
+              }
+            >
+              {segment}
+            </Chip>
+          ))}
+        </Stack>
+      );
     },
-    select: (d) => d.body,
-  });
+  },
+] as ColumnDef<MetricsRow & { entity?: Position }>[];
 
-  const rColumns = data?.results[1].columns ?? [];
-  const rRows = data?.results[1].rows ?? [];
+export function PortfolioTable() {
+  const { rows, total } = usePortfolio();
 
-  const rows = rRows.map((row) => {
-    const pairs = zip(rColumns, row);
-    const records = fromPairs(pairs) as {
-      [METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH]: MetricValue;
-      [METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY]: MetricValue;
-      [METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS]: MetricValue;
-      [METRIC_NAME_USER_PORTFOLIO_SEGMENTS]: MetricObject;
-      [DIMENSION_NAME_TICKER]: string;
-    };
-    return records;
-  });
-
-  return <DataTable data={rows} columns={columns} stripe="even" />;
+  return (
+    <DataTable data={rows} columns={columns} footerRow={total} stripe="even" />
+  );
 }

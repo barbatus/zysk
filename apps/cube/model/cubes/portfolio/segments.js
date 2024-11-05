@@ -1,4 +1,8 @@
-import { METRIC_NAME_USER_PORTFOLIO_SEGMENTS } from "./shared/constants";
+import {
+  METRIC_NAME_USER_PORTFOLIO_SEGMENTS,
+  DIMENSION_NAME_POSITION_ID,
+  DIMENSION_NAME_TICKER,
+} from "./shared/constants";
 
 cube(`TickerSegmentsCube`, {
   public: false,
@@ -14,68 +18,23 @@ cube(`TickerSegmentsCube`, {
         jsonb_each_text(element) AS t(segment, ratio)
     )
     SELECT
-      ut.user_id,
-      ut.symbol,
       s.segment,
       AVG(s.ratio) as ratio
     FROM public.user_tickers ut
     JOIN segments s ON ut.symbol = s.symbol
-    GROUP BY 1, 2, 3
+    GROUP BY 1
   `,
 
   dimensions: {
-    id: {
-      type: `string`,
-      sql: `${CUBE.userId} || '-' || ${CUBE.symbol} || '-' || ${CUBE.segment}`,
-      primaryKey: true,
-    },
-
-    userId: {
-      type: `string`,
-      sql: `user_id`,
-    },
-
-    symbol: {
-      sql: `symbol`,
-      type: `string`
-    },
-
     segment: {
       sql: `segment`,
-      type: `string`
+      type: `string`,
+      primaryKey: true,
     },
 
     ratio: {
       sql: `ratio`,
       type: `number`
-    },
-  },
-
-  measures: {
-    avgRatio: {
-      type: `number`,
-      sql: `AVG(${CUBE.ratio})`
-    },
-  },
-});
-
-cube(`PortfolioSegmentsCube`, {
-  extends: TickerSegmentsCube,
-
-  public: false,
-
-  joins: {
-    TickerSegmentsCube: {
-      sql: `${CUBE.id} = ${TickerSegmentsCube.id}`,
-      relationship: `one_to_many`,
-    },
-  },
-
-  dimensions: {
-    ratio: {
-      type: `number`,
-      sql: `${TickerSegmentsCube.avgRatio}`,
-      sub_query: true
     },
   },
 
@@ -90,9 +49,13 @@ cube(`PortfolioSegmentsCube`, {
 view(`PortfolioSegments`, {
   cubes: [
     {
-      join_path: PortfolioSegmentsCube,
+      join_path: TickerSegmentsCube,
       includes: [
-        `symbol`,
+        {
+          name: `id`,
+          alias: DIMENSION_NAME_POSITION_ID,
+        },
+        DIMENSION_NAME_TICKER,
         METRIC_NAME_USER_PORTFOLIO_SEGMENTS,
       ],
     },

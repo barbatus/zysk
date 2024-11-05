@@ -1,12 +1,12 @@
 import cube, { type BinaryFilter } from "@cubejs-client/core";
-import { parseName, resolveViews } from "@zysk/cube";
+import { resolveViews, stripViewName } from "@zysk/cube";
 import {
   type MetricsRequest,
   type MetricsResponse,
   type MetricValue,
 } from "@zysk/ts-rest";
 import { sign, verify } from "jsonwebtoken";
-import { groupBy, intersection, merge } from "lodash";
+import { fromPairs, groupBy, intersection, merge } from "lodash";
 
 let cubeToken = "";
 const getToken = () => {
@@ -35,15 +35,17 @@ export class MetricsService {
 
     const results = await Promise.all(
       metricViews.flatMap((v) => {
-        const groupingSets = groupBys.map((group) => {
-          return group.map((d) => {
-            const resolved = v.resolveDimension(d);
-            if (!resolved) {
-              throw new Error(`Dimension ${d} not found in ${v.name} view`);
-            }
-            return resolved;
+        const groupingSets = groupBys
+          .filter((group) => group.every((d) => v.resolveDimension(d)))
+          .map((group) => {
+            return group.map((d) => {
+              const resolved = v.resolveDimension(d);
+              // if (!resolved) {
+              //   throw new Error(`Dimension ${d} not found in ${v.name} view`);
+              // }
+              return resolved!;
+            });
           });
-        });
         const viewMetrics = intersection(
           v.metrics.map((m) => m.name),
           metrics,
@@ -100,15 +102,29 @@ export class MetricsService {
       }),
     );
 
+    // Combining results grouped by the same dimensions.
     const groupResults = groupBy(results, (r) =>
-      r.query().dimensions!.join(","),
+      r
+        .query()
+        .dimensions!.map((d) => stripViewName(d))
+        .join(","),
     );
 
     const finalResults = Object.keys(groupResults).map((key) => {
       const group = key.split(",").filter(Boolean);
 
+      // Combining rows with the same dimension values
+      // so that it will be one grid row.
       const rows = groupBy(
-        groupResults[key].flatMap((r) => r.rawData()),
+        groupResults[key].flatMap((r) =>
+          r
+            .rawData()
+            .map((it) =>
+              fromPairs(
+                Object.entries(it).map(([n, v]) => [stripViewName(n), v]),
+              ),
+            ),
+        ),
         (r) => group.map((d) => r[d]).join(","),
       );
 
@@ -116,13 +132,13 @@ export class MetricsService {
         return merge({}, ...row) as Record<string, string | number | boolean>;
       });
 
-      const allMeasures = groupResults[key].flatMap(
-        (res) => res.query().measures!,
+      const allMeasures = groupResults[key].flatMap((res) =>
+        res.query().measures!.map((m) => stripViewName(m)),
       );
       const columns = group.concat(allMeasures);
 
       return {
-        columns: columns.map((c) => parseName(c)),
+        columns,
         rows: resultRows.map((row) =>
           columns.map((c) => row[c]),
         ) as MetricValue[][],

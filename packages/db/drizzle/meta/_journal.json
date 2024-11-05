@@ -50,6 +50,27 @@
       "when": 1729551961333,
       "tag": "0006_add_open_and_close_prices",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1730149904438,
+      "tag": "0007_add_id_to_position",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1730150043737,
+      "tag": "0008_add_id_to_position",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1730150204450,
+      "tag": "0009_user_ticker_remove_unique_key",
+      "breakpoints": true
     }
   ]
 }

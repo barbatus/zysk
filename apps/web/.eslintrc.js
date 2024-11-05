@@ -8,5 +8,7 @@ module.exports = {
   ],
   rules: {
     "@typescript-eslint/no-unnecessary-condition": "off",
+    "eslint-comments/require-description": "off",
+    "@typescript-eslint/restrict-template-expressions": "off",
   },
 };

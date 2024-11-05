@@ -7,8 +7,8 @@ import {
 
 export interface UserTable {
   id: Generated<string>;
-  first_name: string;
-  last_name: string | null;
+  firstName: string;
+  lastName: string | null;
   email: string;
 }
 
@@ -24,27 +24,28 @@ export interface TickerTable {
       weight: number;
     }[]
   >;
-  founded_at: ColumnType<Date | null, string, string>;
+  foundedAt: ColumnType<Date | null, string, string>;
 }
 
 export interface UserTickersTable {
-  user_id: string;
+  id: Generated<string>;
+  userId: string;
   symbol: string;
   amount: number;
-  opened_at: ColumnType<Date, string, never>;
-  open_price: number | null;
-  closed_at: ColumnType<Date, string, never>;
-  close_price: number | null;
+  openedAt: ColumnType<Date, string, never>;
+  openPrice: number | null;
+  closedAt: ColumnType<Date, string, never>;
+  closePrice: number | null;
 }
 
 export interface Quote {
   symbol: string;
-  open_price: number;
-  close_price: number;
+  openPrice: number;
+  closePrice: number;
   high: number;
   low: number;
   volume: number;
-  split_coeff: number | null;
+  splitCoeff: number | null;
   divident: number | null;
   date: Date;
 }
@@ -52,7 +53,7 @@ export interface Quote {
 export interface Database {
   user: UserTable;
   ticker: TickerTable;
-  user_tickers: UserTickersTable;
+  userTickers: UserTickersTable;
   quote: Quote;
 }
 

@@ -3,12 +3,13 @@ import GlobalStyles from "@mui/joy/GlobalStyles";
 import { type ReactNode } from "react";
 
 import { metricsApi } from "#/api/metrics";
+import { portfolioApi } from "#/api/portfolio";
 
 import { ReactQueryProvider } from "../common/react-query-provider";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <ReactQueryProvider apis={[metricsApi]}>
+    <ReactQueryProvider apis={[metricsApi, portfolioApi]}>
       <GlobalStyles
         styles={{
           '[data-joy-color-scheme="dark"]': {
