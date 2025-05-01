@@ -1,0 +1,329 @@
+import { type BaseLLM } from "@langchain/core/language_models/llms";
+import { type AIMessageChunk } from "@langchain/core/messages";
+import { type RunnableConfig } from "@langchain/core/runnables";
+
+import { getAppConfigStatic } from "../config";
+import {
+  AsyncRetrying,
+  type RetryCallState,
+  retryIfException,
+  stopAfterAttempt,
+} from "../utils/async-retrying";
+import { logger } from "../utils/logger";
+import { PromptTrimmer } from "../utils/trimmer";
+import { type ModelKeyEnum } from "./enums";
+import {
+  FatalTimeoutError,
+  RateLimitExceededError,
+  ResponseTimeoutError,
+  shouldRetryException,
+} from "./exceptions";
+import { type ExecutionResult, type ModelIdentity } from "./schemas";
+
+const appConfig = getAppConfigStatic();
+
+export type AnyLLMModelType = BaseLLM;
+
+/**
+ * Interface for running a LLM model.
+ * It should take in a prompt and return an ExecutionResult.
+ */
+export interface AbstractRunner {
+  arun: (message: string, config?: RunnableConfig) => Promise<ExecutionResult>;
+}
+
+export abstract class BaseLLMRunner implements AbstractRunner {
+  protected llm: AnyLLMModelType;
+
+  constructor(llm: AnyLLMModelType) {
+    this.llm = llm;
+  }
+
+  protected async ainvoke(
+    message: string,
+    config?: RunnableConfig,
+  ): Promise<AIMessageChunk | string> {
+    const timeout =
+      (config?.metadata?.timeout as number | undefined) ??
+      appConfig.llmResponseTimeoutSec;
+    try {
+      const startTime = Date.now();
+      logger.info(`[BaseLLMRunner] running ${this.toString()}`);
+
+      const result = await Promise.race<AIMessageChunk | string>([
+        this.llm.invoke(message, config),
+        new Promise((_, reject) =>
+          // eslint-disable-next-line no-promise-executor-return
+          setTimeout(() => {
+            reject(new Error("Timeout"));
+          }, timeout * 1000),
+        ),
+      ]);
+
+      const executionTime = (Date.now() - startTime) / 1000;
+      logger.info(
+        `[BaseLLMRunner] ${this.toString()} execution time: ${executionTime.toFixed(2)}s`,
+      );
+
+      return result;
+    } catch (error) {
+      if ((error as Error).message === "Timeout") {
+        throw new Error(
+          `[BaseLLMRunner] ${this.toString()} API call timed out after ${timeout}s`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  abstract arun(
+    message: string,
+    config?: RunnableConfig,
+  ): Promise<ExecutionResult>;
+
+  toString(): string {
+    return `BaseLLMRunner(llm=${this.llm.constructor.name})`;
+  }
+}
+
+/**
+ * Interface for a container that holds a LLM model or agent
+ */
+export interface AbstractContainer {
+  readonly id: string;
+}
+
+/**
+ * A container for a LLM based runner
+ */
+export class ModelContainer implements AbstractContainer {
+  constructor(
+    public runner: BaseLLMRunner,
+    public identity: ModelIdentity,
+  ) {}
+
+  get id(): string {
+    return this.identity.id;
+  }
+
+  toString(): string {
+    return `ModelContainer(identity=${this.identity.toString()}, runner=${this.runner.toString()})`;
+  }
+
+  async arun(
+    message: string,
+    config?: RunnableConfig,
+  ): Promise<ExecutionResult> {
+    const result = await this.runner.arun(message, config);
+    const content = result.response.trim();
+
+    logger.debug(`Response content: [${content}]`);
+
+    if (
+      content === "I'm sorry, but I can't assist with that request." ||
+      content === "I'm sorry, I can't assist with that request."
+    ) {
+      throw new Error(
+        `Content filter error: ${content} runner=${this.runner.toString()}`,
+      );
+    } else if (!content) {
+      throw new Error(
+        `Model response is empty. runner=${this.runner.toString()}`,
+      );
+    }
+
+    return result;
+  }
+}
+
+export class SequentialModelContainer implements AbstractContainer {
+  private modelContainers: ModelContainer[];
+  private currentContainer: ModelContainer;
+  private maxInputTokens: number;
+  private charsPerToken: number;
+  private maxAttempts: number;
+  private modelKey: ModelKeyEnum;
+  private onRetryHandlers: (() => Promise<void> | void)[] = [];
+  private rateLimitTtl = 60; // TTL of a rate limited model in seconds
+
+  constructor(
+    modelKey: ModelKeyEnum,
+    containers: Iterable<ModelContainer>,
+    maxInputTokens: number,
+    charsPerToken = 3.5,
+  ) {
+    if (Array.from(containers).length === 0) {
+      throw new Error("Containers must be non-empty");
+    }
+    this.modelContainers = Array.from(containers);
+    this.shuffle(this.modelContainers);
+    this.maxInputTokens = maxInputTokens;
+    this.charsPerToken = charsPerToken;
+    this.maxAttempts = Math.max(2, Math.floor(this.modelContainers.length / 2));
+    this.modelKey = modelKey;
+    this.currentContainer = this.modelContainers[0];
+  }
+
+  private shuffle(array: ModelContainer[]): void {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  async adjustPromptLength(prompt: string): Promise<string> {
+    const trimmer = new PromptTrimmer(this.maxInputTokens, this.charsPerToken);
+    const res = await trimmer.trim(prompt);
+
+    if (res.wasTrimmed) {
+      logger.warn(
+        {
+          originalTokens: res.originalTokens,
+          estimatedTokens: res.estimatedTokens,
+          maxTokens: this.maxInputTokens,
+          chars: res.originalLength,
+          truncationPoint: res.truncationPoint,
+        },
+        "Prompt length exceeds limits:",
+      );
+      return res.trimmedText;
+    }
+
+    logger.info(
+      {
+        originalTokens: res.originalTokens,
+        maxTokens: this.maxInputTokens,
+        chars: res.originalLength,
+      },
+      "Prompt length is within limits:",
+    );
+    return prompt;
+  }
+
+  get length(): number {
+    return this.modelContainers.length;
+  }
+
+  get id(): string {
+    return this.currentContainer.id;
+  }
+
+  toString(): string {
+    return `SequentialModelContainer(model=${this.modelKey}, modelContainers=${this.modelContainers
+      .map((c) => c.toString())
+      .join(", ")})`;
+  }
+
+  onRetry(handler: () => Promise<void> | void): () => void {
+    this.onRetryHandlers.push(handler);
+
+    return () => {
+      const index = this.onRetryHandlers.indexOf(handler);
+      if (index !== -1) {
+        this.onRetryHandlers.splice(index, 1);
+      }
+    };
+  }
+
+  async arun(
+    message: string,
+    config?: RunnableConfig,
+  ): Promise<ExecutionResult> {
+    const inputPrompt = await this.adjustPromptLength(message);
+
+    const emitRetry = async (): Promise<void> => {
+      for (const handler of this.onRetryHandlers) {
+        try {
+          await handler();
+        } catch (e) {
+          logger.error(
+            {
+              error: e,
+            },
+            `[SequentialModelContainer(${this.modelKey}).arun] Error in retry event handler`,
+          );
+        }
+      }
+    };
+
+    const onBeforeRetry = async (details: RetryCallState): Promise<void> => {
+      if (details.attemptNumber <= 1) {
+        return;
+      }
+      await emitRetry();
+    };
+
+    let consecutiveTimeouts = 0;
+    try {
+      // eslint-disable-next-line  no-unreachable-loop
+      for await (const _ of new AsyncRetrying(
+        stopAfterAttempt(this.maxAttempts),
+        retryIfException(shouldRetryException),
+        { before: onBeforeRetry },
+      )) {
+        try {
+          this.currentContainer = await this.getAvailable(emitRetry);
+          logger.info(
+            `[SequentialModelContainer(${this.modelKey}).arun] running ${this.currentContainer.runner.toString()}`,
+          );
+          const response = await this.currentContainer.arun(
+            inputPrompt,
+            config,
+          );
+          return response;
+        } catch (error) {
+          if (error instanceof ResponseTimeoutError) {
+            consecutiveTimeouts++;
+            if (consecutiveTimeouts >= 2) {
+              throw new FatalTimeoutError(
+                `[SequentialModelContainer(${this.modelKey}).arun] multiple consecutive timeout errors occurred. Giving up on retries.`,
+              );
+            }
+            throw error;
+          } else if (error instanceof RateLimitExceededError) {
+            this.markRateLimited(this.currentContainer.id);
+            throw error;
+          }
+          throw error;
+        }
+      }
+    } catch (error) {
+      logger.error(
+        `[SequentialModelContainer(${this.modelKey}).arun] runner=${this.currentContainer.runner.toString()} RetryError`,
+      );
+      throw error;
+    }
+
+    throw new Error("No response received");
+  }
+
+  private markRateLimited(modelId: string): void {
+    logger.warn(`Model ${modelId} is rate limited`);
+  }
+
+  private async getAvailable(
+    _onRetry?: () => Promise<void>,
+  ): Promise<ModelContainer> {
+    return this.modelContainers[
+      Math.floor(Math.random() * this.modelContainers.length)
+    ];
+
+    // for (const waitTime of [this.rateLimitTtl, 0]) {
+    //   for (const container of this.modelContainers) {
+    //     logger.info(
+    //       `[SequentialModelContainer(${this.modelKey})] getting available runner=${container.runner.toString()}`,
+    //     );
+    //     return container;
+    //   }
+
+    //   await new Promise((resolve) => setTimeout(resolve, waitTime * 1000));
+    //   if (onRetry) {
+    //     await onRetry();
+    //   }
+    // }
+
+    // throw new FatalTimeoutError(
+    //   `[SequentialModelContainer(${this.modelKey})] not available model containers`,
+    // );
+  }
+}

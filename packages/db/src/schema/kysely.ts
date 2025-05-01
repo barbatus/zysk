@@ -12,19 +12,21 @@ export interface UserTable {
   email: string;
 }
 
+export type TickerType = "stock" | "etp" | "reit" | "adr";
+
 export interface TickerTable {
   symbol: string;
-  type: "stock" | "etp" | "reit" | "adr";
+  type: TickerType;
   currency: string;
-  figi: string;
-  about: string | null;
+  figi: string | null;
+  about: string;
   sectors: JSONColumnType<
     {
       name: string;
       weight: number;
     }[]
   >;
-  foundedAt: ColumnType<Date | null, string, string>;
+  foundedAt: ColumnType<Date | null, string | undefined>;
 }
 
 export interface UserTickersTable {

@@ -3,16 +3,7 @@ import { subYears } from "date-fns";
 
 import { db } from "./db";
 
-const stockSymbols = [
-  "NVDA",
-  "AMZN",
-  "META",
-  "MSFT",
-  "APPL",
-  "UBER",
-  "INTC",
-  "LI",
-];
+const tickers = ["NVDA", "AMZN", "META", "MSFT", "APPL", "UBER", "INTC", "LI"];
 
 async function fetchAndSaveStockData(symbol: string) {
   try {
@@ -49,8 +40,8 @@ async function fetchAndSaveStockData(symbol: string) {
         return {
           symbol,
           date: new Date(dateStr),
-          open_price: parseFloat(values["1. open"]),
-          close_price: parseFloat(values["4. close"]),
+          openPrice: parseFloat(values["1. open"]),
+          closePrice: parseFloat(values["4. close"]),
           high: parseFloat(values["2. high"]),
           low: parseFloat(values["3. low"]),
           volume: parseFloat(values["5. volume"]),
@@ -76,7 +67,7 @@ async function fetchAndSaveStockData(symbol: string) {
 async function main() {
   try {
     await Promise.allSettled(
-      stockSymbols.map((symbol) => fetchAndSaveStockData(symbol)),
+      tickers.map((symbol) => fetchAndSaveStockData(symbol)),
     );
   } finally {
     await db.destroy();

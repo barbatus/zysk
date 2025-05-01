@@ -1,5 +1,5 @@
 {
-  "display": "db",
+  "display": "scripts",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",

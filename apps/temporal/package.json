@@ -1,0 +1,53 @@
+{
+  "name": "@zysk/temporal",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "temporal": "temporal server start-dev",
+    "dev:build": "tsc --watch",
+    "dev": "npm-run-all -l build --parallel dev:build start:worker",
+    "start:worker": "nodemon dist/worker",
+    "generate": "pnpm dlx dotenv-cli -e .env.development -- drizzle-kit generate --name",
+    "migrate": "pnpm dlx dotenv-cli -e .env.development -- drizzle-kit migrate",
+    "lint": "eslint . --ext .ts --color",
+    "lint:fix": "pnpm lint --fix"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.49",
+    "@langchain/textsplitters": "^0.1.0",
+    "@temporalio/worker": "^1.11.3",
+    "@temporalio/workflow": "^1.11.3",
+    "@zysk/db": "workspace:*",
+    "axios": "^1.7.7",
+    "date-fns": "^4.1.0",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.33.0",
+    "finnhub": "^1.2.19",
+    "kysely": "^0.27.4",
+    "langchain": "^0.3.24",
+    "lodash": "^4.17.21",
+    "pg": "^8.13.0",
+    "pino": "^9.6.0",
+    "uuid": "^11.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@total-typescript/ts-reset": "^0.6.1",
+    "@types/lodash": "^4.17.10",
+    "@types/pg": "^8.11.10",
+    "@zysk/eslint-config": "workspace:*",
+    "dotenv-cli": "^7.4.2",
+    "drizzle-kit": "^0.24.2",
+    "nodemon": "^3.1.7",
+    "npm-run-all": "^4.1.5",
+    "ts-node": "^10.9.2",
+    "typescript": "5.6.2"
+  }
+}

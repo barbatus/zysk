@@ -1,5 +1,5 @@
 {
-  "display": "db",
+  "display": "ts-rest",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",

@@ -1,0 +1,143 @@
+import "dotenv/config";
+
+import { ApplicationFailure } from "@temporalio/workflow";
+import axios, { type AxiosResponse } from "axios";
+import { subYears } from "date-fns";
+import { isEmpty } from "lodash";
+
+function processResponse<
+  T extends
+    | {
+        "Error Message"?: string;
+        Note?: string;
+        Information?: string;
+      }
+    | undefined,
+>(response: AxiosResponse<T>) {
+  if (!response.data) {
+    throw new Error("No data returned from Alpha Vantage");
+  }
+
+  if (isEmpty(response.data)) {
+    return undefined;
+  }
+
+  if (response.data["Error Message"] ?? response.data.Note) {
+    throw new Error(response.data["Error Message"] ?? response.data.Note);
+  }
+
+  if (response.data.Information?.includes("rate limits")) {
+    throw new ApplicationFailure("Rate limit exceeded", "RATE_LIMIT_EXCEEDED");
+  }
+
+  return response.data;
+}
+
+export async function getSymbolOverview(symbol: string) {
+  const response = await axios.get<
+    | {
+        Description: string;
+        Currency: string;
+        Sector: string;
+        AssetType: string;
+        Country: string;
+        Beta: string;
+        "Error Message": string;
+      }
+    | undefined
+  >("https://www.alphavantage.co/query", {
+    params: {
+      function: "OVERVIEW",
+      symbol,
+      apikey: process.env.ALPHA_VANTAGE_API_KEY,
+    },
+  });
+
+  const data = processResponse(response);
+
+  return data
+    ? {
+        ...data,
+        Beta: Number(data.Beta),
+        symbol,
+      }
+    : undefined;
+}
+
+export async function getETFProfile(symbol: string) {
+  const response = await axios.get<
+    | {
+        inception_date: string;
+        sectors: {
+          name: string;
+          weight: number;
+        }[];
+        "Error Message": string;
+      }
+    | undefined
+  >("https://www.alphavantage.co/query", {
+    params: {
+      function: "ETF_PROFILE",
+      symbol,
+      apikey: process.env.ALPHA_VANTAGE_API_KEY,
+    },
+  });
+
+  const data = processResponse(response);
+
+  return data
+    ? {
+        ...data,
+        symbol,
+      }
+    : undefined;
+}
+
+export async function getTimeSeriesDaily(
+  symbol: string,
+  outputsize: "full" | "compact" = "compact",
+) {
+  const response = await axios.get<
+    | {
+        "Time Series (Daily)": Record<string, Record<string, string>>;
+        "Error Message"?: string;
+        Note?: string;
+      }
+    | undefined
+  >("https://www.alphavantage.co/query", {
+    params: {
+      function: "TIME_SERIES_DAILY",
+      symbol,
+      apikey: process.env.ALPHA_VANTAGE_API_KEY,
+      outputsize,
+    },
+  });
+
+  const data = processResponse(response);
+  if (!data) {
+    return undefined;
+  }
+
+  const timeSeries = data["Time Series (Daily)"];
+
+  const tenYearsAgo = subYears(new Date(), 10);
+  const quotes = Object.entries(timeSeries)
+    .filter(([dateStr]) => new Date(dateStr) >= tenYearsAgo)
+    .map(([dateStr, values]) => {
+      return {
+        symbol,
+        date: new Date(dateStr),
+        openPrice: parseFloat(values["1. open"]),
+        closePrice: parseFloat(values["4. close"]),
+        high: parseFloat(values["2. high"]),
+        low: parseFloat(values["3. low"]),
+        volume: parseFloat(values["5. volume"]),
+      };
+    });
+
+  return {
+    ...data,
+    symbol,
+    quotes,
+  };
+}

@@ -19,17 +19,20 @@ enum TickerType {
 }
 
 export const tickerTable = pgTable("ticker", {
-  symbol: varchar("symbol", { length: 10 }).notNull().primaryKey(),
+  symbol: varchar("symbol", { length: 40 }).notNull().primaryKey(),
   type: validatedStringEnum("type", TickerType),
-  currency: varchar("currency", { length: 10 }).notNull(),
-  figi: varchar("figi", { length: 12 }).notNull(),
+  currency: varchar("currency", { length: 10 }).notNull().default("USD"),
+  figi: varchar("figi", { length: 20 }),
   about: text("about"),
-  sectors: jsonb("sectors").$type<
-    {
-      name: string;
-      weight: number;
-    }[]
-  >(),
+  sectors: jsonb("sectors")
+    .default([])
+    .$type<
+      {
+        name: string;
+        weight: number;
+      }[]
+    >()
+    .default([]),
   foundedAt: timestamp("founded_at", { withTimezone: true }),
 });
 
@@ -41,7 +44,7 @@ export const userTickersTable = pgTable("user_tickers", {
       onDelete: "restrict",
       onUpdate: "cascade",
     }),
-  symbol: varchar("symbol", { length: 10 })
+  symbol: varchar("symbol", { length: 40 })
     .notNull()
     .references(() => tickerTable.symbol, {
       onDelete: "restrict",

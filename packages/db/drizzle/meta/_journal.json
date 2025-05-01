@@ -71,6 +71,13 @@
       "when": 1730150204450,
       "tag": "0009_user_ticker_remove_unique_key",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1731959667309,
+      "tag": "0010_some_ticker_updates",
+      "breakpoints": true
     }
   ]
 }

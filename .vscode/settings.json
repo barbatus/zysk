@@ -25,9 +25,8 @@
   "files.associations": {},
 
   "[markdown]": {
-    "files.trimTrailingWhitespace": false
+    "files.trimTrailingWhitespace": true
   },
-
   "tailwindCSS.includeLanguages": {
     "javascript": "javascript",
     "typescript": "typescript",
@@ -38,4 +37,6 @@
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
+  "editor.rulers": [100],
+  "editor.wordWrapColumn": 100
 }

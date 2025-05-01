@@ -10,7 +10,7 @@ import {
 export const quoteTable = pgTable(
   "quote",
   {
-    symbol: varchar("symbol", { length: 10 }).notNull(),
+    symbol: varchar("symbol", { length: 40 }).notNull(),
     open_price: numeric("open_price").notNull(),
     close_price: numeric("close_price").notNull(),
     high: numeric("high").notNull(),
@@ -26,7 +26,7 @@ export const quoteTable = pgTable(
 );
 
 export const rtQuoteTable = pgTable("rl_quote", {
-  symbol: varchar("symbol", { length: 10 }).primaryKey(),
+  symbol: varchar("symbol", { length: 40 }).primaryKey(),
   price: numeric("price").notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });

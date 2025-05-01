@@ -35,10 +35,10 @@ export const usePortfolio = () => {
   return {
     metrics: metricsRes.data,
     total: metricsRes.total,
-    positions: portfolioRes.data,
-    isLoading: metricsRes.isLoading || portfolioRes.isLoading,
-    isFetching: metricsRes.isFetching || portfolioRes.isFetching,
-    error: metricsRes.error || portfolioRes.error,
+    positions: portfolioData,
+    isLoading: metricsRes.isLoading ?? portfolioRes.isLoading,
+    isFetching: metricsRes.isFetching ?? portfolioRes.isFetching,
+    error: metricsRes.error ?? portfolioRes.error,
     rows: rows.map((r) => ({
       ...r,
       subRows: (r.subRows ?? []).map((subRow) => ({
