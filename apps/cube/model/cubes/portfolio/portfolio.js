@@ -13,7 +13,7 @@ cube(`PortfolioCube`, {
   sql: `
     WITH pq AS (
       SELECT *, ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY date ASC) row
-      FROM quote
+      FROM ticker_quotes
       WHERE ${FILTER_PARAMS.Portfolio.period.filter("date")}
     )
 
@@ -24,19 +24,19 @@ cube(`PortfolioCube`, {
       pq.date as start_date,
       pq.open_price as start_price
     FROM user_tickers ut
-    JOIN quote q1 ON ut.symbol = q1.symbol AND ut.opened_at::date = q1.date
-    LEFT JOIN quote q2 ON ut.symbol = q2.symbol AND ut.closed_at::date = q2.date
+    JOIN ticker_quotes q1 ON ut.symbol = q1.symbol AND ut.opened_at::date = q1.date
+    LEFT JOIN ticker_quotes q2 ON ut.symbol = q2.symbol AND ut.closed_at::date = q2.date
     JOIN pq ON pq.symbol = ut.symbol AND pq.row = 1
   `,
 
   joins: {
-    User: {
-      sql: `${CUBE.userId} = ${User.id}`,
+    Users: {
+      sql: `${CUBE.userId} = ${Users.id}`,
       relationship: `many_to_one`
     },
 
-    CurrentQuote: {
-      sql: `${CUBE.symbol} = ${CurrentQuote.symbol}`,
+    CurrentQuotes: {
+      sql: `${CUBE.symbol} = ${CurrentQuotes.symbol}`,
       relationship: `one_to_one`,
     },
   },

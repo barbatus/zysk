@@ -5,7 +5,7 @@ import {
   type Selectable,
 } from "kysely";
 
-export interface UserTable {
+export interface UsersTable {
   id: Generated<string>;
   firstName: string;
   lastName: string | null;
@@ -14,7 +14,7 @@ export interface UserTable {
 
 export type TickerType = "stock" | "etp" | "reit" | "adr";
 
-export interface TickerTable {
+export interface TickersTable {
   symbol: string;
   type: TickerType;
   currency: string;
@@ -40,7 +40,7 @@ export interface UserTickersTable {
   closePrice: number | null;
 }
 
-export interface Quote {
+export interface TickerQuotesTable {
   symbol: string;
   openPrice: number;
   closePrice: number;
@@ -53,12 +53,13 @@ export interface Quote {
 }
 
 export interface Database {
-  user: UserTable;
-  ticker: TickerTable;
+  users: UsersTable;
+  tickers: TickersTable;
   userTickers: UserTickersTable;
-  quote: Quote;
+  tickerQuotes: TickerQuotesTable;
 }
 
-export type User = Selectable<UserTable>;
-export type Ticker = Selectable<TickerTable>;
+export type Users = Selectable<UsersTable>;
+export type Tickers = Selectable<TickersTable>;
 export type UserTickers = Selectable<UserTickersTable>;
+export type TickerQuotes = Selectable<TickerQuotesTable>;

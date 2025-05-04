@@ -13,7 +13,7 @@ cube(`TickerSegmentsCube`, {
         symbol,
         segment,
         ratio::numeric AS ratio
-      FROM public.ticker,
+      FROM public.tickers,
         jsonb_array_elements(sectors) AS element,
         jsonb_each_text(element) AS t(segment, ratio)
     )

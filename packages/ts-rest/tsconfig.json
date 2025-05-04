@@ -1,25 +1,13 @@
 {
-  "display": "ts-rest",
+  "extends": "@zysk/typescript-config/node.json",
   "compilerOptions": {
-    "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": ".",
-    "lib": ["ES2023"],
-    "module": "commonjs",
-    "target": "ES2022",
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "declaration": true,
-    "declarationMap": true,
+    "outDir": "dist",
+    "lib": ["DOM", "ES2021"],
     "paths": {
       "#/*": ["./*"]
-    },
+    }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["dist"]
 }

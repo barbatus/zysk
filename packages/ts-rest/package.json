@@ -13,6 +13,9 @@
     "zod": "^3.23.8",
     "@zysk/cube": "workspace:*"
   },
+  "devDependencies": {
+    "@zysk/typescript-config": "workspace:*"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

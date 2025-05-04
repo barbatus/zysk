@@ -1,16 +1,117 @@
 {
-  "id": "8dec8c10-ff0d-4a7f-a9e8-1dbce7eafced",
+  "id": "eefe5c3b-b64c-4817-868e-f7e6ff21e12b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.ticker": {
-      "name": "ticker",
+    "public.current_quotes": {
+      "name": "current_quotes",
       "schema": "",
       "columns": {
         "symbol": {
           "name": "symbol",
-          "type": "varchar(10)",
+          "type": "varchar(40)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "price": {
+          "name": "price",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.ticker_quotes": {
+      "name": "ticker_quotes",
+      "schema": "",
+      "columns": {
+        "symbol": {
+          "name": "symbol",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "open_price": {
+          "name": "open_price",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "close_price": {
+          "name": "close_price",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "high": {
+          "name": "high",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "low": {
+          "name": "low",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "volume": {
+          "name": "volume",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "split_coeff": {
+          "name": "split_coeff",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "divident": {
+          "name": "divident",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "ticker_quotes_symbol_date_pk": {
+          "name": "ticker_quotes_symbol_date_pk",
+          "columns": [
+            "symbol",
+            "date"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.tickers": {
+      "name": "tickers",
+      "schema": "",
+      "columns": {
+        "symbol": {
+          "name": "symbol",
+          "type": "varchar(40)",
           "primaryKey": true,
           "notNull": true
         },
@@ -24,13 +125,14 @@
           "name": "currency",
           "type": "varchar(10)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "'USD'"
         },
         "figi": {
           "name": "figi",
-          "type": "varchar(12)",
+          "type": "varchar(20)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "about": {
           "name": "about",
@@ -42,7 +144,8 @@
           "name": "sectors",
           "type": "jsonb",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": "'[]'::jsonb"
         },
         "founded_at": {
           "name": "founded_at",
@@ -60,6 +163,13 @@
       "name": "user_tickers",
       "schema": "",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
         "user_id": {
           "name": "user_id",
           "type": "uuid",
@@ -68,7 +178,7 @@
         },
         "symbol": {
           "name": "symbol",
-          "type": "varchar(10)",
+          "type": "varchar(40)",
           "primaryKey": false,
           "notNull": true
         },
@@ -76,13 +186,31 @@
           "name": "amount",
           "type": "numeric",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "added_at": {
-          "name": "added_at",
+        "opened_at": {
+          "name": "opened_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
+        },
+        "open_price": {
+          "name": "open_price",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "closed_at": {
+          "name": "closed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "close_price": {
+          "name": "close_price",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -100,10 +228,10 @@
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
-        "user_tickers_symbol_ticker_symbol_fk": {
-          "name": "user_tickers_symbol_ticker_symbol_fk",
+        "user_tickers_symbol_tickers_symbol_fk": {
+          "name": "user_tickers_symbol_tickers_symbol_fk",
           "tableFrom": "user_tickers",
-          "tableTo": "ticker",
+          "tableTo": "tickers",
           "columnsFrom": [
             "symbol"
           ],
@@ -114,15 +242,7 @@
           "onUpdate": "cascade"
         }
       },
-      "compositePrimaryKeys": {
-        "user_tickers_user_id_symbol_pk": {
-          "name": "user_tickers_user_id_symbol_pk",
-          "columns": [
-            "user_id",
-            "symbol"
-          ]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
     "public.users": {
@@ -133,7 +253,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "first_name": {
           "name": "first_name",
@@ -145,7 +266,7 @@
           "name": "last_name",
           "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "email": {
           "name": "email",

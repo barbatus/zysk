@@ -5,10 +5,10 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: pgpassword
-      POSTGRES_DB: postgres
+      POSTGRES_DB: zysk
     volumes:
       - pg-data:/var/lib/postgresql/data
-      - ./docker/postgres
+      - ./docker/postgres:/postgres
     shm_size: "8gb"
     ports:
       - "5432:5432"

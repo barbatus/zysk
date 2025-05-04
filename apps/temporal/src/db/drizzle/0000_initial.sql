@@ -1,6 +1,6 @@
-CREATE SCHEMA "api_data";
+CREATE SCHEMA "app_data";
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "api_data"."alpha_vantage_time_series" (
+CREATE TABLE IF NOT EXISTS "app_data"."alpha_vantage_time_series" (
 	"symbol" varchar(40) PRIMARY KEY NOT NULL,
 	"open_price" numeric NOT NULL,
 	"close_price" numeric NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS "api_data"."alpha_vantage_time_series" (
 	"date" date NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "api_data"."alpha_vantage_company_overview" (
+CREATE TABLE IF NOT EXISTS "app_data"."alpha_vantage_company_overviews" (
 	"symbol" varchar(40) PRIMARY KEY NOT NULL,
 	"description" text NOT NULL,
 	"currency" varchar(10),
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS "api_data"."alpha_vantage_company_overview" (
 	"beta" numeric
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "api_data"."alpha_vantage_etf_profile" (
+CREATE TABLE IF NOT EXISTS "app_data"."alpha_vantage_etf_profiles" (
 	"symbol" varchar(40) PRIMARY KEY NOT NULL,
 	"sectors" jsonb DEFAULT '[]'::jsonb,
 	"holdings" jsonb DEFAULT '[]'::jsonb,

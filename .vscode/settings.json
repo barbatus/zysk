@@ -16,6 +16,7 @@
     { "pattern": "apps/*/" },
     { "pattern": "packages/*/" }
   ],
+  "eslint.useFlatConfig": false,
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit"
   },

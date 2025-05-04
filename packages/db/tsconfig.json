@@ -1,25 +1,16 @@
 {
-  "display": "db",
+  "extends": "@zysk/typescript-config/node.json",
+  "display": "database",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": ".",
-    "lib": ["ES2023"],
-    "module": "commonjs",
-    "target": "ES2022",
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "declaration": true,
-    "declarationMap": true,
+    "typeRoots": ["node_modules/@types"],
     "paths": {
       "#/*": ["./*"]
-    },
+    }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "ts-node": {
+    "swc": true,
+  }
 }

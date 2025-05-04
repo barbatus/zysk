@@ -1,6 +1,11 @@
 import { type ColumnType, type Selectable } from "kysely";
 
-export interface IalphaVantageCompanyOverview {
+import {
+  type EvaluationDetails,
+  type ExperimentTaskStatus,
+} from "./experiments";
+
+export interface IalphaVantageCompanyOverviews {
   symbol: string;
   description: string;
   sector: string;
@@ -8,7 +13,7 @@ export interface IalphaVantageCompanyOverview {
   beta: number | null;
 }
 
-export interface IalphaVantageETFProfile {
+export interface IalphaVantageETFProfiles {
   symbol: string;
   inception_date: ColumnType<Date | null, string | undefined>;
   sectors: {
@@ -27,15 +32,28 @@ export interface IalphaVantageTimeSeries {
   date: Date;
 }
 
-export interface Database {
-  "api_data.alphaVantageCompanyOverview": IalphaVantageCompanyOverview;
-  "api_data.alphaVantageEtfProfile": IalphaVantageETFProfile;
-  "api_data.alphaVantageTimeSeries": IalphaVantageTimeSeries;
+export interface Iexperiment {
+  id: string;
+  responseText: string | null;
+  responseJson: object | null;
+  createdAt: Date;
+  updatedAt: Date;
+  status: ExperimentTaskStatus;
+  details: EvaluationDetails;
 }
 
-export type AlphaVantageCompanyOverview =
-  Selectable<IalphaVantageCompanyOverview>;
+export interface Database {
+  "app_data.alphaVantageCompanyOverviews": IalphaVantageCompanyOverviews;
+  "app_data.alphaVantageETFProfiles": IalphaVantageETFProfiles;
+  "app_data.alphaVantageTimeSeries": IalphaVantageTimeSeries;
+  "app_data.experiments": Experiment;
+}
 
-export type AlphaVantageETFProfile = Selectable<IalphaVantageETFProfile>;
+export type AlphaVantageCompanyOverviews =
+  Selectable<IalphaVantageCompanyOverviews>;
+
+export type AlphaVantageETFProfiles = Selectable<IalphaVantageETFProfiles>;
 
 export type AlphaVantageTimeSeries = Selectable<IalphaVantageTimeSeries>;
+
+export type Experiment = Selectable<Iexperiment>;

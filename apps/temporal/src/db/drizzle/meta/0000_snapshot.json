@@ -1,12 +1,12 @@
 {
-  "id": "d86777d9-c687-4ce0-94f9-749f63f05fa7",
+  "id": "be1bacf3-1b5f-4abd-90fa-89da811a5ed7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "api_data.alpha_vantage_time_series": {
+    "app_data.alpha_vantage_time_series": {
       "name": "alpha_vantage_time_series",
-      "schema": "api_data",
+      "schema": "app_data",
       "columns": {
         "symbol": {
           "name": "symbol",
@@ -56,9 +56,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "api_data.alpha_vantage_company_overview": {
-      "name": "alpha_vantage_company_overview",
-      "schema": "api_data",
+    "app_data.alpha_vantage_company_overviews": {
+      "name": "alpha_vantage_company_overviews",
+      "schema": "app_data",
       "columns": {
         "symbol": {
           "name": "symbol",
@@ -102,9 +102,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "api_data.alpha_vantage_etf_profile": {
-      "name": "alpha_vantage_etf_profile",
-      "schema": "api_data",
+    "app_data.alpha_vantage_etf_profiles": {
+      "name": "alpha_vantage_etf_profiles",
+      "schema": "app_data",
       "columns": {
         "symbol": {
           "name": "symbol",
@@ -141,7 +141,7 @@
   },
   "enums": {},
   "schemas": {
-    "api_data": "api_data"
+    "app_data": "app_data"
   },
   "sequences": {},
   "_meta": {

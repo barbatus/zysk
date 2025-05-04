@@ -1,18 +1,8 @@
 {
+  "extends": "@zysk/typescript-config/react.json",
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
     "baseUrl": ".",
+    "module": "esnext",
     "plugins": [
       {
         "name": "next"
@@ -22,6 +12,5 @@
       "#/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "reset.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["next-env.d.ts", "reset.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"]
 }

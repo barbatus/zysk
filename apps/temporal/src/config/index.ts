@@ -51,8 +51,31 @@ function getPostgresEnvVariables(prefix: string) {
   };
 }
 
+export const AzureOpenAIDeploymentConfigSchema = z.object({
+  name: z.string(),
+  modelName: z.string(),
+  tokensRateLimit: z.number(),
+  requestsRateLimit: z.number(),
+  services: z.array(z.string()),
+  temperature: z.number().optional(),
+  apiVersion: z.string().optional(),
+});
+
+export type AzureOpenAIDeploymentConfig = z.infer<
+  typeof AzureOpenAIDeploymentConfigSchema
+>;
+
+export const AzureOpenAIServiceConfigSchema = z.object({
+  name: z.string(),
+  apiKey: z.string(),
+  url: z.string().optional(),
+});
+
+export type AzureOpenAIServiceConfig = z.infer<
+  typeof AzureOpenAIServiceConfigSchema
+>;
+
 const appPostgresEnvVars = getPostgresEnvVariables("APP");
-const analyticsPostgresEnvVars = getPostgresEnvVariables("ANALYTICS");
 
 export const AppConfigEnvVariablesSchema = z.object({
   NODE_ENV: z.nativeEnum(NodeEnvironment),
@@ -64,8 +87,6 @@ export const AppConfigEnvVariablesSchema = z.object({
   INTEGRATION_TEST: z.preprocess((s) => Boolean(Number(s || "0")), z.boolean()),
   SENTRY_DSN: z.string().optional(),
   ...appPostgresEnvVars.zodSchema,
-  APP_POSTGRES_ENCRYPTION_SECRET: z.string().nonempty(),
-  ...analyticsPostgresEnvVars.zodSchema,
   REDIS_HOST: z.string().nonempty(),
   REDIS_PORT: z.preprocess(Number, z.number().positive()).default(6379),
   REDIS_PASSWORD: z.string().optional(),
@@ -90,21 +111,6 @@ export const AppConfigEnvVariablesSchema = z.object({
   MAILGUN_LOCAL_MAILER_HOSTNAME: z.string().optional(),
   POSTHOG_API_KEY: z.string().nonempty(),
   POSTHOG_PERSONAL_API_KEY: z.string().optional(),
-  GITHUB_APP_ID: z.string().nonempty(),
-  GITHUB_APP_SLUG: z.string().nonempty(),
-  GITHUB_APP_PRIVATE_KEY: z.string().nonempty(),
-  GITHUB_CLIENT_ID: z.string().nonempty(),
-  GITHUB_CLIENT_SECRET: z.string().nonempty(),
-  BASIC_GITHUB_APP_ID: z.string().default(""),
-  BASIC_GITHUB_APP_SLUG: z.string().default(""),
-  BASIC_GITHUB_APP_PRIVATE_KEY: z.string().default(""),
-  BASIC_GITHUB_CLIENT_ID: z.string().default(""),
-  BASIC_GITHUB_CLIENT_SECRET: z.string().default(""),
-  GITHUB_PROVISIONER_APP_ID: z.string().default(""),
-  GITHUB_PROVISIONER_APP_SLUG: z.string().default(""),
-  GITHUB_PROVISIONER_APP_PRIVATE_KEY_ENC: z.string().default(""),
-  GITHUB_PROVISIONER_CLIENT_ID: z.string().default(""),
-  GITHUB_PROVISIONER_CLIENT_SECRET: z.string().default(""),
   SENTRY_PROVISIONER_APP_SLUG: z.string().default(""),
   SENTRY_PROVISIONER_APP_CLIENT_ID: z.string().default(""),
   SENTRY_PROVISIONER_APP_CLIENT_SECRET: z.string().default(""),
@@ -119,6 +125,8 @@ export const AppConfigEnvVariablesSchema = z.object({
   AWS_S3_METRIC_DIGEST_BUCKET: z.string(),
   LLM_RESPONSE_TIMEOUT_SEC: z.number().default(300),
   FINNHUB_API_KEY: z.string(),
+  AZURE_OPENAI_DEPLOYMENTS: z.array(AzureOpenAIDeploymentConfigSchema),
+  AZURE_OPENAI_SERVICES: z.array(AzureOpenAIServiceConfigSchema),
 });
 
 export type AppConfigEnvVariables = z.infer<typeof AppConfigEnvVariablesSchema>;
@@ -142,12 +150,7 @@ export interface AppConfig {
   sentry: {
     dsn?: string;
   };
-  postgres: {
-    app: PostgresConfig & {
-      encryptionSecret: string;
-    };
-    analytics: PostgresConfig;
-  };
+  postgres: PostgresConfig;
   redis: {
     host: string;
     port: number;
@@ -184,27 +187,6 @@ export interface AppConfig {
     apiKey: string;
     personalApiKey?: string;
   };
-  github: {
-    appId: string;
-    appSlug: string;
-    appPrivateKey: string;
-    clientId: string;
-    clientSecret: string;
-  };
-  basicGithub: {
-    appId: string;
-    appSlug: string;
-    appPrivateKey: string;
-    clientId: string;
-    clientSecret: string;
-  };
-  githubProvisioner: {
-    appId: string;
-    appSlug: string;
-    appPrivateKeyEnc: string;
-    clientId: string;
-    clientSecret: string;
-  };
   provisionerApi: {
     baseUrl: string;
   };
@@ -231,6 +213,10 @@ export interface AppConfig {
   };
   llmResponseTimeoutSec: number;
   finnhubApiKey: string;
+  azureOpenAI: {
+    deployments: AzureOpenAIDeploymentConfig[];
+    services: AzureOpenAIServiceConfig[];
+  };
 }
 
 function getPostgresConfig(
@@ -266,14 +252,7 @@ export function validate(config: Record<string, unknown>) {
       dsn: appConfigValidated.SENTRY_DSN,
     },
     postgres: {
-      app: {
-        ...getPostgresConfig(appConfigValidated, appPostgresEnvVars),
-        encryptionSecret: appConfigValidated.APP_POSTGRES_ENCRYPTION_SECRET,
-      },
-      analytics: getPostgresConfig(
-        appConfigValidated,
-        analyticsPostgresEnvVars,
-      ),
+      ...getPostgresConfig(appConfigValidated, appPostgresEnvVars),
     },
     redis: {
       host: appConfigValidated.REDIS_HOST,
@@ -311,28 +290,6 @@ export function validate(config: Record<string, unknown>) {
       apiKey: appConfigValidated.POSTHOG_API_KEY,
       personalApiKey: appConfigValidated.POSTHOG_PERSONAL_API_KEY,
     },
-    github: {
-      appId: appConfigValidated.GITHUB_APP_ID,
-      appSlug: appConfigValidated.GITHUB_APP_SLUG,
-      appPrivateKey: appConfigValidated.GITHUB_APP_PRIVATE_KEY,
-      clientId: appConfigValidated.GITHUB_CLIENT_ID,
-      clientSecret: appConfigValidated.GITHUB_CLIENT_SECRET,
-    },
-    basicGithub: {
-      appId: appConfigValidated.BASIC_GITHUB_APP_ID,
-      appSlug: appConfigValidated.BASIC_GITHUB_APP_SLUG,
-      appPrivateKey: appConfigValidated.BASIC_GITHUB_APP_PRIVATE_KEY,
-      clientId: appConfigValidated.BASIC_GITHUB_CLIENT_ID,
-      clientSecret: appConfigValidated.BASIC_GITHUB_CLIENT_SECRET,
-    },
-    githubProvisioner: {
-      appId: appConfigValidated.GITHUB_PROVISIONER_APP_ID,
-      appSlug: appConfigValidated.GITHUB_PROVISIONER_APP_SLUG,
-      appPrivateKeyEnc:
-        appConfigValidated.GITHUB_PROVISIONER_APP_PRIVATE_KEY_ENC,
-      clientId: appConfigValidated.GITHUB_PROVISIONER_CLIENT_ID,
-      clientSecret: appConfigValidated.GITHUB_PROVISIONER_CLIENT_SECRET,
-    },
     provisionerApi: {
       baseUrl: appConfigValidated.PROVISIONER_API_BASE_URL,
     },
@@ -359,6 +316,10 @@ export function validate(config: Record<string, unknown>) {
     },
     llmResponseTimeoutSec: appConfigValidated.LLM_RESPONSE_TIMEOUT_SEC,
     finnhubApiKey: appConfigValidated.FINNHUB_API_KEY,
+    azureOpenAI: {
+      deployments: appConfigValidated.AZURE_OPENAI_DEPLOYMENTS,
+      services: appConfigValidated.AZURE_OPENAI_SERVICES,
+    },
   };
 
   return { config: appConfig };

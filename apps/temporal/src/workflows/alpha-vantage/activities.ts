@@ -1,11 +1,11 @@
+import { getETFProfile, getSymbolOverview, getTimeSeriesDaily } from "./api";
 import {
   getAVOverviews,
   getAVTimeSeries,
   saveAVETFDetails,
   saveAVOverviews,
   saveAVTimeSeries,
-} from "../../db";
-import { getETFProfile, getSymbolOverview, getTimeSeriesDaily } from "./api";
+} from "./db";
 
 export async function fetchStockDetails(symbol: string) {
   return getSymbolOverview(symbol);

@@ -45,6 +45,9 @@ importers:
       '@langchain/core':
         specifier: ^0.3.49
         version: 0.3.49(openai@4.96.0(zod@3.23.8))
+      '@langchain/openai':
+        specifier: ^0.5.10
+        version: 0.5.10(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))
       '@langchain/textsplitters':
         specifier: ^0.1.0
         version: 0.1.0(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))
@@ -63,6 +66,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      dedent:
+        specifier: ^1.6.0
+        version: 1.6.0(babel-plugin-macros@3.1.0)
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -106,6 +112,9 @@ importers:
       '@zysk/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
+      '@zysk/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/config-typescript
       dotenv-cli:
         specifier: ^7.4.2
         version: 7.4.2
@@ -245,9 +254,14 @@ importers:
       '@zysk/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
+      '@zysk/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/config-typescript
       typescript:
         specifier: 5.6.2
         version: 5.6.2
+
+  packages/config-typescript: {}
 
   packages/db:
     dependencies:
@@ -267,6 +281,9 @@ importers:
       '@zysk/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
+      '@zysk/typescript-config':
+        specifier: workspace:*
+        version: link:../config-typescript
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -356,6 +373,10 @@ importers:
       zod:
         specifier: ^3.23.8
         version: 3.23.8
+    devDependencies:
+      '@zysk/typescript-config':
+        specifier: workspace:*
+        version: link:../config-typescript
 
 packages:
 
@@ -1589,8 +1610,8 @@ packages:
     resolution: {integrity: sha512-ESEbxjtVtZTpgMPrLFEQZVHA5EVJuDYV3XzTFQ8haPHmBJfzskl6TINFttoGKTGbv799DZrRwnd5fbuCN5NDEA==}
     engines: {node: '>=18'}
 
-  '@langchain/openai@0.5.7':
-    resolution: {integrity: sha512-2azobl6XqPJIwe1MC4G33/77sOuvWtsbv2Wa8K6qsEEmIsznOXBXrOcKrp+1PTxRKy3UkIV2JV9mQas+ewPU0Q==}
+  '@langchain/openai@0.5.10':
+    resolution: {integrity: sha512-hBQIWjcVxGS7tgVvgBBmrZ5jSaJ8nu9g6V64/Tx6KGjkW7VdGmUvqCO+koiQCOZVL7PBJkHWAvDsbghPYXiZEA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/core': '>=0.3.48 <0.4.0'
@@ -3011,6 +3032,14 @@ packages:
   decompress@4.2.1:
     resolution: {integrity: sha512-e48kc2IjU+2Zw8cTb6VZcJQ3lgVbS4uuB1TfCHbiZIP/haNXm+SVyhu+87jts5/3ROpd82GSVCoNs/z8l4ZOaQ==}
     engines: {node: '>=4'}
+
+  dedent@1.6.0:
+    resolution: {integrity: sha512-F1Z+5UCFpmQUzJa11agbyPVMbpgT/qA3/SKyJ1jyBgm7dUcUEa8v9JwDkerSQXfakBwFljIxhOJqGkjUwZ9FSA==}
+    peerDependencies:
+      babel-plugin-macros: ^3.1.0
+    peerDependenciesMeta:
+      babel-plugin-macros:
+        optional: true
 
   deep-equal@2.2.3:
     resolution: {integrity: sha512-ZIwpnevOurS8bpT4192sqAowWM76JDKSHYzMLty3BZGSswgq6pBaH3DhCSW5xVAZICZyKdOBPjwww5wfgT/6PA==}
@@ -7640,7 +7669,7 @@ snapshots:
     transitivePeerDependencies:
       - openai
 
-  '@langchain/openai@0.5.7(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))':
+  '@langchain/openai@0.5.10(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))':
     dependencies:
       '@langchain/core': 0.3.49(openai@4.96.0(zod@3.23.8))
       js-tiktoken: 1.0.20
@@ -9207,6 +9236,10 @@ snapshots:
       make-dir: 1.3.0
       pify: 2.3.0
       strip-dirs: 2.1.0
+
+  dedent@1.6.0(babel-plugin-macros@3.1.0):
+    optionalDependencies:
+      babel-plugin-macros: 3.1.0
 
   deep-equal@2.2.3:
     dependencies:
@@ -10907,7 +10940,7 @@ snapshots:
   langchain@0.3.24(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))(axios@1.7.7)(openai@4.96.0(zod@3.23.8)):
     dependencies:
       '@langchain/core': 0.3.49(openai@4.96.0(zod@3.23.8))
-      '@langchain/openai': 0.5.7(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))
+      '@langchain/openai': 0.5.10(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))
       '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))
       js-tiktoken: 1.0.20
       js-yaml: 4.1.0
