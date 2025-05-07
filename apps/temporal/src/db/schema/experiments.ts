@@ -22,7 +22,7 @@ export const experimentsTable = mySchema.table("experiments", {
   id: uuid("id").defaultRandom().primaryKey(),
   responseText: text("response_text"),
   responseJson: jsonb("response_json"),
-  details: jsonb("details").$type<EvaluationDetails>().notNull(),
+  details: jsonb("details").$type<EvaluationDetails>(),
   status: validatedStringEnum("status", ExperimentTaskStatus).notNull(),
   ...auditColumns(),
 });

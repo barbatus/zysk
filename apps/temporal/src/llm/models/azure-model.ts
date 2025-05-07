@@ -1,4 +1,4 @@
-import { AIMessageChunk } from "@langchain/core/messages";
+import { AIMessage } from "@langchain/core/messages";
 import { type RunnableConfig } from "@langchain/core/runnables";
 import { AzureChatOpenAI } from "@langchain/openai";
 
@@ -45,17 +45,20 @@ class AzureOpenAIRunner extends BaseLLMRunner {
     });
     const end = performance.now();
     return {
-      response: result instanceof AIMessageChunk ? result.text : result,
+      response:
+        result instanceof AIMessage ? (result.content as string) : result,
       evaluationDetails: {
         promptTokens: callback.promptTokens,
         completionTokens: callback.completionTokens,
         successfulRequests: callback.successfulRequests,
         totalCost: callback.totalCost,
-        responseTimeMs: end - start,
+        responseTimeMs: Math.round(end - start),
       },
     };
   }
 }
+
+const apiVersion = "2024-02-01";
 
 function buildAzureOpenAIModelConfigs(
   modelName: string,
@@ -85,7 +88,7 @@ function buildAzureOpenAIModelConfigs(
       llmModelName: deployment.modelName,
       temperature: deployment.temperature,
       reasoningEffort,
-      apiVersion: deployment.apiVersion,
+      apiVersion: deployment.apiVersion ?? apiVersion,
     });
   }
 

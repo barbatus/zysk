@@ -1,4 +1,4 @@
-import { type ColumnType, type Selectable } from "kysely";
+import { type ColumnType, type Generated, type Selectable } from "kysely";
 
 import {
   type EvaluationDetails,
@@ -15,7 +15,7 @@ export interface IalphaVantageCompanyOverviews {
 
 export interface IalphaVantageETFProfiles {
   symbol: string;
-  inception_date: ColumnType<Date | null, string | undefined>;
+  inceptionDate: ColumnType<Date | null, string | undefined>;
   sectors: {
     name: string;
     weight: number;
@@ -33,20 +33,20 @@ export interface IalphaVantageTimeSeries {
 }
 
 export interface Iexperiment {
-  id: string;
+  id: Generated<string>;
   responseText: string | null;
   responseJson: object | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Generated<Date>;
+  updatedAt: Generated<Date>;
   status: ExperimentTaskStatus;
-  details: EvaluationDetails;
+  details: EvaluationDetails | null;
 }
 
 export interface Database {
   "app_data.alphaVantageCompanyOverviews": IalphaVantageCompanyOverviews;
   "app_data.alphaVantageETFProfiles": IalphaVantageETFProfiles;
   "app_data.alphaVantageTimeSeries": IalphaVantageTimeSeries;
-  "app_data.experiments": Experiment;
+  "app_data.experiments": Iexperiment;
 }
 
 export type AlphaVantageCompanyOverviews =

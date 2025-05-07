@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { appConfig } from "../../config";
+import { appConfig } from "../config";
 
 export async function getUSSymbols(symbols: string[]) {
   const response = await axios.get<

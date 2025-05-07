@@ -1,20 +1,13 @@
-import { type DestinationStream, pino, transport } from "pino";
+import { pino } from "pino";
+import pretty from "pino-pretty";
 
 import { appConfig } from "../config";
 
-const transport_ = transport({
-  targets: [
-    {
-      level: appConfig.logLevel ?? "info",
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-        translateTime: "yyyy-mm-dd HH:MM:ss.l",
-        ignore: "pid,hostname",
-      },
-    },
-  ],
-}) as DestinationStream;
+const transport = pretty({
+  colorize: true,
+  translateTime: "yyyy-mm-dd HH:MM:ss.l",
+  ignore: "pid,hostname",
+});
 
 export const logger = pino(
   {
@@ -22,5 +15,5 @@ export const logger = pino(
     level: appConfig.logLevel ?? "info",
     base: undefined,
   },
-  transport_,
+  transport,
 );

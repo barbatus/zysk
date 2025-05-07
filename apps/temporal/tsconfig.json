@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
+    "baseUrl": ".",
     "resolveJsonModule": true,
     "inlineSources": true,
     "jsx": "react-jsx",

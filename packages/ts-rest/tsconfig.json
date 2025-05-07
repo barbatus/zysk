@@ -2,10 +2,11 @@
   "extends": "@zysk/typescript-config/node.json",
   "compilerOptions": {
     "rootDir": "src",
+    "baseUrl": ".",
     "outDir": "dist",
     "lib": ["DOM", "ES2021"],
     "paths": {
-      "#/*": ["./*"]
+      "#/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts"],

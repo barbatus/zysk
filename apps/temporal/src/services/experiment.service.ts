@@ -10,6 +10,9 @@ export class ExperimentService implements StateService<Experiment> {
   async create(): Promise<Experiment> {
     return db
       .insertInto("app_data.experiments")
+      .values({
+        status: ExperimentTaskStatus.Pending,
+      })
       .returningAll()
       .executeTakeFirstOrThrow();
   }

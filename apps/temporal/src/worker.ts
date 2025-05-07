@@ -8,7 +8,7 @@ async function run() {
   });
   const worker = await Worker.create({
     connection,
-    taskQueue: "zysk-api-data",
+    taskQueue: "zysk-data",
     workflowsPath: require.resolve("./workflows/index"),
     activities,
   });

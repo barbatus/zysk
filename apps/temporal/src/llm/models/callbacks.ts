@@ -1,4 +1,6 @@
 import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
+import { type Serialized } from "@langchain/core/load/serializable";
+import { AIMessage } from "@langchain/core/messages";
 import { type Generation, type LLMResult } from "@langchain/core/outputs";
 import dedent from "dedent";
 
@@ -39,15 +41,15 @@ export class OpenAICallbackHandler extends BaseCallbackHandler {
   successfulRequests = 0;
   totalCost = 0.0;
 
-  onLLMStart(_serialized: Record<string, unknown>, _prompts: string[]): void {
+  override handleLLMStart(_serialized: Serialized, _prompts: string[]): void {
     // Print out the prompts if needed
   }
 
-  onLLMNewToken(_token: string): void {
+  override handleLLMNewToken(_token: string): void {
     // Print out the token if needed
   }
 
-  onLLMEnd(response: LLMResult): void {
+  override handleLLMEnd(response: LLMResult): void {
     try {
       const generation = response.generations[0][0];
 
@@ -122,16 +124,14 @@ export class OpenAICallbackHandler extends BaseCallbackHandler {
         this.successfulRequests++;
       }
     } catch (error) {
-      logger.error({ error }, "[OpenAICallbackHandler.onLLMEnd]");
+      logger.error({ error }, "[OpenAICallbackHandler.config]");
     }
   }
 
   private isChatGeneration(
     generation: Generation,
   ): generation is ChatGeneration {
-    return (
-      "type" in generation && (generation as { type: string }).type === "chat"
-    );
+    return "message" in generation && generation.message instanceof AIMessage;
   }
 
   private standardizeModelName(modelName: string): string {
@@ -139,7 +139,7 @@ export class OpenAICallbackHandler extends BaseCallbackHandler {
   }
 
   private calculateCost(
-    modelName: string,
+    _modelName: string,
     promptTokens: number,
     completionTokens: number,
   ): number {

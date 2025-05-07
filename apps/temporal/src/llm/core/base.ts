@@ -1,6 +1,6 @@
 import { type BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { type BaseLLM } from "@langchain/core/language_models/llms";
-import { type AIMessageChunk } from "@langchain/core/messages";
+import { type AIMessage } from "@langchain/core/messages";
 import { type RunnableConfig } from "@langchain/core/runnables";
 import dedent from "dedent";
 
@@ -34,13 +34,13 @@ export type AnyLLMModelType = BaseChatModel | BaseLLM;
 export class ModelIdentity {
   constructor(
     public id: string,
-    public title: string,
+    public name: string,
     public vendor: ModelVendorEnum,
     public provider: ModelProviderEnum,
   ) {}
 
   toString(): string {
-    return `ModelIdentity(title=${this.title}, vendor=${this.vendor}, provider=${this.provider})`;
+    return `ModelIdentity(name=${this.name}, vendor=${this.vendor}, provider=${this.provider})`;
   }
 }
 
@@ -62,7 +62,7 @@ export abstract class BaseLLMRunner implements AbstractRunner {
   protected async ainvoke(
     message: string,
     config?: RunnableConfig,
-  ): Promise<AIMessageChunk | string> {
+  ): Promise<AIMessage | string> {
     const timeout =
       (config?.metadata?.timeout as number | undefined) ??
       appConfig.llmResponseTimeoutSec;
@@ -70,7 +70,7 @@ export abstract class BaseLLMRunner implements AbstractRunner {
       const startTime = Date.now();
       logger.info(`[BaseLLMRunner] running ${this.toString()}`);
 
-      const result = await Promise.race<AIMessageChunk | string>([
+      const result = await Promise.race<AIMessage | string>([
         this.llm.invoke(message, config),
         new Promise((_, reject) =>
           // eslint-disable-next-line no-promise-executor-return
@@ -109,7 +109,7 @@ export abstract class BaseLLMRunner implements AbstractRunner {
 /**
  * Interface for a container that holds a LLM model or agent
  */
-export interface AbstractContainer {
+export interface AbstractContainer extends AbstractRunner {
   readonly id: string;
 }
 
@@ -127,7 +127,7 @@ export class ModelContainer implements AbstractContainer {
   }
 
   toString(): string {
-    return `ModelContainer(identity=${this.identity.toString()}, runner=${this.runner.toString()})`;
+    return `ModelContainer(name=${this.identity.name}, runner=${this.runner.toString()})`;
   }
 
   async arun(
@@ -164,7 +164,7 @@ export class SequentialModelContainer implements AbstractRunner {
   private maxAttempts: number;
   private modelKey: ModelKeyEnum;
   private onRetryHandlers: (() => Promise<void> | void)[] = [];
-  private rateLimitTtl = 60; // TTL of a rate limited model in seconds
+  // private rateLimitTtl = 60; // TTL of a rate limited model in seconds
 
   constructor(
     modelKey: ModelKeyEnum,
@@ -173,7 +173,7 @@ export class SequentialModelContainer implements AbstractRunner {
     charsPerToken = 3.5,
   ) {
     if (Array.from(containers).length === 0) {
-      throw new Error("Containers must be non-empty");
+      throw new Error(`Containers must be non-empty for ${modelKey}`);
     }
     this.modelContainers = Array.from(containers);
     this.shuffle(this.modelContainers);
@@ -232,7 +232,7 @@ export class SequentialModelContainer implements AbstractRunner {
     return dedent`SequentialModelContainer(
       model=${this.modelKey},
       modelContainers=${this.modelContainers
-        .map((c) => c.toString())
+        .map((c) => c.identity.id)
         .join(", ")}
     )`;
   }
@@ -269,7 +269,9 @@ export class SequentialModelContainer implements AbstractRunner {
       }
     };
 
-    const onBeforeRetry = async (details: RetryCallState): Promise<void> => {
+    const onBeforeRetry = async (
+      details: RetryCallState<ExecutionResult>,
+    ): Promise<void> => {
       if (details.attemptNumber <= 1) {
         return;
       }
@@ -277,48 +279,48 @@ export class SequentialModelContainer implements AbstractRunner {
     };
 
     let consecutiveTimeouts = 0;
-    try {
-      // eslint-disable-next-line  no-unreachable-loop
-      for await (const _ of new AsyncRetrying(
-        stopAfterAttempt(this.maxAttempts),
-        retryIfException(shouldRetryException),
-        { before: onBeforeRetry },
-      )) {
-        try {
-          this.currentContainer = await this.getAvailable(emitRetry);
-          logger.info(
-            {
-              modelKey: this.modelKey,
-              currentContainer: this.currentContainer,
-            },
-            `[SequentialModelContainer.arun]`,
-          );
-          const response = await this.currentContainer.arun(
-            inputPrompt,
-            config,
-          );
-          return response;
-        } catch (error) {
-          if (error instanceof ResponseTimeoutError) {
-            consecutiveTimeouts++;
-            if (consecutiveTimeouts >= 2) {
-              throw new FatalTimeoutError(
-                `[SequentialModelContainer(${this.modelKey}).arun] Multiple consecutive timeout errors occurred.`,
-              );
-            }
-            throw error;
-          } else if (error instanceof RateLimitExceededError) {
-            this.markRateLimited(this.currentContainer.id);
-            throw error;
+    const callModel = async () => {
+      try {
+        this.currentContainer = await this.getAvailable(emitRetry);
+        logger.info(
+          {
+            modelKey: this.modelKey,
+            currentContainer: this.currentContainer.toString(),
+          },
+          `[SequentialModelContainer.arun]`,
+        );
+        const response = await this.currentContainer.arun(inputPrompt, config);
+        return response;
+      } catch (error) {
+        if (error instanceof ResponseTimeoutError) {
+          consecutiveTimeouts++;
+          if (consecutiveTimeouts >= 2) {
+            throw new FatalTimeoutError(
+              `[SequentialModelContainer(${this.modelKey}).arun] Multiple consecutive timeout errors occurred.`,
+            );
           }
-          throw error;
+        } else if (error instanceof RateLimitExceededError) {
+          this.markRateLimited(this.currentContainer.id);
+        }
+        throw error;
+      }
+    };
+    try {
+      for await (const state of new AsyncRetrying(
+        callModel,
+        retryIfException(shouldRetryException),
+        { before: onBeforeRetry, stop: stopAfterAttempt(this.maxAttempts) },
+      )) {
+        if (state.response !== undefined) {
+          return state.response;
         }
       }
     } catch (error) {
       logger.error(
         {
+          error: (error as Error).message,
           modelKey: this.modelKey,
-          currentContainer: this.currentContainer,
+          currentContainer: this.currentContainer.toString(),
         },
         `[SequentialModelContainer.arun] RetryError`,
       );
@@ -419,14 +421,14 @@ export class SequentialModelContainerWithFallback implements AbstractContainer {
       try {
         const response = await container.arun(message, config);
         return response;
-      } catch (err) {
+      } catch (error) {
         await emitRetry();
         logger.error(
           {
-            error: err,
-            container,
+            error: (error as Error).message,
+            container: container.toString(),
           },
-          `[SequentialModelContainerWithFallback.arun]`,
+          `[SequentialModelContainerWithFallback.arun] Container failed`,
         );
         this.index++;
       }
