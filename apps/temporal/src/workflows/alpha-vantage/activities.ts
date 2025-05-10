@@ -1,32 +1,20 @@
-import {
-  getETFProfile,
-  getSymbolOverview,
-  getTimeSeriesDaily,
-} from "#/api/alpha-vantage";
-import { stockApiService } from "#/services/stock-api.service";
+import { alphaVantageService } from "#/services/alpha-vantage.service";
+import { tickerInfoService } from "#/services/ticket-info.service";
 
 export async function fetchStockDetails(symbol: string) {
-  return getSymbolOverview(symbol);
+  return alphaVantageService.getSymbolOverview(symbol);
 }
 
 export async function fetchETFDetails(symbol: string) {
-  return getETFProfile(symbol);
+  return alphaVantageService.getETFProfile(symbol);
 }
 
 export async function fetchTimeSeries(symbol: string) {
-  const data = await stockApiService.getAVTimeSeries(symbol);
-  const result = await getTimeSeriesDaily(symbol, data ? "compact" : "full");
-  if (!result) {
-    return undefined;
-  }
-  const quotes = data
-    ? result.quotes.filter((q) => q.date > data.date)
-    : result.quotes;
-  return quotes;
+  return tickerInfoService.getTimeSeries(symbol);
 }
 
 export async function getStockDetails(symbols: string[]) {
-  return stockApiService.getAVOverviews(symbols);
+  return tickerInfoService.getAVOverviews(symbols);
 }
 
 type StockType = Awaited<ReturnType<typeof fetchStockDetails>>;
@@ -39,7 +27,7 @@ export async function saveStockDetails(data: Exclude<StockType, undefined>[]) {
     sector: d.Sector.toLowerCase(),
     beta: d.Beta,
   }));
-  await stockApiService.saveAVOverviews(saveValues);
+  await tickerInfoService.saveAVOverviews(saveValues);
   return saveValues;
 }
 
@@ -50,11 +38,11 @@ export async function saveETFDetails(data: Exclude<ETFType, undefined>[]) {
     inceptionDate: d.inception_date ? new Date(d.inception_date) : undefined,
     sectors: d.sectors,
   }));
-  await stockApiService.saveAVETFDetails(saveValues);
+  await tickerInfoService.saveAVETFDetails(saveValues);
   return saveValues;
 }
 
 type TimeSeriesType = Awaited<ReturnType<typeof fetchTimeSeries>>;
 export async function saveTimeSeries(data: Exclude<TimeSeriesType, undefined>) {
-  return stockApiService.saveAVTimeSeries(data);
+  return tickerInfoService.saveAVTimeSeries(data);
 }

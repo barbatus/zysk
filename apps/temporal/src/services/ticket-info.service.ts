@@ -1,6 +1,7 @@
 import { db } from "../db";
+import { alphaVantageService } from "./alpha-vantage.service";
 
-export class StockApiService {
+export class TickerInfoService {
   async saveAVOverviews(
     data: {
       symbol: string;
@@ -79,6 +80,21 @@ export class StockApiService {
       )
       .execute();
   }
+
+  async getTimeSeries(symbol: string) {
+    const data = await this.getAVTimeSeries(symbol);
+    const result = await alphaVantageService.getTimeSeriesDaily(
+      symbol,
+      data ? "compact" : "full",
+    );
+    if (!result) {
+      return undefined;
+    }
+    const quotes = data
+      ? result.quotes.filter((q) => q.date > data.date)
+      : result.quotes;
+    return quotes;
+  }
 }
 
-export const stockApiService = new StockApiService();
+export const tickerInfoService = new TickerInfoService();

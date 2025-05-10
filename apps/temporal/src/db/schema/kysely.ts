@@ -4,6 +4,7 @@ import {
   type EvaluationDetails,
   type ExperimentTaskStatus,
 } from "./experiments";
+import { type StockNewsStatus } from "./stock-news";
 
 export interface IalphaVantageCompanyOverviews {
   symbol: string;
@@ -42,11 +43,21 @@ export interface Iexperiment {
   details: EvaluationDetails | null;
 }
 
+export interface IstockNews {
+  symbol: string;
+  url: string;
+  status: StockNewsStatus;
+  tokenSize: number;
+  markdown: string;
+  newsDate: ColumnType<Date, string>;
+}
+
 export interface Database {
   "app_data.alphaVantageCompanyOverviews": IalphaVantageCompanyOverviews;
   "app_data.alphaVantageETFProfiles": IalphaVantageETFProfiles;
   "app_data.alphaVantageTimeSeries": IalphaVantageTimeSeries;
   "app_data.experiments": Iexperiment;
+  "app_data.stock_news": IstockNews;
 }
 
 export type AlphaVantageCompanyOverviews =
@@ -57,3 +68,5 @@ export type AlphaVantageETFProfiles = Selectable<IalphaVantageETFProfiles>;
 export type AlphaVantageTimeSeries = Selectable<IalphaVantageTimeSeries>;
 
 export type Experiment = Selectable<Iexperiment>;
+
+export type StockNews = Selectable<IstockNews>;

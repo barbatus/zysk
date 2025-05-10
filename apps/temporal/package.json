@@ -18,12 +18,13 @@
     "migrate": "pnpm dlx dotenv-cli -e .env -- drizzle-kit migrate",
     "lint": "eslint . --ext .ts --color",
     "lint:fix": "pnpm lint --fix",
-    "test": "pnpm dlx dotenv-cli -e .env -- node dist/llm/agents/market-predictor.agent"
+    "test": "pnpm dlx dotenv-cli -e .env -- node dist/test"
   },
   "dependencies": {
     "@langchain/core": "^0.3.49",
     "@langchain/openai": "^0.5.10",
     "@langchain/textsplitters": "^0.1.0",
+    "@mendable/firecrawl-js": "^1.24.0",
     "@temporalio/worker": "^1.11.3",
     "@temporalio/workflow": "^1.11.3",
     "@zysk/db": "workspace:*",

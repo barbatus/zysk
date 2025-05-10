@@ -36,6 +36,20 @@
       "when": 1746571074593,
       "tag": "0004_details_nullable",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1746728231142,
+      "tag": "0005_add_stock_news_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1746728351765,
+      "tag": "0006_stock_news_update",
+      "breakpoints": true
     }
   ]
 }

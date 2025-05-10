@@ -22,10 +22,3 @@ export class MarketPredictorAgent extends ExperimentAgent {
     return new MarketPredictorAgent(state) as ExperimentAgent<TResult>;
   }
 }
-
-// export async function runStockStatePredictor() {
-//   const agent = await MarketPredictorAgent.create();
-//   return await agent.run();
-// }
-
-// void runStockStatePredictor();

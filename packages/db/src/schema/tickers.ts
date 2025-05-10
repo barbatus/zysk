@@ -35,6 +35,7 @@ export const tickersTable = pgTable("tickers", {
     >()
     .default([]),
   foundedAt: timestamp("founded_at", { withTimezone: true }),
+  ...auditColumns(),
 });
 
 export const userTickersTable = pgTable("user_tickers", {

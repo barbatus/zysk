@@ -95,6 +95,9 @@ export const AppConfigEnvVariablesSchema = z.object({
     (val) => JSON.parse(val as string),
     z.array(AzureOpenAIServiceConfigSchema),
   ),
+  STOCK_NEWS_API_KEY: z.string(),
+  FIRECRAWL_API_KEY: z.string(),
+  ALPHA_VANTAGE_API_KEY: z.string(),
 });
 
 export type AppConfigEnvVariables = z.infer<typeof AppConfigEnvVariablesSchema>;
@@ -134,6 +137,9 @@ export interface AppConfig {
   // };
   llmResponseTimeoutSec: number;
   finnhubApiKey: string;
+  stockNewsApiKey: string;
+  firecrawlApiKey: string;
+  alphaVantageApiKey: string;
   azureOpenAI: {
     deployments: AzureOpenAIDeploymentConfig[];
     services: AzureOpenAIServiceConfig[];
@@ -189,6 +195,9 @@ export function validate(config: Record<string, unknown>) {
     // },
     llmResponseTimeoutSec: appConfigValidated.LLM_RESPONSE_TIMEOUT_SEC,
     finnhubApiKey: appConfigValidated.FINNHUB_API_KEY,
+    stockNewsApiKey: appConfigValidated.STOCK_NEWS_API_KEY,
+    firecrawlApiKey: appConfigValidated.FIRECRAWL_API_KEY,
+    alphaVantageApiKey: appConfigValidated.ALPHA_VANTAGE_API_KEY,
     azureOpenAI: {
       deployments: appConfigValidated.AZURE_OPENAI_DEPLOYMENTS,
       services: appConfigValidated.AZURE_OPENAI_SERVICES,
