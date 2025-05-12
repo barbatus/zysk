@@ -1,7 +1,7 @@
 import FirecrawlApp, { type FirecrawlError } from "@mendable/firecrawl-js";
 import axios, { type AxiosError } from "axios";
 import { startOfDay } from "date-fns";
-import { mapKeys, omit } from "lodash";
+import { keyBy, omit } from "lodash";
 
 import { type StockNews } from "#/db/schema";
 
@@ -79,7 +79,7 @@ class TickerNewsService {
             "Basic plans can query up to 5 pages",
           )
         ) {
-          return [];
+          return [] as { url: string; title: string; newsDate: Date }[];
         }
         throw e;
       });
@@ -124,7 +124,7 @@ class TickerNewsService {
   async scrapeTodayNews(symbol: string) {
     const news = await this.getTodayNews(symbol);
     const result: { url: string; markdown: string; newsDate: Date }[] = [];
-    const dateMap = mapKeys(news, "newsUrl");
+    const dateMap = keyBy(news, "newsUrl");
     // Currently, Firecrawl's RL is 100 requests per minute
     for (let i = 0; i < news.length; i += 100) {
       const scrapedNews = await Promise.all(
@@ -156,6 +156,26 @@ class TickerNewsService {
         })),
       )
       .returningAll()
+      .execute();
+  }
+
+  async getLatestNewsDatePerTicker() {
+    const result = await db
+      .selectFrom("app_data.stock_news")
+      .select(["symbol", (eb) => eb.fn.max("newsDate").as("newsDate")])
+      .groupBy("symbol")
+      .execute();
+    return keyBy(result, "symbol");
+  }
+
+  async getNews(symbol: string, sinceDate: Date) {
+    return db
+      .selectFrom("app_data.stock_news")
+      .selectAll()
+      .where((eb) =>
+        eb("symbol", "=", symbol).and(eb("newsDate", ">=", sinceDate)),
+      )
+      .orderBy("newsDate", "desc")
       .execute();
   }
 }

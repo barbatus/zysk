@@ -1,6 +1,8 @@
 import { executeChild, proxyActivities } from "@temporalio/workflow";
-import { startOfDay, subDays } from "date-fns";
 import { chunk as makeChunks, mapKeys } from "lodash";
+
+import { type StockNews } from "#/db/schema/kysely";
+import { StockNewsStatus } from "#/db/schema/stock-news";
 
 import type * as activities from "./activities";
 
@@ -8,6 +10,7 @@ const proxy = proxyActivities<typeof activities>({
   startToCloseTimeout: "10 minutes",
   retry: {
     nonRetryableErrorTypes: ["NonRetryable"],
+    maximumAttempts: 1,
   },
 });
 
@@ -31,13 +34,11 @@ export async function scrapeSymbolNews(symbol: string, sinceDate: Date) {
   let hasMore = true;
   while (hasMore) {
     currentNews = await fetchNewsSince(page);
-    const scrapedNews: (Omit<SymbolNews, "title"> & {
-      markdown: string;
-    })[] = [];
+    const scrapedNews: StockNews[] = [];
     const newsDateMap = mapKeys(currentNews, "url");
     for (let i = 0; i < currentNews.length; i += 100) {
       const tmpScrape = await Promise.all(
-        makeChunks(currentNews.slice(i, i + 100), 50).map((chunk) =>
+        makeChunks(currentNews.slice(i, i + 100), 5).map((chunk) =>
           proxy.scrapeSymbolNews(chunk.map((n) => n.url)),
         ),
       );
@@ -48,25 +49,28 @@ export async function scrapeSymbolNews(symbol: string, sinceDate: Date) {
             n.markdown
               ? {
                   ...n,
+                  symbol,
                   markdown: n.markdown,
                   newsDate: newsDateMap[n.url].newsDate,
+                  status: StockNewsStatus.Scraped,
                 }
               : null,
           )
           .filter(Boolean),
       );
     }
-    // TODO: Save scraped news
+    if (scrapedNews.length > 0) {
+      await proxy.saveNews(scrapedNews);
+    }
     hasMore = currentNews.length > 0;
     page += 1;
   }
 }
 
 export async function scrapeNews() {
-  const symbols = await proxy.getSymbolsToProcess();
+  const symbols = await proxy.fetchSymbolsToProcess();
 
-  const sinceDate = startOfDay(subDays(new Date(), 5));
-  for (const symbol of symbols) {
+  for (const { symbol, sinceDate } of symbols) {
     await executeChild(scrapeSymbolNews, {
       args: [symbol, sinceDate],
     });

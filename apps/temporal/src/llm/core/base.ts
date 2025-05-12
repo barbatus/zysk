@@ -170,7 +170,7 @@ export class SequentialModelContainer implements AbstractRunner {
     modelKey: ModelKeyEnum,
     containers: Iterable<ModelContainer>,
     maxInputTokens: number,
-    charsPerToken = 3.5,
+    charsPerToken = 3,
   ) {
     if (Array.from(containers).length === 0) {
       throw new Error(`Containers must be non-empty for ${modelKey}`);
@@ -204,7 +204,7 @@ export class SequentialModelContainer implements AbstractRunner {
           chars: res.originalLength,
           truncationPoint: res.truncationPoint,
         },
-        "Prompt length exceeds limits:",
+        `[SequentialModelContainer.arun(${this.modelKey})] Prompt length exceeds limits`,
       );
       return res.trimmedText;
     }
@@ -215,7 +215,7 @@ export class SequentialModelContainer implements AbstractRunner {
         maxTokens: this.maxInputTokens,
         chars: res.originalLength,
       },
-      "Prompt length is within limits:",
+      `[SequentialModelContainer.arun(${this.modelKey})] Prompt length is within limits`,
     );
     return prompt;
   }

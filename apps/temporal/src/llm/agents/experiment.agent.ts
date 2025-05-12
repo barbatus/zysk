@@ -1,8 +1,4 @@
-import { type BaseOutputParser } from "@langchain/core/output_parsers";
-import {
-  PromptTemplate,
-  type PromptTemplateInput,
-} from "@langchain/core/prompts";
+import { PromptTemplate } from "@langchain/core/prompts";
 
 import { type Experiment, type ExperimentTaskStatus } from "#/db/schema";
 import { type AbstractContainer } from "#/llm/core/base";
@@ -19,21 +15,7 @@ export abstract class Agent<AResult> {
   ): Promise<AgentExecutionResult<AResult>>;
 }
 
-export class AgentPrompt<
-  TResult = string,
-  RunInput extends Record<string, unknown> = Record<string, unknown>,
-  PartialVariableName extends string = string,
-> extends PromptTemplate {
-  constructor(
-    params: PromptTemplateInput<RunInput, PartialVariableName>,
-    outputParser?: BaseOutputParser<TResult>,
-  ) {
-    super({
-      ...params,
-      outputParser,
-    });
-  }
-
+export class AgentPrompt<TResult = string> extends PromptTemplate {
   async parseResponse(response: string): Promise<TResult> {
     if (!this.outputParser) {
       return response as TResult;
@@ -101,10 +83,14 @@ export class ExperimentAgent<TResult = string> extends StatefulAgent<
   TResult
 > {
   static async create<TResult = string>(params: {
-    prompt: AgentPrompt<TResult>;
+    prompt?: AgentPrompt<TResult>;
     model?: AbstractContainer;
-  }): Promise<ExperimentAgent<TResult>> {
+    [key: string]: unknown;
+  }): Promise<object> {
     const state = await experimentService.create();
+    if (!params.prompt) {
+      throw new Error("Prompt is required");
+    }
     return new ExperimentAgent(state, params.prompt, params.model);
   }
 

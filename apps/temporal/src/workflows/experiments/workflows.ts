@@ -10,6 +10,6 @@ const proxy = proxyActivities<typeof activities>({
   },
 });
 
-export async function runPredictionExperiment() {
-  return proxy.runPredictionExperiment();
+export async function runPredictionExperiment(_symbol: string) {
+  return proxy.runPredictionExperiment("AAPL");
 }
