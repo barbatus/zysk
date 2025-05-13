@@ -1,4 +1,9 @@
-import { AnyPgColumn, PgColumnBuilder, timestamp } from "drizzle-orm/pg-core";
+import {
+  type AnyPgColumn,
+  type PgColumnBuilder,
+  type PgTimestampBuilderInitial,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
 interface CustomTypeMeta {
   isUpdatedAt?: boolean;
@@ -12,7 +17,10 @@ const CUSTOM_COLUMN_TYPE_META_SYMBOL = Symbol.for(
 export function getCustomTypeMeta(
   column: AnyPgColumn,
 ): CustomTypeMeta | undefined {
-  return (column as any).config[CUSTOM_COLUMN_TYPE_META_SYMBOL];
+  const data = column as unknown as {
+    config: { [CUSTOM_COLUMN_TYPE_META_SYMBOL]: CustomTypeMeta };
+  };
+  return data.config[CUSTOM_COLUMN_TYPE_META_SYMBOL];
 }
 
 export function getColumnIsUpdatedAt(column: AnyPgColumn) {
@@ -24,23 +32,32 @@ export function getColumnIsOrganizationId(column: AnyPgColumn) {
 }
 
 export function setCustomTypeMeta(
-  columnBuilder: PgColumnBuilder,
+  columnBuilder: PgColumnBuilder | PgTimestampBuilderInitial<string>,
   meta: CustomTypeMeta,
 ) {
-  (columnBuilder as any).config[CUSTOM_COLUMN_TYPE_META_SYMBOL] = meta;
+  (
+    columnBuilder as unknown as {
+      config: { [CUSTOM_COLUMN_TYPE_META_SYMBOL]: CustomTypeMeta };
+    }
+  ).config[CUSTOM_COLUMN_TYPE_META_SYMBOL] = meta;
 }
 
-type ColumnType = (...args: any[]) => PgColumnBuilder<any>;
+type ColumnType = (
+  name: string,
+  config?: object,
+) => PgColumnBuilder | PgTimestampBuilderInitial<string>;
 export function createCustomTypeWithMeta<T extends ColumnType>(
   colType: ColumnType,
   meta: CustomTypeMeta,
   options?: {
-    extraConfig?: (colBuilder: any) => ReturnType<T>;
+    extraConfig?: (
+      colBuilder: PgColumnBuilder | PgTimestampBuilderInitial<string>,
+    ) => ReturnType<T>;
   },
 ) {
   const { extraConfig } = options ?? {};
-  return (...args: Parameters<T>): ReturnType<T> => {
-    const columnBuilder = colType(...args);
+  return (name: string, config?: object): ReturnType<T> => {
+    const columnBuilder = colType(name, config);
     setCustomTypeMeta(columnBuilder, meta);
     return (
       extraConfig ? extraConfig(columnBuilder as ReturnType<T>) : columnBuilder

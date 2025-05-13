@@ -1,4 +1,9 @@
-import { type ColumnType, type Generated, type Selectable } from "kysely";
+import {
+  type ColumnType,
+  type Generated,
+  type Insertable,
+  type Selectable,
+} from "kysely";
 
 import {
   type EvaluationDetails,
@@ -44,15 +49,16 @@ export interface Iexperiment {
 }
 
 export interface IstockNews {
+  id: Generated<string>;
   symbol: string;
   url: string;
   status: StockNewsStatus;
   tokenSize: number;
   markdown: string;
-  newsDate: ColumnType<Date, string>;
+  newsDate: ColumnType<Date, string | Date>;
 }
 
-export interface Database {
+export interface DataDatabase {
   "app_data.alphaVantageCompanyOverviews": IalphaVantageCompanyOverviews;
   "app_data.alphaVantageETFProfiles": IalphaVantageETFProfiles;
   "app_data.alphaVantageTimeSeries": IalphaVantageTimeSeries;
@@ -70,3 +76,5 @@ export type AlphaVantageTimeSeries = Selectable<IalphaVantageTimeSeries>;
 export type Experiment = Selectable<Iexperiment>;
 
 export type StockNews = Selectable<IstockNews>;
+
+export type InsertableStockNews = Insertable<IstockNews>;

@@ -1,9 +1,10 @@
-import { db } from "../db";
 import {
   type EvaluationDetails,
   type Experiment,
   ExperimentTaskStatus,
-} from "../db/schema";
+} from "@zysk/db";
+
+import { db } from "../db";
 import { type StateService } from "./types";
 
 export class ExperimentService implements StateService<Experiment> {

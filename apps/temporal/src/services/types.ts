@@ -1,4 +1,4 @@
-import { type ExperimentTaskStatus } from "#/db/schema";
+import { type ExperimentTaskStatus } from "@zysk/db";
 
 export interface StateService<T> {
   create: () => Promise<T>;

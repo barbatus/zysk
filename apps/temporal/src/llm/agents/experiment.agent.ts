@@ -1,6 +1,6 @@
 import { PromptTemplate } from "@langchain/core/prompts";
+import { type Experiment, type ExperimentTaskStatus } from "@zysk/db";
 
-import { type Experiment, type ExperimentTaskStatus } from "#/db/schema";
 import { type AbstractContainer } from "#/llm/core/base";
 import { type AgentExecutionResult } from "#/llm/core/schemas";
 import { experimentService } from "#/services/experiment.service";

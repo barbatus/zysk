@@ -1,1 +1,0 @@
-ALTER TABLE "app_data"."experiments" ALTER COLUMN "details" DROP NOT NULL;

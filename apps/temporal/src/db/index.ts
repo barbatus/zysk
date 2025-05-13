@@ -1,10 +1,8 @@
-import "dotenv/config";
-
+import { type DataDatabase } from "@zysk/db";
 import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
 
 import { appConfig } from "../config";
-import { type Database } from "./schema/kysely";
 
 const dialect = new PostgresDialect({
   pool: new Pool({
@@ -13,7 +11,7 @@ const dialect = new PostgresDialect({
   }),
 });
 
-export const db = new Kysely<Database>({
+export const db = new Kysely<DataDatabase>({
   dialect,
   plugins: [new CamelCasePlugin()],
 });

@@ -1,20 +1,24 @@
-import { type Experiment } from "#/db/schema";
+import { type Experiment } from "@zysk/db";
+
 import { experimentService } from "#/services/experiment.service";
 
 import { type AbstractContainer } from "../core/base";
 import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
 import { type AgentPrompt, ExperimentAgent } from "./experiment.agent";
-import { shortTermPredictionPrompt } from "./prompts/short-term-prediction.prompt";
+import {
+  type Prediction,
+  shortTermPredictionPrompt,
+} from "./prompts/short-term-prediction.prompt";
 
-export class MarketPredictorAgent extends ExperimentAgent {
+export class NewsBasedTickerMarketPredictorAgent extends ExperimentAgent<Prediction> {
   private readonly symbol: string;
   private readonly news: { markdown: string; date: Date; url: string }[];
 
   constructor(params: {
     state: Experiment;
     symbol: string;
-    prompt: AgentPrompt;
+    prompt: AgentPrompt<Prediction>;
     model: AbstractContainer;
     news: { markdown: string; url: string; date: Date }[];
   }) {
@@ -41,7 +45,7 @@ export class MarketPredictorAgent extends ExperimentAgent {
     news: { markdown: string; url: string; date: Date }[];
   }) {
     const state = await experimentService.create();
-    return new MarketPredictorAgent({
+    return new NewsBasedTickerMarketPredictorAgent({
       state,
       symbol: params.symbol,
       prompt: shortTermPredictionPrompt,

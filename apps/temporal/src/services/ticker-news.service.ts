@@ -1,9 +1,8 @@
 import FirecrawlApp, { type FirecrawlError } from "@mendable/firecrawl-js";
+import { type InsertableStockNews } from "@zysk/db";
 import axios, { type AxiosError } from "axios";
 import { startOfDay } from "date-fns";
 import { keyBy, omit } from "lodash";
-
-import { type StockNews } from "#/db/schema";
 
 import { appConfig } from "../config";
 import { db } from "../db";
@@ -146,16 +145,18 @@ class TickerNewsService {
     return result;
   }
 
-  async saveNews(news: StockNews[]) {
+  async saveNews(news: InsertableStockNews[]) {
     return db
       .insertInto("app_data.stock_news")
-      .values(
-        news.map((n) => ({
-          ...omit(n, "newsDate"),
-          newsDate: n.newsDate.toISOString(),
-        })),
-      )
+      .values(news)
       .returningAll()
+      .onConflict((oc) =>
+        oc.columns(["url", "symbol"]).doUpdateSet({
+          markdown: (eb) => eb.ref("excluded.markdown"),
+          tokenSize: (eb) => eb.ref("excluded.tokenSize"),
+          newsDate: (eb) => eb.ref("excluded.newsDate"),
+        }),
+      )
       .execute();
   }
 
@@ -168,7 +169,7 @@ class TickerNewsService {
     return keyBy(result, "symbol");
   }
 
-  async getNews(symbol: string, sinceDate: Date) {
+  async getNewsBySymbol(symbol: string, sinceDate: Date) {
     return db
       .selectFrom("app_data.stock_news")
       .selectAll()
@@ -176,6 +177,14 @@ class TickerNewsService {
         eb("symbol", "=", symbol).and(eb("newsDate", ">=", sinceDate)),
       )
       .orderBy("newsDate", "desc")
+      .execute();
+  }
+
+  async getNewsByNewsIds(newsIds: string[]) {
+    return db
+      .selectFrom("app_data.stock_news")
+      .selectAll()
+      .where("id", "in", newsIds)
       .execute();
   }
 }

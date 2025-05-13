@@ -1,8 +1,6 @@
 import { executeChild, proxyActivities } from "@temporalio/workflow";
+import { type InsertableStockNews, StockNewsStatus } from "@zysk/db";
 import { chunk as makeChunks, mapKeys } from "lodash";
-
-import { type StockNews } from "#/db/schema/kysely";
-import { StockNewsStatus } from "#/db/schema/stock-news";
 
 import type * as activities from "./activities";
 
@@ -34,7 +32,7 @@ export async function scrapeSymbolNews(symbol: string, sinceDate: Date) {
   let hasMore = true;
   while (hasMore) {
     currentNews = await fetchNewsSince(page);
-    const scrapedNews: StockNews[] = [];
+    const scrapedNews: InsertableStockNews[] = [];
     const newsDateMap = mapKeys(currentNews, "url");
     for (let i = 0; i < currentNews.length; i += 100) {
       const tmpScrape = await Promise.all(

@@ -1,5 +1,7 @@
-import { auditColumns, validatedStringEnum } from "@zysk/db";
 import { jsonb, pgSchema, text, uuid } from "drizzle-orm/pg-core";
+
+import { auditColumns } from "../utils/audit";
+import { validatedStringEnum } from "./columns/validated-enum";
 
 export const mySchema = pgSchema("app_data");
 
@@ -15,7 +17,7 @@ export interface EvaluationDetails {
   completionTokens: number;
   successfulRequests: number;
   totalCost: number;
-  responseTimeMs;
+  responseTimeMs: number;
 }
 
 export const experimentsTable = mySchema.table("experiments", {

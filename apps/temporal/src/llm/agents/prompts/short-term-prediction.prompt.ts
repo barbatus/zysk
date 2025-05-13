@@ -15,7 +15,7 @@ const InsightSchema = z.object({
   date: z.string(),
   url: z.string(),
   insight: z.string(),
-  impact: z.enum(["positive", "negative"]),
+  impact: z.enum(["positive", "negative", "mixed"]),
   reasoning: z.string(),
   confidence: z.number(),
 });
@@ -28,7 +28,7 @@ const PredictionSchema = z.object({
   insights: z.array(InsightSchema),
 });
 
-type Prediction = z.infer<typeof PredictionSchema>;
+export type Prediction = z.infer<typeof PredictionSchema>;
 
 export class PredictionParser extends JsonOutputParser<Prediction> {
   override parse(response: string): Promise<Prediction> {
@@ -54,7 +54,7 @@ You must provide output as a single JSON object with the following structure:
                 "date": "date of the article",
                 "url": "url of the article",
                 "insight": "description of the insight",
-                "impact": "impact on the stock price: positive, negative",
+                "impact": "impact on the stock price: positive, negative, mixed",
                 "reasoning": "reasoning behind the impact",
                 "confidence": "confidence score (0-100)"
             },
@@ -68,7 +68,7 @@ You must provide output as a single JSON object with the following structure:
 
 const predictionParser = new PredictionParser();
 
-export const shortTermPredictionPrompt = new AgentPrompt({
+export const shortTermPredictionPrompt = new AgentPrompt<Prediction>({
   template: dedent`
 You are an expert in analyzing stock market news and extracting insights that can affect a stock price.
 You have been given a set of recent news articles about **{symbol}** from the **past week**.

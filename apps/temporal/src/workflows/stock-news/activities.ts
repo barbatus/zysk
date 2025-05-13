@@ -1,9 +1,9 @@
+import { type InsertableStockNews } from "@zysk/db";
 import { subDays } from "date-fns";
 import { isNil } from "lodash";
 // eslint-disable-next-line camelcase
 import { encoding_for_model } from "tiktoken";
 
-import { type StockNews } from "#/db/schema/kysely";
 import { tickerNewsService } from "#/services/ticker-news.service";
 
 export async function fetchSymbolsToProcess() {
@@ -36,11 +36,6 @@ export async function scrapeSymbolNews(urls: string[]) {
   });
 }
 
-export async function saveNews(news: StockNews[]) {
-  return tickerNewsService.saveNews(
-    news.map((n) => ({
-      ...n,
-      newsDate: new Date(n.newsDate),
-    })),
-  );
+export async function saveNews(news: InsertableStockNews[]) {
+  return tickerNewsService.saveNews(news);
 }
