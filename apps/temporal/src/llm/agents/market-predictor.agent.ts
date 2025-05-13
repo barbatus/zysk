@@ -6,6 +6,7 @@ import { type AbstractContainer } from "../core/base";
 import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
 import { type AgentPrompt, ExperimentAgent } from "./experiment.agent";
+import { predictionsMergerPrompt } from "./prompts/predictions-merger.prompt";
 import {
   type Prediction,
   shortTermPredictionPrompt,
@@ -40,6 +41,23 @@ export class NewsBasedTickerMarketPredictorAgent extends ExperimentAgent<Predict
     };
   }
 
+  static override async create<TResult = Prediction>(params: {
+    symbol: string;
+    prompt: AgentPrompt<TResult>;
+    model?: AbstractContainer;
+    news: { markdown: string; url: string; date: Date }[];
+  }) {
+    const state = await experimentService.create();
+    return new NewsBasedTickerMarketPredictorAgent({
+      state,
+      ...params,
+      prompt: params.prompt as AgentPrompt<Prediction>,
+      model: params.model ?? modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
+    });
+  }
+}
+
+export class ShortTermNewsBasedPredictorAgent extends ExperimentAgent<Prediction> {
   static override async create(params: {
     symbol: string;
     news: { markdown: string; url: string; date: Date }[];
@@ -47,10 +65,37 @@ export class NewsBasedTickerMarketPredictorAgent extends ExperimentAgent<Predict
     const state = await experimentService.create();
     return new NewsBasedTickerMarketPredictorAgent({
       state,
-      symbol: params.symbol,
+      ...params,
       prompt: shortTermPredictionPrompt,
       model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
-      news: params.news,
+    });
+  }
+}
+export class PreditionsMergerAgent extends ExperimentAgent<Prediction> {
+  private readonly predictions: Prediction[];
+
+  constructor(params: { state: Experiment; predictions: Prediction[] }) {
+    super(
+      params.state,
+      predictionsMergerPrompt,
+      modelsWithFallback[ModelKeyEnum.GptO3Mini],
+    );
+    this.predictions = params.predictions;
+  }
+
+  override async mapPromptValues(): Promise<Record<string, string>> {
+    return {
+      predictions: this.predictions
+        .map((p) => `\`\`\`json\n${JSON.stringify(p, null, 2)}\`\`\``)
+        .join("\n"),
+    };
+  }
+
+  static override async create(params: { predictions: Prediction[] }) {
+    const state = await experimentService.create();
+    return new PreditionsMergerAgent({
+      state,
+      predictions: params.predictions,
     });
   }
 }

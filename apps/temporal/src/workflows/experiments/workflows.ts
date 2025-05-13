@@ -10,18 +10,26 @@ const proxy = proxyActivities<typeof activities>({
   },
 });
 
-export async function runPredictionExperiment(_symbol: string) {
+export async function runPredictionExperiment(symbol: string) {
   const newsBatches = await proxy.fetchLastWeekNews({
-    symbol: "AAPL",
+    symbol,
   });
 
-  const results = await Promise.all(
+  const predictions = await Promise.all(
     newsBatches.map((batch) =>
-      proxy.runPredictionExperiment({
-        symbol: "AAPL",
+      proxy.runShortTermMarketPredictionExperiment({
+        symbol,
         newsIds: batch,
       }),
     ),
   );
-  console.log(results);
+
+  await proxy.mergePredictions({
+    predictions,
+  });
+}
+
+export async function runPredictionExperiments() {
+  const symbols = ["AAPL", "TSLA", "NVDA"];
+  await Promise.all(symbols.map(runPredictionExperiment));
 }

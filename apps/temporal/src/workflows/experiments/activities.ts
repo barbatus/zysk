@@ -1,7 +1,11 @@
 import { type StockNews } from "@zysk/db";
 import { subDays } from "date-fns";
 
-import { NewsBasedTickerMarketPredictorAgent } from "#/llm/agents/market-predictor.agent";
+import {
+  PreditionsMergerAgent,
+  ShortTermNewsBasedPredictorAgent,
+} from "#/llm/agents/market-predictor.agent";
+import { type Prediction } from "#/llm/agents/prompts/short-term-prediction.prompt";
 import { tickerNewsService } from "#/services/ticker-news.service";
 
 export async function fetchLastWeekNews(params: {
@@ -50,14 +54,14 @@ export async function fetchLastWeekNews(params: {
   return newsBatches.map((batch) => batch.map((n) => n.id));
 }
 
-export async function runPredictionExperiment(params: {
+export async function runShortTermMarketPredictionExperiment(params: {
   symbol: string;
   newsIds: string[];
 }) {
   const { symbol, newsIds } = params;
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
 
-  const agent = await NewsBasedTickerMarketPredictorAgent.create({
+  const agent = await ShortTermNewsBasedPredictorAgent.create({
     symbol,
     news: news.map((n) => ({
       ...n,
@@ -65,4 +69,10 @@ export async function runPredictionExperiment(params: {
     })),
   });
   return await agent.run();
+}
+
+export async function mergePredictions(params: { predictions: Prediction[] }) {
+  const { predictions } = params;
+  const agent = await PreditionsMergerAgent.create({ predictions });
+  await agent.run();
 }
