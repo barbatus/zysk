@@ -1,25 +1,32 @@
 import {
+  type DataDatabase,
   type EvaluationDetails,
   type Experiment,
   ExperimentTaskStatus,
 } from "@zysk/db";
+import { inject, injectable } from "inversify";
+import { type Kysely } from "kysely";
 
-import { db } from "../db";
+import { dbSymbol } from "./db";
 import { type StateService } from "./types";
 
+@injectable()
 export class ExperimentService implements StateService<Experiment> {
+  constructor(@inject(dbSymbol) private readonly db: Kysely<DataDatabase>) {}
+
   async create(): Promise<Experiment> {
-    return db
+    return this.db
       .insertInto("app_data.experiments")
       .values({
         status: ExperimentTaskStatus.Pending,
+        version: 1,
       })
       .returningAll()
       .executeTakeFirstOrThrow();
   }
 
   async load(id: string): Promise<Experiment> {
-    return db
+    return this.db
       .selectFrom("app_data.experiments")
       .selectAll()
       .where("id", "=", id)
@@ -31,14 +38,16 @@ export class ExperimentService implements StateService<Experiment> {
     status: ExperimentTaskStatus,
     response?: string | object,
     details?: EvaluationDetails,
+    version?: number,
   ): Promise<void> {
-    await db
+    await this.db
       .updateTable("app_data.experiments")
       .set({
         status,
         ...(typeof response === "string" && { responseText: response }),
         ...(typeof response === "object" && { responseJson: response }),
         ...(details && { details }),
+        ...(version && { version }),
       })
       .where("id", "=", id)
       .execute();
@@ -48,9 +57,16 @@ export class ExperimentService implements StateService<Experiment> {
     id: string,
     result: string | object,
     details: EvaluationDetails,
+    version = 1,
   ): Promise<void> {
-    await this.setStatus(id, ExperimentTaskStatus.Completed, result, details);
+    await this.setStatus(
+      id,
+      ExperimentTaskStatus.Completed,
+      result,
+      details,
+      version,
+    );
   }
 }
 
-export const experimentService = new ExperimentService();
+// export const experimentService = new ExperimentService();

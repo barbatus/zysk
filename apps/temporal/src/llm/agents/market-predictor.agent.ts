@@ -1,6 +1,7 @@
 import { type Experiment } from "@zysk/db";
+import { ExperimentService, resolve } from "@zysk/services";
 
-import { experimentService } from "#/services/experiment.service";
+import { type AgentExecutionResult } from "#/llm/core/schemas";
 
 import { type AbstractContainer } from "../core/base";
 import { ModelKeyEnum } from "../core/enums";
@@ -11,6 +12,8 @@ import {
   type Prediction,
   shortTermPredictionPrompt,
 } from "./prompts/short-term-prediction.prompt";
+
+const experimentService = resolve(ExperimentService);
 
 export class NewsBasedTickerMarketPredictorAgent extends ExperimentAgent<Prediction> {
   private readonly symbol: string;
@@ -97,5 +100,15 @@ export class PreditionsMergerAgent extends ExperimentAgent<Prediction> {
       state,
       predictions: params.predictions,
     });
+  }
+
+  override async setSuccess(result: AgentExecutionResult<Prediction>) {
+    await experimentService.setSuccess(
+      this.state.id,
+      result.response as string | object,
+      result.evaluationDetails,
+      2,
+    );
+    return result.response;
   }
 }

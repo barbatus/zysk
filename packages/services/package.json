@@ -1,0 +1,41 @@
+{
+  "name": "@zysk/services",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "build": "tsc && tsc-alias",
+    "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
+    "lint": "eslint . --ext .ts --color",
+    "lint:fix": "pnpm lint --fix"
+  },
+  "dependencies": {
+    "@mendable/firecrawl-js": "^1.24.0",
+    "@temporalio/workflow": "^1.11.3",
+    "@zysk/db": "workspace:*",
+    "axios": "^1.7.7",
+    "date-fns": "^4.1.0",
+    "dedent": "^1.6.0",
+    "dotenv": "^16.4.5",
+    "inversify": "^7.5.1",
+    "kysely": "^0.27.4",
+    "lodash": "^4.17.21",
+    "pg": "^8.13.0",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@total-typescript/ts-reset": "^0.6.1",
+    "@types/lodash": "^4.17.10",
+    "@types/pg": "^8.11.10",
+    "@zysk/eslint-config": "workspace:*",
+    "@zysk/typescript-config": "workspace:*",
+    "tsc-alias": "^1.8.16"
+  }
+}

@@ -1,5 +1,11 @@
-import { alphaVantageService } from "#/services/alpha-vantage.service";
-import { tickerInfoService } from "#/services/ticket-info.service";
+import {
+  AlphaVantageService,
+  resolve,
+  TickerInfoService,
+} from "@zysk/services";
+
+const alphaVantageService = resolve(AlphaVantageService);
+const tickerInfoService = resolve(TickerInfoService);
 
 export async function fetchStockDetails(symbol: string) {
   return alphaVantageService.getSymbolOverview(symbol);

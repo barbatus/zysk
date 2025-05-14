@@ -29,6 +29,20 @@
       "when": 1747139480067,
       "tag": "0003_add_news_id",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1747145021752,
+      "tag": "0004_add_add_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1747238111699,
+      "tag": "0005_fix_news_url",
+      "breakpoints": true
     }
   ]
 }

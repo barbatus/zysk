@@ -46,6 +46,7 @@ export interface Iexperiment {
   updatedAt: Generated<Date>;
   status: ExperimentTaskStatus;
   details: EvaluationDetails | null;
+  version: number;
 }
 
 export interface IstockNews {

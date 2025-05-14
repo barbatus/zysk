@@ -1,4 +1,5 @@
 import { type StockNews } from "@zysk/db";
+import { resolve, TickerNewsService } from "@zysk/services";
 import { subDays } from "date-fns";
 
 import {
@@ -6,7 +7,8 @@ import {
   ShortTermNewsBasedPredictorAgent,
 } from "#/llm/agents/market-predictor.agent";
 import { type Prediction } from "#/llm/agents/prompts/short-term-prediction.prompt";
-import { tickerNewsService } from "#/services/ticker-news.service";
+
+const tickerNewsService = resolve(TickerNewsService);
 
 export async function fetchLastWeekNews(params: {
   symbol: string;

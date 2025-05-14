@@ -1,19 +1,27 @@
 import FirecrawlApp, { type FirecrawlError } from "@mendable/firecrawl-js";
-import { type InsertableStockNews } from "@zysk/db";
+import { type DataDatabase, type InsertableStockNews } from "@zysk/db";
 import axios, { type AxiosError } from "axios";
 import { startOfDay } from "date-fns";
+import { inject, injectable } from "inversify";
+import { type Kysely } from "kysely";
 import { keyBy, omit } from "lodash";
 
-import { appConfig } from "../config";
-import { db } from "../db";
-import { logger } from "../utils/logger";
+import { type AppConfig, appConfigSymbol } from "./config";
+import { dbSymbol } from "./db";
+import { type Logger, loggerSymbol } from "./utils/logger";
 
-class TickerNewsService {
+@injectable()
+export class TickerNewsService {
+  private readonly app: FirecrawlApp;
   constructor(
-    private readonly app = new FirecrawlApp({
-      apiKey: appConfig.firecrawlApiKey,
-    }),
-  ) {}
+    @inject(appConfigSymbol) private readonly appConfig: AppConfig,
+    @inject(dbSymbol) private readonly db: Kysely<DataDatabase>,
+    @inject(loggerSymbol) private readonly logger: Logger,
+  ) {
+    this.app = new FirecrawlApp({
+      apiKey: this.appConfig.firecrawlApiKey,
+    });
+  }
 
   async scrapeUrl(
     url: string,
@@ -34,14 +42,14 @@ class TickerNewsService {
           fe.statusCode === 403 &&
           fe.message.includes("This website is no longer support")
         ) {
-          logger.warn(`Website is no longer supported: ${url}`);
+          this.logger.warn(`Website is no longer supported: ${url}`);
           return { url, markdown: undefined };
         }
         if (fe.statusCode === 408) {
-          logger.warn(`Request timed out: ${url}`);
+          this.logger.warn(`Request timed out: ${url}`);
           return { url, markdown: undefined };
         }
-        logger.error(`Error scraping URL: ${url}`, e);
+        this.logger.error(`Error scraping URL: ${url}`, e);
         throw e;
       });
   }
@@ -58,7 +66,7 @@ class TickerNewsService {
         params: {
           tickers: symbol,
           items: 10,
-          token: appConfig.stockNewsApiKey,
+          token: this.appConfig.stockNewsApiKey,
           page,
         },
       })
@@ -146,7 +154,7 @@ class TickerNewsService {
   }
 
   async saveNews(news: InsertableStockNews[]) {
-    return db
+    return this.db
       .insertInto("app_data.stock_news")
       .values(news)
       .returningAll()
@@ -161,7 +169,7 @@ class TickerNewsService {
   }
 
   async getLatestNewsDatePerTicker() {
-    const result = await db
+    const result = await this.db
       .selectFrom("app_data.stock_news")
       .select(["symbol", (eb) => eb.fn.max("newsDate").as("newsDate")])
       .groupBy("symbol")
@@ -170,7 +178,7 @@ class TickerNewsService {
   }
 
   async getNewsBySymbol(symbol: string, sinceDate: Date) {
-    return db
+    return this.db
       .selectFrom("app_data.stock_news")
       .selectAll()
       .where((eb) =>
@@ -181,7 +189,7 @@ class TickerNewsService {
   }
 
   async getNewsByNewsIds(newsIds: string[]) {
-    return db
+    return this.db
       .selectFrom("app_data.stock_news")
       .selectAll()
       .where("id", "in", newsIds)
@@ -189,4 +197,4 @@ class TickerNewsService {
   }
 }
 
-export const tickerNewsService = new TickerNewsService();
+// export const tickerNewsService = new TickerNewsService();

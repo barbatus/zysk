@@ -1,8 +1,12 @@
 import axios from "axios";
+import { inject, injectable } from "inversify";
 
-import { appConfig } from "../config";
+import { type AppConfig, appConfigSymbol } from "./config";
 
+@injectable()
 export class FinnhubService {
+  constructor(@inject(appConfigSymbol) private readonly appConfig: AppConfig) {}
+
   async getUSSymbols(symbols: string[]) {
     const response = await axios.get<
       {
@@ -13,11 +17,11 @@ export class FinnhubService {
     >("https://finnhub.io/api/v1/stock/symbol", {
       params: {
         exchange: "US",
-        token: appConfig.finnhubApiKey,
+        token: this.appConfig.finnhubApiKey,
       },
     });
     return response.data.filter((d) => symbols.includes(d.symbol));
   }
 }
 
-export const finnhubService = new FinnhubService();
+// export const finnhubService = new FinnhubService();

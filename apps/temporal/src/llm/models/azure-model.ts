@@ -1,12 +1,11 @@
 import { AIMessage } from "@langchain/core/messages";
 import { type RunnableConfig } from "@langchain/core/runnables";
 import { AzureChatOpenAI } from "@langchain/openai";
-
 import {
-  appConfig,
   type AzureOpenAIDeploymentConfig,
   type AzureOpenAIServiceConfig,
-} from "#/config";
+  getConfig,
+} from "@zysk/services";
 
 import { BaseLLMRunner, ModelContainer, ModelIdentity } from "../core/base";
 import { ModelProviderEnum, ModelVendorEnum } from "../core/enums";
@@ -139,6 +138,7 @@ export function getAzureLLMContainers(type: ContainerType) {
     throw new Error(`Invalid container type: ${type}`);
   }
 
+  const appConfig = getConfig();
   const configs = buildAzureOpenAIModelConfigs(
     modelName,
     appConfig.azureOpenAI.services,

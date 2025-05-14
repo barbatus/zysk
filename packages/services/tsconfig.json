@@ -1,0 +1,18 @@
+{
+  "extends": "@zysk/typescript-config/node.json",
+  "display": "services",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "paths": {
+      "#/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "ts-node": {
+    "swc": true,
+  }
+}

@@ -219,4 +219,4 @@ export function getAppConfigStatic() {
   return appConfigStatic;
 }
 
-export const appConfig = getAppConfigStatic();
+export const appConfigSymbol: symbol = Symbol.for("AppConfig");

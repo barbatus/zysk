@@ -1,13 +1,16 @@
 import { PromptTemplate } from "@langchain/core/prompts";
 import { type Experiment, type ExperimentTaskStatus } from "@zysk/db";
+import { ExperimentService, getLogger, resolve } from "@zysk/services";
 
 import { type AbstractContainer } from "#/llm/core/base";
 import { type AgentExecutionResult } from "#/llm/core/schemas";
-import { experimentService } from "#/services/experiment.service";
-import { logger } from "#/utils/logger";
 
 import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
+
+const experimentService = resolve(ExperimentService);
+
+const logger = getLogger();
 
 export abstract class Agent<AResult> {
   abstract arun(

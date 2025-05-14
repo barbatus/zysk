@@ -29,6 +29,7 @@ module.exports = {
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/require-await": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
+    "eslint-comments/require-description": "off",
 
     "react/react-in-jsx-scope": "off",
 
@@ -53,5 +54,23 @@ module.exports = {
         allow: ["warn", "error"],
       },
     ],
+
+    "max-len": [
+      "error",
+      {
+        code: 100,
+        ignoreTemplateLiterals: true,
+        ignoreStrings: false,
+        ignoreComments: true,
+      },
+    ],
+
+    "@typescript-eslint/restrict-template-expressions": [
+      "error",
+      {
+        allowNumber: true,
+      },
+    ],
+    "template-tag-spacing": ["error", "never"],
   },
 };

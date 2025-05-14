@@ -1,7 +1,17 @@
-import { db } from "../db";
-import { alphaVantageService } from "./alpha-vantage.service";
+import { type DataDatabase } from "@zysk/db";
+import { inject, injectable } from "inversify";
+import { type Kysely } from "kysely";
 
+import { AlphaVantageService } from "./alpha-vantage.service";
+import { dbSymbol } from "./db";
+
+@injectable()
 export class TickerInfoService {
+  constructor(
+    @inject(dbSymbol) private readonly db: Kysely<DataDatabase>,
+    private readonly alphaVantageService: AlphaVantageService,
+  ) {}
+
   async saveAVOverviews(
     data: {
       symbol: string;
@@ -12,7 +22,7 @@ export class TickerInfoService {
       beta: number | null;
     }[],
   ) {
-    return db
+    return this.db
       .insertInto("app_data.alphaVantageCompanyOverviews")
       .values(data)
       .onConflict((oc) =>
@@ -26,7 +36,7 @@ export class TickerInfoService {
   }
 
   async getAVOverviews(symbols: string[]) {
-    return db
+    return this.db
       .selectFrom("app_data.alphaVantageCompanyOverviews")
       .selectAll()
       .where("symbol", "in", symbols)
@@ -34,7 +44,7 @@ export class TickerInfoService {
   }
 
   async getAVTimeSeries(symbol: string) {
-    return db
+    return this.db
       .selectFrom("app_data.alphaVantageTimeSeries")
       .selectAll()
       .where("symbol", "=", symbol)
@@ -54,7 +64,7 @@ export class TickerInfoService {
       volume: number;
     }[],
   ) {
-    return db
+    return this.db
       .insertInto("app_data.alphaVantageTimeSeries")
       .values(data)
       .execute();
@@ -70,7 +80,7 @@ export class TickerInfoService {
       }[];
     }[],
   ) {
-    return db
+    return this.db
       .insertInto("app_data.alphaVantageETFProfiles")
       .values(
         data.map((d) => ({
@@ -83,7 +93,7 @@ export class TickerInfoService {
 
   async getTimeSeries(symbol: string) {
     const data = await this.getAVTimeSeries(symbol);
-    const result = await alphaVantageService.getTimeSeriesDaily(
+    const result = await this.alphaVantageService.getTimeSeriesDaily(
       symbol,
       data ? "compact" : "full",
     );
@@ -97,4 +107,4 @@ export class TickerInfoService {
   }
 }
 
-export const tickerInfoService = new TickerInfoService();
+// export const tickerInfoService = new TickerInfoService();

@@ -1,9 +1,10 @@
 import { ApplicationFailure } from "@temporalio/workflow";
 import axios, { type AxiosResponse } from "axios";
 import { subYears } from "date-fns";
+import { inject, injectable } from "inversify";
 import { isEmpty } from "lodash";
 
-import { appConfig } from "#/config";
+import { type AppConfig, appConfigSymbol } from "#/config";
 
 function processResponse<
   T extends
@@ -33,7 +34,10 @@ function processResponse<
   return response.data;
 }
 
+@injectable()
 export class AlphaVantageService {
+  constructor(@inject(appConfigSymbol) private readonly appConfig: AppConfig) {}
+
   async getSymbolOverview(symbol: string) {
     const response = await axios.get<
       | {
@@ -50,7 +54,7 @@ export class AlphaVantageService {
       params: {
         function: "OVERVIEW",
         symbol,
-        apikey: appConfig.alphaVantageApiKey,
+        apikey: this.appConfig.alphaVantageApiKey,
       },
     });
 
@@ -80,7 +84,7 @@ export class AlphaVantageService {
       params: {
         function: "ETF_PROFILE",
         symbol,
-        apikey: appConfig.alphaVantageApiKey,
+        apikey: this.appConfig.alphaVantageApiKey,
       },
     });
 
@@ -109,7 +113,7 @@ export class AlphaVantageService {
       params: {
         function: "TIME_SERIES_DAILY",
         symbol,
-        apikey: appConfig.alphaVantageApiKey,
+        apikey: this.appConfig.alphaVantageApiKey,
         outputsize,
       },
     });
@@ -144,4 +148,4 @@ export class AlphaVantageService {
   }
 }
 
-export const alphaVantageService = new AlphaVantageService();
+// export const alphaVantageService = new AlphaVantageService();

@@ -2,9 +2,10 @@ import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
 import { type Serialized } from "@langchain/core/load/serializable";
 import { AIMessage } from "@langchain/core/messages";
 import { type Generation, type LLMResult } from "@langchain/core/outputs";
+import { getLogger } from "@zysk/services";
 import dedent from "dedent";
 
-import { logger } from "#/utils/logger";
+const logger = getLogger();
 
 interface UsageMetadata {
   total_tokens: number;

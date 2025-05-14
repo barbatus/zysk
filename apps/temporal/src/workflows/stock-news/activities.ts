@@ -1,10 +1,11 @@
 import { type InsertableStockNews } from "@zysk/db";
+import { resolve, TickerNewsService } from "@zysk/services";
 import { subDays } from "date-fns";
 import { isNil } from "lodash";
 // eslint-disable-next-line camelcase
 import { encoding_for_model } from "tiktoken";
 
-import { tickerNewsService } from "#/services/ticker-news.service";
+const tickerNewsService = resolve(TickerNewsService);
 
 export async function fetchSymbolsToProcess() {
   const latestNewsDate = await tickerNewsService.getLatestNewsDatePerTicker();

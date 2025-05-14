@@ -2,16 +2,15 @@ import { type BaseChatModel } from "@langchain/core/language_models/chat_models"
 import { type BaseLLM } from "@langchain/core/language_models/llms";
 import { type AIMessage } from "@langchain/core/messages";
 import { type RunnableConfig } from "@langchain/core/runnables";
+import { getConfig, getLogger } from "@zysk/services";
 import dedent from "dedent";
 
-import { getAppConfigStatic } from "#/config";
 import {
   AsyncRetrying,
   type RetryCallState,
   retryIfException,
   stopAfterAttempt,
 } from "#/utils/async-retrying";
-import { logger } from "#/utils/logger";
 import { PromptTrimmer } from "#/utils/trimmer";
 
 import {
@@ -27,7 +26,8 @@ import {
 } from "./exceptions";
 import { type ExecutionResult } from "./schemas";
 
-const appConfig = getAppConfigStatic();
+const appConfig = getConfig();
+const logger = getLogger();
 
 export type AnyLLMModelType = BaseChatModel | BaseLLM;
 
