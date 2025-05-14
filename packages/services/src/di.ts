@@ -1,12 +1,14 @@
-import { type DataDatabase } from "@zysk/db";
+import { type Database, type DataDatabase } from "@zysk/db";
 import { Container } from "inversify";
 import { type Kysely } from "kysely";
 
 import { AlphaVantageService } from "./alpha-vantage.service";
 import { type AppConfig, appConfigSymbol, getAppConfigStatic } from "./config";
-import { createDb, dbSymbol } from "./db";
+import { appDBSymbol, createDb, dataDBSymbol } from "./db";
 import { ExperimentService } from "./experiment.service";
 import { FinnhubService } from "./finnhub.service";
+import { MetricsService } from "./metrics.service";
+import { PortfolioService } from "./portfolio.service";
 import { TickerNewsService } from "./ticker-news.service";
 import { TickerInfoService } from "./ticket-info.service";
 import { createLogger, type Logger, loggerSymbol } from "./utils/logger";
@@ -16,7 +18,12 @@ export const container = new Container();
 container.bind(appConfigSymbol).toConstantValue(getAppConfigStatic());
 
 container
-  .bind<Kysely<DataDatabase>>(dbSymbol)
+  .bind<Kysely<DataDatabase>>(dataDBSymbol)
+  .toResolvedValue(createDb, [appConfigSymbol])
+  .inSingletonScope();
+
+container
+  .bind<Kysely<Database>>(appDBSymbol)
   .toResolvedValue(createDb, [appConfigSymbol])
   .inSingletonScope();
 
@@ -31,6 +38,8 @@ const services = [
   TickerNewsService,
   FinnhubService,
   ExperimentService,
+  PortfolioService,
+  MetricsService,
 ] as const;
 
 services.forEach((service) => {

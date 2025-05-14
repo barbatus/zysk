@@ -32,8 +32,8 @@ export type MetricsRow = Record<
   };
 
 const getResultRows = (results: QueryResultSet[], index: number) => {
-  const rColumns = results[index].columns ?? [];
-  const rRows = results[index].rows ?? [];
+  const rColumns = results[index]?.columns ?? [];
+  const rRows = results[index]?.rows ?? [];
   return rRows.map((row) => {
     const pairs = zip(rColumns, row);
     return fromPairs(pairs) as MetricsRow;

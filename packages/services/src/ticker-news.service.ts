@@ -7,7 +7,7 @@ import { type Kysely } from "kysely";
 import { keyBy, omit } from "lodash";
 
 import { type AppConfig, appConfigSymbol } from "./config";
-import { dbSymbol } from "./db";
+import { dataDBSymbol } from "./db";
 import { type Logger, loggerSymbol } from "./utils/logger";
 
 @injectable()
@@ -15,7 +15,7 @@ export class TickerNewsService {
   private readonly app: FirecrawlApp;
   constructor(
     @inject(appConfigSymbol) private readonly appConfig: AppConfig,
-    @inject(dbSymbol) private readonly db: Kysely<DataDatabase>,
+    @inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>,
     @inject(loggerSymbol) private readonly logger: Logger,
   ) {
     this.app = new FirecrawlApp({

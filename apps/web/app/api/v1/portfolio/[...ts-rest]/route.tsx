@@ -1,8 +1,6 @@
 import { createNextHandler } from "@ts-rest/serverless/next";
+import { PortfolioService, resolve } from "@zysk/services";
 import { portfolioContract } from "@zysk/ts-rest";
-
-import { resolve } from "#/services";
-import { PortfolioService } from "#/services/portfolio.service";
 
 const handler = createNextHandler(
   portfolioContract,

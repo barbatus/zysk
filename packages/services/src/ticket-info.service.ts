@@ -3,12 +3,12 @@ import { inject, injectable } from "inversify";
 import { type Kysely } from "kysely";
 
 import { AlphaVantageService } from "./alpha-vantage.service";
-import { dbSymbol } from "./db";
+import { dataDBSymbol } from "./db";
 
 @injectable()
 export class TickerInfoService {
   constructor(
-    @inject(dbSymbol) private readonly db: Kysely<DataDatabase>,
+    @inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>,
     private readonly alphaVantageService: AlphaVantageService,
   ) {}
 

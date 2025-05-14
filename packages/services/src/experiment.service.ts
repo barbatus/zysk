@@ -7,12 +7,12 @@ import {
 import { inject, injectable } from "inversify";
 import { type Kysely } from "kysely";
 
-import { dbSymbol } from "./db";
+import { dataDBSymbol } from "./db";
 import { type StateService } from "./types";
 
 @injectable()
 export class ExperimentService implements StateService<Experiment> {
-  constructor(@inject(dbSymbol) private readonly db: Kysely<DataDatabase>) {}
+  constructor(@inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>) {}
 
   async create(): Promise<Experiment> {
     return this.db

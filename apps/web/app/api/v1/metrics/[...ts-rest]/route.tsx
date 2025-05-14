@@ -1,8 +1,6 @@
 import { createNextHandler } from "@ts-rest/serverless/next";
+import { MetricsService, resolve } from "@zysk/services";
 import { metricsContract } from "@zysk/ts-rest";
-
-import { resolve } from "#/services";
-import { MetricsService } from "#/services/metrics.service";
 
 const handler = createNextHandler(
   metricsContract,

@@ -6,5 +6,6 @@ dist
 .cubestore
 
 .env
+.env.development
 suchmuchai
 attuned

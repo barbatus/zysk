@@ -5,6 +5,7 @@ import {
   type MetricsResponse,
   type MetricValue,
 } from "@zysk/ts-rest";
+import { injectable } from "inversify";
 import { sign, verify } from "jsonwebtoken";
 import { fromPairs, groupBy, intersection, merge } from "lodash";
 
@@ -20,6 +21,7 @@ const getToken = () => {
   return cubeToken;
 };
 
+@injectable()
 export class MetricsService {
   async evalQuery({
     metrics,
