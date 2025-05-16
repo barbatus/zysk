@@ -1,13 +1,21 @@
 import FirecrawlApp, { type FirecrawlError } from "@mendable/firecrawl-js";
-import { type DataDatabase, type InsertableStockNews } from "@zysk/db";
+import {
+  type DataDatabase,
+  type InsertableStockNews,
+} from "@zysk/db";
+import { StockNewsStatus } from "@zysk/db";
 import axios, { type AxiosError } from "axios";
 import { startOfDay } from "date-fns";
 import { inject, injectable } from "inversify";
-import { type Kysely } from "kysely";
+import { type Kysely, NotNull } from "kysely";
 import { keyBy, omit } from "lodash";
 
 import { type AppConfig, appConfigSymbol } from "./config";
 import { dataDBSymbol } from "./db";
+import {
+  RateLimitExceededError,
+  RequestTimeoutError,
+} from "./utils/exceptions";
 import { type Logger, loggerSymbol } from "./utils/logger";
 
 @injectable()
@@ -47,14 +55,42 @@ export class TickerNewsService {
         }
         if (fe.statusCode === 408) {
           this.logger.warn(`Request timed out: ${url}`);
-          return { url, markdown: undefined };
+          throw new RequestTimeoutError();
         }
-        this.logger.error(`Error scraping URL: ${url}`, e);
+        if (fe.statusCode === 429) {
+          this.logger.warn(
+            {
+              e: fe.message,
+            },
+            `Rate limited fetching: ${url}`,
+          );
+          throw new RateLimitExceededError(fe.message, 60);
+        }
+        this.logger.error(
+          {
+            error: fe.message,
+          },
+          `Error scraping URL: ${url}`,
+        );
         throw e;
       });
   }
 
   async getNewsPage(symbol: string, page: number) {
+    return this.getStockNewsApiPage({ symbol, page });
+  }
+
+  async getGeneralNewsPage(page: number) {
+    return this.getStockNewsApiPage({ page, section: "general" });
+  }
+
+  private async getStockNewsApiPage(params: {
+    symbol?: string;
+    section?: string;
+    page: number;
+  }) {
+    const { symbol: tickers, section, page } = params;
+    const path = section ? `/category` : "/";
     return axios
       .get<{
         data: {
@@ -62,10 +98,11 @@ export class TickerNewsService {
           date: string;
           title: string;
         }[];
-      }>("https://stocknewsapi.com/api/v1", {
+      }>(`https://stocknewsapi.com/api/v1${path}`, {
         params: {
-          tickers: symbol,
-          items: 10,
+          tickers,
+          section,
+          items: 100,
           token: this.appConfig.stockNewsApiKey,
           page,
         },
@@ -159,19 +196,20 @@ export class TickerNewsService {
       .values(news)
       .returningAll()
       .onConflict((oc) =>
-        oc.columns(["url", "symbol"]).doUpdateSet({
-          markdown: (eb) => eb.ref("excluded.markdown"),
-          tokenSize: (eb) => eb.ref("excluded.tokenSize"),
-          newsDate: (eb) => eb.ref("excluded.newsDate"),
-        }),
+        oc.columns(["url", "symbol"]).doUpdateSet((eb) => ({
+          markdown: eb.ref("excluded.markdown"),
+          tokenSize: eb.ref("excluded.tokenSize"),
+          newsDate: eb.ref("excluded.newsDate"),
+        })),
       )
       .execute();
   }
 
-  async getLatestNewsDatePerTicker() {
+  async getLatestNewsDatePerTicker(symbols: string[]) {
     const result = await this.db
       .selectFrom("app_data.stock_news")
       .select(["symbol", (eb) => eb.fn.max("newsDate").as("newsDate")])
+      .where("symbol", "in", symbols)
       .groupBy("symbol")
       .execute();
     return keyBy(result, "symbol");
@@ -188,11 +226,15 @@ export class TickerNewsService {
       .execute();
   }
 
-  async getNewsByNewsIds(newsIds: string[]) {
+  async getNewsByNewsIds(
+    newsIds: string[],
+  ) {
     return this.db
       .selectFrom("app_data.stock_news")
       .selectAll()
       .where("id", "in", newsIds)
+      .where("status", "=", StockNewsStatus.Scraped)
+      .$narrowType<{ markdown: NotNull }>()
       .execute();
   }
 }

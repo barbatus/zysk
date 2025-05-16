@@ -1,6 +1,6 @@
 import { executeChild, proxyActivities } from "@temporalio/workflow";
 import { type InsertableStockNews, StockNewsStatus } from "@zysk/db";
-import { chunk as makeChunks, mapKeys } from "lodash";
+import { mapKeys } from "lodash";
 
 import type * as activities from "./activities";
 
@@ -8,9 +8,37 @@ const proxy = proxyActivities<typeof activities>({
   startToCloseTimeout: "10 minutes",
   retry: {
     nonRetryableErrorTypes: ["NonRetryable"],
-    maximumAttempts: 1,
+    maximumAttempts: 5,
+    maximumInterval: "5m",
   },
 });
+
+export async function scrapeSymbolNewsUrls(
+  news: { newsDate: Date; url: string; symbol: string }[],
+) {
+  const callScrapeSymbolNews = async (item: {
+    newsDate: Date;
+    url: string;
+    symbol: string;
+  }) => {
+    return proxy.scrapeSymbolNews(item.url).catch(async (error) => {
+      await proxy.saveNews([
+        {
+          ...item,
+          status: StockNewsStatus.Failed,
+          tokenSize: 0,
+        },
+      ]);
+      throw error;
+    });
+  };
+
+  return Promise.allSettled(news.map(callScrapeSymbolNews)).then((result) =>
+    result
+      .map((r) => (r.status === "fulfilled" ? r.value : null))
+      .filter(Boolean),
+  );
+}
 
 type SymbolNews = Awaited<
   ReturnType<typeof proxy.fetchSymbolNewsByPage>
@@ -23,7 +51,6 @@ export async function scrapeSymbolNews(symbol: string, sinceDate: Date) {
     if (news.length === 0) {
       return [];
     }
-
     return news;
   };
 
@@ -35,11 +62,9 @@ export async function scrapeSymbolNews(symbol: string, sinceDate: Date) {
     const scrapedNews: InsertableStockNews[] = [];
     const newsDateMap = mapKeys(currentNews, "url");
     for (let i = 0; i < currentNews.length; i += 100) {
-      const tmpScrape = await Promise.all(
-        makeChunks(currentNews.slice(i, i + 100), 5).map((chunk) =>
-          proxy.scrapeSymbolNews(chunk.map((n) => n.url)),
-        ),
-      );
+      const tmpScrape = await executeChild(scrapeSymbolNewsUrls, {
+        args: [currentNews.slice(i, i + 100).map((c) => ({ ...c, symbol }))],
+      });
       scrapedNews.push(
         ...tmpScrape
           .flat()
@@ -63,6 +88,14 @@ export async function scrapeSymbolNews(symbol: string, sinceDate: Date) {
     hasMore = currentNews.length > 0;
     page += 1;
   }
+}
+
+export async function scrapeGeneralNews() {
+  const sinceDate = await proxy.fetchGeneralLastNewsDate();
+
+  await executeChild(scrapeSymbolNews, {
+    args: ["GENERAL", sinceDate],
+  });
 }
 
 export async function scrapeNews() {

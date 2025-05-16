@@ -55,7 +55,7 @@ export interface IstockNews {
   url: string;
   status: StockNewsStatus;
   tokenSize: number;
-  markdown: string;
+  markdown: string | null;
   newsDate: ColumnType<Date, string | Date>;
 }
 
@@ -79,3 +79,4 @@ export type Experiment = Selectable<Iexperiment>;
 export type StockNews = Selectable<IstockNews>;
 
 export type InsertableStockNews = Insertable<IstockNews>;
+

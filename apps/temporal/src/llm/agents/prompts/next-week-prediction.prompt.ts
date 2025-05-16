@@ -1,75 +1,13 @@
 import dedent from "dedent";
-import { z } from "zod";
 
 import { AgentPrompt } from "../experiment.agent";
-import { JsonOutputParser } from "./parsers";
-
-const SignalSchema = z.object({
-  description: z.string(),
-  prediction: z.enum(["grow", "fall", "same"]),
-  confidence: z.number(),
-});
-
-const InsightSchema = z.object({
-  title: z.string(),
-  date: z.string(),
-  url: z.string(),
-  insight: z.string(),
-  impact: z.enum(["positive", "negative", "mixed"]),
-  reasoning: z.string(),
-  confidence: z.number(),
-});
-
-const PredictionSchema = z.object({
-  prediction: z.enum(["grow", "fall", "same"]),
-  signal: SignalSchema.optional().nullable(),
-  reasoning: z.string(),
-  confidence: z.number(),
-  insights: z.array(InsightSchema),
-});
-
-export type Prediction = z.infer<typeof PredictionSchema>;
-
-export class PredictionParser extends JsonOutputParser<Prediction> {
-  override parse(response: string): Promise<Prediction> {
-    return Promise.resolve(PredictionSchema.parse(super.parse(response)));
-  }
-
-  override getFormatInstructions(): string {
-    return `
-You must provide output as a single JSON object with the following structure:
-\`\`\`json
-    {
-        "prediction": "prediction for the stock price: grow, fall, same",
-        "reasoning": "reasoning behind the prediction",
-        "confidence": "confidence score (0-100)",
-        "signal": {
-            "description": "description of the signal that stock price will grow despite unfavorable market conditions or some very negative news, or vice versa, stock price will fall despite favorable market conditions or some very positive news",
-            "prediction": "should be 'grow' if overall prediction is 'fall' and vice versa",
-            "confidence": "confidence score (0-100)"
-        },
-        "insights": [
-            {
-                "title": "title of the article",
-                "date": "date of the article",
-                "url": "url of the article",
-                "insight": "description of the insight",
-                "impact": "impact on the stock price: positive, negative, mixed",
-                "reasoning": "reasoning behind the impact",
-                "confidence": "confidence score (0-100)"
-            },
-            ...
-        ]
-    }
-\`\`\`
-    `;
-  }
-}
+import { type Prediction, PredictionParser } from "./prediction-parser";
 
 const predictionParser = new PredictionParser();
 
-export const shortTermPredictionPrompt = new AgentPrompt<Prediction>({
-  template: dedent`
+export const nextWeekTicketMarketPredictionPrompt = new AgentPrompt<Prediction>(
+  {
+    template: dedent`
 You are an expert in analyzing stock market news and extracting insights that can affect a stock price.
 You have been given a set of recent news articles about **{symbol}** from the **past week**.
 Please review these articles in combination with current **{symbol}** stock prices and overall market conditions based on MARKET PROGNOSIS LAST WEEK to determine how each piece of news could influence {symbol}'s stock price in the next **5 working days** (either negatively or positively).
@@ -130,9 +68,45 @@ Apr 12, 2025 - 77.55
 {news}
 \`\`\`
   `,
-  inputVariables: ["symbol", "news", "marketPrognosis"],
-  partialVariables: {
-    formatInstructions: predictionParser.getFormatInstructions(),
+    inputVariables: ["symbol", "news", "marketPrognosis"],
+    partialVariables: {
+      formatInstructions: predictionParser.getFormatInstructions(),
+    },
+    outputParser: predictionParser,
   },
-  outputParser: predictionParser,
-});
+);
+
+export const nextWeekGeneralMarketPredictionPrompt =
+  new AgentPrompt<Prediction>({
+    template: dedent`
+You are an expert in analyzing stock market news and extracting insights that can affect stock market condition.
+You have been given a set of recent news articles about stocket market from the **past week**.
+Please review these articles to determine how each piece of news could influence market conditions in the next **5 working days** (either negatively or positively).
+
+## Your Task
+1. Read the news articles about stocke market (provided below) and identify any insights that may have a meaningful impact on the market condition in the **next week (5 days)**.
+2. Produce your conclusions and insights as a structured JSON response, **strictly** following the format in the **Output Format** section.
+
+## Important Details
+- **Confidence scores** must be integers between 0 and 100.
+- The overall market **prediction** for the upcoming week must be one of: \`grow\`, \`fall\`, or \`same\`.
+- The **impact** of each insight on the market condition must be either \`positive\` or \`negative\`.
+- Be sure to account for every article. Each article begins with \`# ARTICLE TITLE: <title>\` and they are separated by \`---\`.
+- CRITICAL Output should be in JSON format as specified in the OUTPUT FORMAT section.
+
+---
+
+# OUTPUT FORMAT:
+{formatInstructions}
+
+# NEWS ARTICLES
+\`\`\`markdown
+{news}
+\`\`\`
+  `,
+    inputVariables: ["news"],
+    partialVariables: {
+      formatInstructions: predictionParser.getFormatInstructions(),
+    },
+    outputParser: predictionParser,
+  });

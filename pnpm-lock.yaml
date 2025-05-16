@@ -51,6 +51,9 @@ importers:
       '@langchain/textsplitters':
         specifier: ^0.1.0
         version: 0.1.0(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))
+      '@temporalio/activity':
+        specifier: ^1.11.8
+        version: 1.11.8
       '@temporalio/worker':
         specifier: ^1.11.3
         version: 1.11.3(@swc/helpers@0.5.5)(esbuild@0.19.12)
@@ -177,13 +180,13 @@ importers:
         version: 3.51.0(@types/node@20.16.10)(zod@3.23.8)
       '@ts-rest/next':
         specifier: ^3.51.0
-        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)
+        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)
       '@ts-rest/react-query':
         specifier: ^3.51.0
         version: 3.51.0(@tanstack/react-query@5.59.15(react@18.3.1))(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(react@18.3.1)(zod@3.23.8)
       '@ts-rest/serverless':
         specifier: ^3.51.0
-        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)
+        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)
       '@zysk/cube':
         specifier: workspace:*
         version: link:../cube
@@ -207,7 +210,7 @@ importers:
         version: 4.17.21
       next:
         specifier: 14.2.13
-        version: 14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18
         version: 18.3.1
@@ -316,7 +319,7 @@ importers:
         version: 12.1.1(eslint@8.57.1)
       eslint-plugin-unused-imports:
         specifier: ^4.1.4
-        version: 4.1.4(@typescript-eslint/eslint-plugin@8.8.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)
+        version: 4.1.4(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)
     devDependencies:
       eslint:
         specifier: ^8.56.0
@@ -2127,17 +2130,26 @@ packages:
   '@temporalio/activity@1.11.3':
     resolution: {integrity: sha512-XH923/I7wvKSxrMiB/vF7Xuix3lBEd1vLGMtgkj0wF2t8WBITjbHXQLzpJUlQm8O0hjixI7bDqFNRCan3Ov1xQ==}
 
+  '@temporalio/activity@1.11.8':
+    resolution: {integrity: sha512-XWjj/EL0YiKsnh0W4W5kBm+Xp1jhpUEaQMGA25+BxKEYBn8qJ+mLQOwuqWn6punS9a6bvnT7P/pUlnhjPxH6KQ==}
+
   '@temporalio/client@1.11.3':
     resolution: {integrity: sha512-2x30xAXbUuqelrWe3Vd1FVC0+Z2Cfh6m2W5yDUZBjqTMdNP6qd8nH4S4mceRtZ4TipYSPmaONaiWoAU2VvwEIg==}
 
   '@temporalio/common@1.11.3':
     resolution: {integrity: sha512-dzCrwiE9ox/Q16AjBsUKr4djg1ovYHNCjH36WZadwsemXINRWa5eW53j0WZOlmFF8/CbcHIhiD5N18rZqjiYkg==}
 
+  '@temporalio/common@1.11.8':
+    resolution: {integrity: sha512-hB+TSB/P2Vm8chYyZGcKALdywGvcBSqzSUzFG1lOm/JPDh2d4uK6lvE2S8OneEndlJSdzE++d2Mt5B+iKe2ytA==}
+
   '@temporalio/core-bridge@1.11.3':
     resolution: {integrity: sha512-dUPJiS/ZQtFnttmu0V1BLLjUE5wQxrwI0+xSvUc6JEiC1q9Z6BmhobSKbcEKCvJgh5OMZKh/jn6yu1N7oLsZPw==}
 
   '@temporalio/proto@1.11.3':
     resolution: {integrity: sha512-X+xV75m11BvvS5MljagtYCybRNxpLNJM24eWyfv+uyU4WZSvgQCUh21fY4FOUDJS66DPvO1mefSPu0Nunp1PHg==}
+
+  '@temporalio/proto@1.11.8':
+    resolution: {integrity: sha512-L6QsIAq3PrnQpARAcqLCe4xMpbkpBEvA/9FQGddpzCESvViUOUAIHPwckL1DokYPedEAt19C+uuBGVBMCNx7vw==}
 
   '@temporalio/worker@1.11.3':
     resolution: {integrity: sha512-CwiqsiQ5pKIyEcYOlfjRudu4pXCHU9PXm3Qycn1owpgdL1fbbpFiJ8yCoTWqrlB23BsWMhOpUyaQLnTF8D+4aQ==}
@@ -8145,6 +8157,11 @@ snapshots:
       '@temporalio/common': 1.11.3
       abort-controller: 3.0.0
 
+  '@temporalio/activity@1.11.8':
+    dependencies:
+      '@temporalio/common': 1.11.8
+      abort-controller: 3.0.0
+
   '@temporalio/client@1.11.3':
     dependencies:
       '@grpc/grpc-js': 1.12.2
@@ -8161,6 +8178,13 @@ snapshots:
       ms: 3.0.0-canary.1
       proto3-json-serializer: 2.0.2
 
+  '@temporalio/common@1.11.8':
+    dependencies:
+      '@temporalio/proto': 1.11.8
+      long: 5.2.3
+      ms: 3.0.0-canary.1
+      proto3-json-serializer: 2.0.2
+
   '@temporalio/core-bridge@1.11.3':
     dependencies:
       '@temporalio/common': 1.11.3
@@ -8169,6 +8193,11 @@ snapshots:
       which: 4.0.0
 
   '@temporalio/proto@1.11.3':
+    dependencies:
+      long: 5.2.3
+      protobufjs: 7.4.0
+
+  '@temporalio/proto@1.11.8':
     dependencies:
       long: 5.2.3
       protobufjs: 7.4.0
@@ -8212,10 +8241,10 @@ snapshots:
       '@types/node': 20.16.10
       zod: 3.23.8
 
-  '@ts-rest/next@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)':
+  '@ts-rest/next@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)':
     dependencies:
       '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.23.8)
-      next: 14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      next: 14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     optionalDependencies:
       zod: 3.23.8
 
@@ -8227,12 +8256,12 @@ snapshots:
     optionalDependencies:
       zod: 3.23.8
 
-  '@ts-rest/serverless@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)':
+  '@ts-rest/serverless@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)':
     dependencies:
       '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.23.8)
       itty-router: 5.0.18
     optionalDependencies:
-      next: 14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      next: 14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       zod: 3.23.8
 
   '@tsconfig/node10@1.0.11': {}
@@ -8309,10 +8338,10 @@ snapshots:
 
   '@types/uuid@10.0.0': {}
 
-  '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)':
+  '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)':
     dependencies:
       '@eslint-community/regexpp': 4.11.1
-      '@typescript-eslint/parser': 7.18.0(eslint@8.57.1)(typescript@5.6.2)
+      '@typescript-eslint/parser': 8.8.0(eslint@8.57.1)(typescript@5.6.2)
       '@typescript-eslint/scope-manager': 7.18.0
       '@typescript-eslint/type-utils': 7.18.0(eslint@8.57.1)(typescript@5.6.2)
       '@typescript-eslint/utils': 7.18.0(eslint@8.57.1)(typescript@5.6.2)
@@ -8519,7 +8548,7 @@ snapshots:
       '@babel/core': 7.25.7
       '@babel/eslint-parser': 7.25.7(@babel/core@7.25.7)(eslint@8.57.1)
       '@rushstack/eslint-patch': 1.10.4
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
       '@typescript-eslint/parser': 7.18.0(eslint@8.57.1)(typescript@5.6.2)
       eslint-config-prettier: 9.1.0(eslint@8.57.1)
       eslint-import-resolver-alias: 1.1.2(eslint-plugin-import@2.31.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.1))
@@ -9909,7 +9938,7 @@ snapshots:
       '@typescript-eslint/utils': 5.62.0(eslint@8.57.1)(typescript@5.6.2)
       eslint: 8.57.1
     optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -10021,18 +10050,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-unused-imports@4.1.4(@typescript-eslint/eslint-plugin@8.8.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1):
+  eslint-plugin-unused-imports@4.1.4(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
     optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 8.8.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
 
   eslint-plugin-vitest@0.3.26(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2):
     dependencies:
       '@typescript-eslint/utils': 7.18.0(eslint@8.57.1)(typescript@5.6.2)
       eslint: 8.57.1
     optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -11319,7 +11348,7 @@ snapshots:
 
   next-tick@1.1.0: {}
 
-  next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@next/env': 14.2.13
       '@swc/helpers': 0.5.5
@@ -11329,7 +11358,7 @@ snapshots:
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.1(@babel/core@7.25.7)(react@18.3.1)
+      styled-jsx: 5.1.1(react@18.3.1)
     optionalDependencies:
       '@next/swc-darwin-arm64': 14.2.13
       '@next/swc-darwin-x64': 14.2.13
@@ -12403,12 +12432,10 @@ snapshots:
 
   strip-json-comments@3.1.1: {}
 
-  styled-jsx@5.1.1(@babel/core@7.25.7)(react@18.3.1):
+  styled-jsx@5.1.1(react@18.3.1):
     dependencies:
       client-only: 0.0.1
       react: 18.3.1
-    optionalDependencies:
-      '@babel/core': 7.25.7
 
   stylis-plugin-rtl@2.1.1(stylis@4.2.0):
     dependencies:

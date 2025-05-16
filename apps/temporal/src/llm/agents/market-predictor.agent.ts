@@ -7,11 +7,9 @@ import { type AbstractContainer } from "../core/base";
 import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
 import { type AgentPrompt, ExperimentAgent } from "./experiment.agent";
+import { nextWeekTicketMarketPredictionPrompt } from "./prompts/next-week-prediction.prompt";
+import { type Prediction } from "./prompts/prediction-parser";
 import { predictionsMergerPrompt } from "./prompts/predictions-merger.prompt";
-import {
-  type Prediction,
-  shortTermPredictionPrompt,
-} from "./prompts/short-term-prediction.prompt";
 
 const experimentService = resolve(ExperimentService);
 
@@ -69,7 +67,7 @@ export class ShortTermNewsBasedPredictorAgent extends ExperimentAgent<Prediction
     return new NewsBasedTickerMarketPredictorAgent({
       state,
       ...params,
-      prompt: shortTermPredictionPrompt,
+      prompt: nextWeekTicketMarketPredictionPrompt,
       model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
     });
   }

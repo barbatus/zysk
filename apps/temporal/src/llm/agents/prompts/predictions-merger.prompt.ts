@@ -1,10 +1,7 @@
 import dedent from "dedent";
 
 import { AgentPrompt } from "../experiment.agent";
-import {
-  type Prediction,
-  PredictionParser,
-} from "./short-term-prediction.prompt";
+import { type Prediction, PredictionParser } from "./prediction-parser";
 
 const predictionParser = new PredictionParser();
 
@@ -14,7 +11,7 @@ You are an expert financial analyst whose goal is to merge multiple stock price 
 
 # YOUR TASK
 1. Carefully review all the given predictions.
-2. Eeliminate duplicate insights and consolidate overlapping reasoning.
+2. Eliminate duplicate insights and consolidate overlapping reasoning.
 3. If predictions are **contradictory** (e.g., one says "grow", another says "fall"), analyze the **underlying signals and reasoning** in each prediction:
    - Determine **which insights are stronger**, better supported, or more recent.
    - Weigh **very negative insights** more heavily (1.5x weight).

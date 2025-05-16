@@ -6,7 +6,7 @@ import {
   PreditionsMergerAgent,
   ShortTermNewsBasedPredictorAgent,
 } from "#/llm/agents/market-predictor.agent";
-import { type Prediction } from "#/llm/agents/prompts/short-term-prediction.prompt";
+import { type Prediction } from "#/llm/agents/prompts/prediction-parser";
 
 const tickerNewsService = resolve(TickerNewsService);
 
