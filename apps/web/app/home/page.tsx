@@ -1,10 +1,9 @@
 // import type { Metadata } from 'next';
 import Box from "@mui/joy/Box";
-import Grid from "@mui/joy/Grid";
 import Stack from "@mui/joy/Stack";
 import Typography from "@mui/joy/Typography";
 
-import { PortfolioTable } from "./portfolio-table";
+import { UserSubscriptions } from "#/app/home/user-subscriptions";
 
 // export const metadata = { title: `Overview | Dashboard | ${config.site.name}` } satisfies Metadata;
 
@@ -17,11 +16,7 @@ export default function Home() {
             Overview
           </Typography>
         </div>
-        <Grid container spacing={3}>
-          <Grid md={12} sx={{ "& > *": { height: "100%" } }} xs={12}>
-            <PortfolioTable />
-          </Grid>
-        </Grid>
+        <UserSubscriptions />
       </Stack>
     </Box>
   );

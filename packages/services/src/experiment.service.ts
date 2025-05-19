@@ -12,7 +12,9 @@ import { type StateService } from "./types";
 
 @injectable()
 export class ExperimentService implements StateService<Experiment> {
-  constructor(@inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>) {}
+  constructor(
+    @inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>,
+  ) {}
 
   async create(): Promise<Experiment> {
     return this.db
@@ -68,5 +70,3 @@ export class ExperimentService implements StateService<Experiment> {
     );
   }
 }
-
-// export const experimentService = new ExperimentService();

@@ -22,8 +22,6 @@ export default function Layout({ children }: { children: ReactNode }) {
             "--Layout-gap": "24px",
             "--MainNav-height": "72px",
             "--MainNav-zIndex": 1000,
-            "--SideNav-width": "320px",
-            "--SideNav-zIndex": 1100,
             "--MobileNav-width": "320px",
             "--MobileNav-zIndex": 1100,
             // When RTL is used, for some reason, Global styles are applied before default styles.
@@ -36,10 +34,8 @@ export default function Layout({ children }: { children: ReactNode }) {
         sx={{
           display: "flex",
           flexDirection: "column",
+          alignItems: "center",
           minHeight: "100%",
-          pb: { lg: "var(--Layout-gap)" },
-          pl: { lg: "var(--SideNav-width)" },
-          pr: { lg: "var(--Layout-gap)" },
         }}
       >
         <Box
@@ -51,11 +47,11 @@ export default function Layout({ children }: { children: ReactNode }) {
             "--Content-padding":
               "var(--Content-paddingY) var(--Content-paddingX)",
             bgcolor: "var(--Content-background)",
-            borderRadius: { lg: "var(--Content-radius)" },
             display: "flex",
             flex: "1 1 auto",
             flexDirection: "column",
             position: "relative",
+            width: "100%",
           }}
         >
           <Box

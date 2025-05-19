@@ -106,5 +106,3 @@ export class TickerInfoService {
     return quotes;
   }
 }
-
-// export const tickerInfoService = new TickerInfoService();

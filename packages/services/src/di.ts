@@ -9,6 +9,7 @@ import { ExperimentService } from "./experiment.service";
 import { FinnhubService } from "./finnhub.service";
 import { MetricsService } from "./metrics.service";
 import { PortfolioService } from "./portfolio.service";
+import { SubscriptionsService } from "./subscriptions.service";
 import { TickerNewsService } from "./ticker-news.service";
 import { TickerInfoService } from "./ticket-info.service";
 import { createLogger, type Logger, loggerSymbol } from "./utils/logger";
@@ -40,6 +41,7 @@ const services = [
   ExperimentService,
   PortfolioService,
   MetricsService,
+  SubscriptionsService,
 ] as const;
 
 services.forEach((service) => {

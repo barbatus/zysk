@@ -52,7 +52,7 @@ async function fetchAndSaveStockData(symbol: string) {
 
     for (const quote of quotes) {
       await db
-        .insertInto("quote")
+        .insertInto("tickerQuotes")
         .values(quote)
         .onConflict((oc) => oc.columns(["symbol", "date"]).doUpdateSet(quote))
         .execute();

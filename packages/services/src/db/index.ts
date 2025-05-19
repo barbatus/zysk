@@ -1,15 +1,33 @@
+import { neonConfig } from "@neondatabase/serverless";
 import { type Database, type DataDatabase } from "@zysk/db";
-import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely";
-import { Pool } from "pg";
+import { CamelCasePlugin, Kysely } from "kysely";
+import { NeonDialect } from "kysely-neon";
+import ws from "ws";
 
-import { type AppConfig } from "../config";
+import { type AppConfig, NodeEnvironment } from "../config";
 
 export function createDb<T extends DataDatabase | Database>(config: AppConfig) {
-  const dialect = new PostgresDialect({
-    pool: new Pool({
-      connectionString: `postgresql://${config.postgres.username}:${config.postgres.password}@${config.postgres.host}:${config.postgres.port}/${config.postgres.database}`,
-      max: 50,
-    }),
+  const dbHost =
+    config.nodeEnv === NodeEnvironment.DEVELOPMENT
+      ? "db.localtest.me"
+      : config.postgres.host;
+  const connectionString = `postgresql://${config.postgres.username}:${config.postgres.password}@${dbHost}:${config.postgres.port}/${config.postgres.database}`;
+  if (config.nodeEnv === NodeEnvironment.DEVELOPMENT) {
+    neonConfig.fetchEndpoint = (host) => {
+      const [protocol, port] =
+        host === "db.localtest.me" ? ["http", 4444] : ["https", 443];
+      return `${protocol}://${host}:${port}/sql`;
+    };
+    const connectionStringUrl = new URL(connectionString);
+    neonConfig.useSecureWebSocket =
+      connectionStringUrl.hostname !== "db.localtest.me";
+    neonConfig.wsProxy = (host) =>
+      host === "db.localtest.me" ? `${host}:4444/v2` : `${host}/v2`;
+  }
+  neonConfig.webSocketConstructor = ws;
+
+  const dialect = new NeonDialect({
+    connectionString,
   });
   return new Kysely<T>({
     dialect,

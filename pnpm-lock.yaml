@@ -44,13 +44,13 @@ importers:
     dependencies:
       '@langchain/core':
         specifier: ^0.3.49
-        version: 0.3.49(openai@4.96.0(zod@3.23.8))
+        version: 0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
       '@langchain/openai':
         specifier: ^0.5.10
-        version: 0.5.10(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))
+        version: 0.5.10(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(ws@8.18.2(bufferutil@4.0.9))
       '@langchain/textsplitters':
         specifier: ^0.1.0
-        version: 0.1.0(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))
+        version: 0.1.0(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))
       '@temporalio/activity':
         specifier: ^1.11.8
         version: 1.11.8
@@ -80,7 +80,7 @@ importers:
         version: 16.4.5
       langchain:
         specifier: ^0.3.24
-        version: 0.3.24(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))(axios@1.7.7)(openai@4.96.0(zod@3.23.8))
+        version: 0.3.24(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(axios@1.7.7)(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))(ws@8.18.2(bufferutil@4.0.9))
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -129,7 +129,7 @@ importers:
         version: 4.1.5
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@swc/core@1.9.2(@swc/helpers@0.5.5))(@types/node@20.16.10)(typescript@5.6.2)
+        version: 10.9.2(@swc/core@1.9.2(@swc/helpers@0.5.5))(@types/node@22.15.19)(typescript@5.6.2)
       tsc-alias:
         specifier: ^1.8.16
         version: 1.8.16
@@ -166,6 +166,9 @@ importers:
       '@mui/joy':
         specifier: 5.0.0-beta.48
         version: 5.0.0-beta.48(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@mui/system':
+        specifier: ^7.1.0
+        version: 7.1.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
       '@mui/utils':
         specifier: ^6.1.1
         version: 6.1.2(@types/react@18.3.11)(react@18.3.1)
@@ -180,13 +183,13 @@ importers:
         version: 3.51.0(@types/node@20.16.10)(zod@3.23.8)
       '@ts-rest/next':
         specifier: ^3.51.0
-        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)
+        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)
       '@ts-rest/react-query':
         specifier: ^3.51.0
         version: 3.51.0(@tanstack/react-query@5.59.15(react@18.3.1))(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(react@18.3.1)(zod@3.23.8)
       '@ts-rest/serverless':
         specifier: ^3.51.0
-        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)
+        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)
       '@zysk/cube':
         specifier: workspace:*
         version: link:../cube
@@ -210,7 +213,7 @@ importers:
         version: 4.17.21
       next:
         specifier: 14.2.13
-        version: 14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18
         version: 18.3.1
@@ -224,6 +227,9 @@ importers:
         specifier: ^3.23.8
         version: 3.23.8
     devDependencies:
+      '@mui/types':
+        specifier: ^7.4.2
+        version: 7.4.2(@types/react@18.3.11)
       '@total-typescript/ts-reset':
         specifier: ^0.6.1
         version: 0.6.1
@@ -261,7 +267,7 @@ importers:
     dependencies:
       drizzle-orm:
         specifier: ^0.33.0
-        version: 0.33.0(@types/pg@8.11.10)(@types/react@18.3.11)(kysely@0.27.4)(pg@8.13.0)(react@18.3.1)
+        version: 0.33.0(@neondatabase/serverless@1.0.0)(@types/pg@8.11.10)(@types/react@18.3.11)(@vercel/postgres@0.10.0)(kysely@0.27.4)(pg@8.13.0)(react@18.3.1)
       kysely:
         specifier: ^0.27.4
         version: 0.27.4
@@ -319,7 +325,7 @@ importers:
         version: 12.1.1(eslint@8.57.1)
       eslint-plugin-unused-imports:
         specifier: ^4.1.4
-        version: 4.1.4(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)
+        version: 4.1.4(@typescript-eslint/eslint-plugin@8.8.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)
     devDependencies:
       eslint:
         specifier: ^8.56.0
@@ -354,7 +360,7 @@ importers:
         version: 8.11.10
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@swc/core@1.9.2(@swc/helpers@0.5.5))(@types/node@20.16.10)(typescript@5.6.2)
+        version: 10.9.2(@swc/core@1.9.2(@swc/helpers@0.5.5))(@types/node@22.15.19)(typescript@5.6.2)
 
   packages/services:
     dependencies:
@@ -364,6 +370,9 @@ importers:
       '@mendable/firecrawl-js':
         specifier: ^1.24.0
         version: 1.24.0
+      '@neondatabase/serverless':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@temporalio/workflow':
         specifier: ^1.11.3
         version: 1.11.3
@@ -397,6 +406,9 @@ importers:
       kysely:
         specifier: ^0.27.4
         version: 0.27.4
+      kysely-neon:
+        specifier: ^1.3.0
+        version: 1.3.0(@neondatabase/serverless@1.0.0)(kysely@0.27.4)(ws@8.18.2(bufferutil@4.0.9))
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -409,6 +421,9 @@ importers:
       pino-pretty:
         specifier: ^13.0.0
         version: 13.0.0
+      ws:
+        specifier: ^8.18.2
+        version: 8.18.2(bufferutil@4.0.9)
       zod:
         specifier: ^3.23.8
         version: 3.23.8
@@ -425,12 +440,18 @@ importers:
       '@types/pg':
         specifier: ^8.11.10
         version: 8.11.10
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       '@zysk/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
       '@zysk/typescript-config':
         specifier: workspace:*
         version: link:../config-typescript
+      concurrently:
+        specifier: ^9.1.2
+        version: 9.1.2
       tsc-alias:
         specifier: ^1.8.16
         version: 1.8.16
@@ -439,7 +460,7 @@ importers:
     dependencies:
       '@ts-rest/core':
         specifier: ^3.51.0
-        version: 3.51.0(@types/node@20.16.10)(zod@3.23.8)
+        version: 3.51.0(@types/node@22.15.19)(zod@3.23.8)
       '@zysk/cube':
         specifier: workspace:*
         version: link:../../apps/cube
@@ -1021,6 +1042,10 @@ packages:
     resolution: {integrity: sha512-FjoyLe754PMiYsFaN5C94ttGiOmBNYTf6pLr4xXHAT5uctHb092PBszndLDR5XA/jghQvn4n7JMHl7dmTgbm9w==}
     engines: {node: '>=6.9.0'}
 
+  '@babel/runtime@7.27.1':
+    resolution: {integrity: sha512-1x3D2xEk2fRo3PAhwQwu5UubzgiVWSXTBfWpVd2Mx2AzRqJuDJCsgaDVZ7HB5iGzDW1Hl1sWN2mFyKjmR9uAog==}
+    engines: {node: '>=6.9.0'}
+
   '@babel/standalone@7.25.7':
     resolution: {integrity: sha512-7H+mK18Ew4C/pIIiZwF1eiVjUEh2Ju/BpwRZwcPeXltF/rIjHjFL0gol7PtGrHocmIq6P6ubJrylmmWQ3lGJPA==}
     engines: {node: '>=6.9.0'}
@@ -1085,6 +1110,9 @@ packages:
   '@emotion/cache@11.13.1':
     resolution: {integrity: sha512-iqouYkuEblRcXmylXIwwOodiEK5Ifl7JcX7o6V4jI3iW4mLXX3dmt5xwBtIkJiQEXFAI+pC8X0i67yiPkH9Ucw==}
 
+  '@emotion/cache@11.14.0':
+    resolution: {integrity: sha512-L/B1lc/TViYk4DcpGxtAVbx0ZyiKM5ktoIyafGkH6zg/tj+mA+NE//aPYKG0k8kCHSHVJrpLpcAlOBEXQ3SavA==}
+
   '@emotion/hash@0.9.2':
     resolution: {integrity: sha512-MyqliTZGuOm3+5ZRSaaBGP3USLw6+EGykkwZns2EPC5g8jJ4z9OrdZY9apkl3+UP9+sdz76YYkwCKP5gh8iY3g==}
 
@@ -1105,6 +1133,9 @@ packages:
 
   '@emotion/serialize@1.3.2':
     resolution: {integrity: sha512-grVnMvVPK9yUVE6rkKfAJlYZgo0cu3l9iMC77V7DW6E1DUIrU68pSEXRmFZFOFB1QFo57TncmOcvcbMDWsL4yA==}
+
+  '@emotion/serialize@1.3.3':
+    resolution: {integrity: sha512-EISGqt7sSNWHGI76hC7x1CksiXPahbxEOrC5RjmFRJTqLyEK9/9hZvBbiYn70dw4wuwMKiEMCUlR6ZXTSWQqxA==}
 
   '@emotion/sheet@1.4.0':
     resolution: {integrity: sha512-fTBW9/8r2w3dXWYM4HCB1Rdp8NLibOw2+XELH5m5+AkWiL/KqYX6dc0kKYlaYyKjrQ6ds33MCdMPEwgs2z1rqg==}
@@ -1129,6 +1160,9 @@ packages:
 
   '@emotion/utils@1.4.1':
     resolution: {integrity: sha512-BymCXzCG3r72VKJxaYVwOXATqXIZ85cuvg0YOUDxMGNrKc1DJRZk8MgV5wyXRyEayIMd4FuXJIUgTBXvDNW5cA==}
+
+  '@emotion/utils@1.4.2':
+    resolution: {integrity: sha512-3vLclRofFziIa3J2wDh9jjbkUz9qk5Vi3IZ/FSTKViB0k+ef0fPV7dYrUIugbgupYDx7v9ud/SjrtEP8Y4xLoA==}
 
   '@emotion/weak-memoize@0.4.0':
     resolution: {integrity: sha512-snKqtPW01tN0ui7yu9rGv69aJXr/a/Ywvl11sUjNtEcRc+ng/mQriFL0wLXMef74iHa/EkftbDzU9F8iFbH+zg==}
@@ -1804,6 +1838,16 @@ packages:
       '@types/react':
         optional: true
 
+  '@mui/private-theming@7.1.0':
+    resolution: {integrity: sha512-4Kck4jxhqF6YxNwJdSae1WgDfXVg0lIH6JVJ7gtuFfuKcQCgomJxPvUEOySTFRPz1IZzwz5OAcToskRdffElDA==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
   '@mui/styled-engine@5.16.6':
     resolution: {integrity: sha512-zaThmS67ZmtHSWToTiHslbI8jwrmITcN93LQaR2lKArbvS7Z3iLkwRoiikNWutx9MBs8Q6okKvbZq1RQYB3v7g==}
     engines: {node: '>=12.0.0'}
@@ -1819,6 +1863,19 @@ packages:
 
   '@mui/styled-engine@6.1.2':
     resolution: {integrity: sha512-uKOfWkR23X39xj7th2nyTcCHqInTAXtUnqD3T5qRVdJcOPvu1rlgTleTwJC/FJvWZJBU6ieuTWDhbcx5SNViHQ==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      '@emotion/react': ^11.4.1
+      '@emotion/styled': ^11.3.0
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/react':
+        optional: true
+      '@emotion/styled':
+        optional: true
+
+  '@mui/styled-engine@7.1.0':
+    resolution: {integrity: sha512-m0mJ0c6iRC+f9hMeRe0W7zZX1wme3oUX0+XTVHjPG7DJz6OdQ6K/ggEOq7ZdwilcpdsDUwwMfOmvO71qDkYd2w==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@emotion/react': ^11.4.1
@@ -1862,8 +1919,24 @@ packages:
       '@types/react':
         optional: true
 
-  '@mui/types@7.2.17':
-    resolution: {integrity: sha512-oyumoJgB6jDV8JFzRqjBo2daUuHpzDjoO/e3IrRhhHo/FxJlaVhET6mcNrKHUq2E+R+q3ql0qAtvQ4rfWHhAeQ==}
+  '@mui/system@7.1.0':
+    resolution: {integrity: sha512-iedAWgRJMCxeMHvkEhsDlbvkK+qKf9me6ofsf7twk/jfT4P1ImVf7Rwb5VubEA0sikrVL+1SkoZM41M4+LNAVA==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      '@emotion/react': ^11.5.0
+      '@emotion/styled': ^11.3.0
+      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/react':
+        optional: true
+      '@emotion/styled':
+        optional: true
+      '@types/react':
+        optional: true
+
+  '@mui/types@7.4.2':
+    resolution: {integrity: sha512-edRc5JcLPsrlNFYyTPxds+d5oUovuUxnnDtpJUbP6WMeV4+6eaX/mqai1ZIWT62lCOe0nlrON0s9HDiv5en5bA==}
     peerDependencies:
       '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
@@ -1889,6 +1962,23 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@mui/utils@7.1.0':
+    resolution: {integrity: sha512-/OM3S8kSHHmWNOP+NH9xEtpYSG10upXeQ0wLZnfDgmgadTAk5F4MQfFLyZ5FCRJENB3eRzltMmaNl6UtDnPovw==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
+  '@neondatabase/serverless@0.9.5':
+    resolution: {integrity: sha512-siFas6gItqv6wD/pZnvdu34wEqgG3nSE6zWZdq5j2DEsa+VvX8i/5HXJOo06qrw5axPXn+lGCxeR+NLaSPIXug==}
+
+  '@neondatabase/serverless@1.0.0':
+    resolution: {integrity: sha512-XWmEeWpBXIoksZSDN74kftfTnXFEGZ3iX8jbANWBc+ag6dsiQuvuR4LgB0WdCOKMb5AQgjqgufc0TgAsZubUYw==}
+    engines: {node: '>=19.0.0'}
 
   '@next/env@14.2.13':
     resolution: {integrity: sha512-s3lh6K8cbW1h5Nga7NNeXrbe0+2jIIYK9YaA9T7IufDWnZpozdFUp6Hf0d5rNWUKu4fEuSX2rCKlGjCrtylfDw==}
@@ -2257,6 +2347,9 @@ packages:
   '@types/node@20.16.10':
     resolution: {integrity: sha512-vQUKgWTjEIRFCvK6CyriPH3MZYiYlNy0fKiEYHWbcoWLEgs4opurGGKlebrTLqdSMIbXImH6XExNiIyNUv3WpA==}
 
+  '@types/node@22.15.19':
+    resolution: {integrity: sha512-3vMNr4TzNQyjHcRZadojpRaD9Ofr6LsonZAoQ+HMUa/9ORTPoxVIw0e0mpqWpdjj8xybyCM+oKOUH2vwFu/oEw==}
+
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
 
@@ -2266,8 +2359,14 @@ packages:
   '@types/pg@8.11.10':
     resolution: {integrity: sha512-LczQUW4dbOQzsH2RQ5qoeJ6qJPdrcM/DcMLoqWQkMLMsq83J5lAX3LXjdkWdpscFy67JSOWDnh7Ny/sPFykmkg==}
 
+  '@types/pg@8.11.6':
+    resolution: {integrity: sha512-/2WmmBXHLsfRqzfHW7BNZ8SbYzE8OSk7i3WjFYvfgRHj7S1xj+16Je5fUKv3lVdVzk/zn9TXOqf+avFCFIE0yQ==}
+
   '@types/prop-types@15.7.13':
     resolution: {integrity: sha512-hCZTSvwbzWGvhqxp/RqVqwU999pBf2vp7hzIjiYOsl8wqOmUxkQ6ddw1cV3l8811+kdUFus/q4d1Y3E3SyEifA==}
+
+  '@types/prop-types@15.7.14':
+    resolution: {integrity: sha512-gNMvNH49DJ7OJYv+KAKn0Xp45p8PLl6zo2YnvDIbTd4J6MER2BmWN49TG7n9LvkyihINxeKW8+3bfS2yDC9dzQ==}
 
   '@types/react-dom@18.3.0':
     resolution: {integrity: sha512-EhwApuTmMBmXuFOikhQLIBUn6uFg81SwLMOAUgodJF14SOBOCMdU04gDoYi0WOJJHD144TL32z4yDqCW3dnkQg==}
@@ -2286,6 +2385,9 @@ packages:
 
   '@types/uuid@10.0.0':
     resolution: {integrity: sha512-7gqG38EyHgyP1S+7+xomFtL+ZNHcKv6DwNaCZmJmo1vgMugyF3TCnXVg4t1uk89mLNwnLtnY3TpOpCOyp1/xHQ==}
+
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
   '@typescript-eslint/eslint-plugin@7.18.0':
     resolution: {integrity: sha512-94EQTWZ40mzBc42ATNIBimBEDltSJ9RQHCC8vc/PDbxi4k8dVwUAv4o98dk50M1zB+JGFxp43FP7f8+FP8R6Sw==}
@@ -2431,6 +2533,10 @@ packages:
 
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
+
+  '@vercel/postgres@0.10.0':
+    resolution: {integrity: sha512-fSD23DxGND40IzSkXjcFcxr53t3Tiym59Is0jSYIFpG4/0f0KO9SGtcp1sXiebvPaGe7N/tU05cH4yt2S6/IPg==}
+    engines: {node: '>=18.14'}
 
   '@vercel/style-guide@6.0.0':
     resolution: {integrity: sha512-tu0wFINGz91EPwaT5VjSqUwbvCY9pvLach7SPG4XyfJKPU9Vku2TFa6+AyzJ4oroGbo9fK+TQhIFHrnFl0nCdg==}
@@ -2815,6 +2921,10 @@ packages:
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
+
+  bufferutil@4.0.9:
+    resolution: {integrity: sha512-WDtdLmJvAuNNPzByAYpRo2rF1Mmradw6gvWsQKf63476DDXmomT9zUiGypLcG4ibIM67vhAj8jJRdbmEws2Aqw==}
+    engines: {node: '>=6.14.2'}
 
   builtin-modules@3.3.0:
     resolution: {integrity: sha512-zhaCDicdLuWN5UbN5IMnFqNMhNfo919sH85y2/ea+5Yg9TsTkeZxpL+JLbp6cgYFS4sRLp3YV4S6yDuqVWHYOw==}
@@ -4583,6 +4693,16 @@ packages:
       kysely-postgres-js:
         optional: true
 
+  kysely-neon@1.3.0:
+    resolution: {integrity: sha512-CIIlbmqpIXVJDdBEYtEOwbmALag0jmqYrGfBeM4cHKb9AgBGs+X1SvXUZ8TqkDacQEqEZN2XtsDoUkcMIISjHw==}
+    peerDependencies:
+      '@neondatabase/serverless': ^0.4.3
+      kysely: 0.x.x
+      ws: ^8.13.0
+    peerDependenciesMeta:
+      ws:
+        optional: true
+
   kysely@0.27.4:
     resolution: {integrity: sha512-dyNKv2KRvYOQPLCAOCjjQuCk4YFd33BvGdf/o5bC7FiW+BB6snA81Zt+2wT9QDFzKqxKa5rrOmvlK/anehCcgA==}
     engines: {node: '>=14.0.0'}
@@ -4944,6 +5064,10 @@ packages:
     peerDependenciesMeta:
       encoding:
         optional: true
+
+  node-gyp-build@4.8.4:
+    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
+    hasBin: true
 
   node-releases@2.0.18:
     resolution: {integrity: sha512-d9VeXT4SJ7ZeOqGX6R5EM022wpL+eWPooLI+5UpWn2jCT1aosUQEhQP214x33Wkwx3JQMvIm+tIoVOdodFS40g==}
@@ -5427,6 +5551,9 @@ packages:
 
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
+
+  react-is@19.1.0:
+    resolution: {integrity: sha512-Oe56aUPnkHyyDxxkvqtd7KkdQP5uIUfHxd5XTb3wE9d/kRnZLmKbDB0GWk919tdQ+mxxPtG6EAs6RMT6i1qtHg==}
 
   react-transition-group@4.4.5:
     resolution: {integrity: sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g==}
@@ -6205,6 +6332,9 @@ packages:
   undici-types@6.19.8:
     resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
 
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
   unicode-canonical-property-names-ecmascript@2.0.1:
     resolution: {integrity: sha512-dA8WbNeb2a6oQzAQ55YlT5vQAWGV9WXOsi3SskE3bcCdM0P4SDd+24zS/OCacdRq5BkdsRj9q3Pg6YyQoxIGqg==}
     engines: {node: '>=4'}
@@ -6365,6 +6495,18 @@ packages:
 
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
+
+  ws@8.18.2:
+    resolution: {integrity: sha512-DMricUmwGZUVr++AEAe2uiVM7UoO9MAVZMDu05UQOaUII0lp+zOzLLU4Xqh/JvTqklB1T4uELaaPBKyjE1r4fQ==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -7166,6 +7308,8 @@ snapshots:
     dependencies:
       regenerator-runtime: 0.14.1
 
+  '@babel/runtime@7.27.1': {}
+
   '@babel/standalone@7.25.7': {}
 
   '@babel/template@7.25.7':
@@ -7331,6 +7475,14 @@ snapshots:
       '@emotion/weak-memoize': 0.4.0
       stylis: 4.2.0
 
+  '@emotion/cache@11.14.0':
+    dependencies:
+      '@emotion/memoize': 0.9.0
+      '@emotion/sheet': 1.4.0
+      '@emotion/utils': 1.4.2
+      '@emotion/weak-memoize': 0.4.0
+      stylis: 4.2.0
+
   '@emotion/hash@0.9.2': {}
 
   '@emotion/is-prop-valid@1.3.1':
@@ -7363,6 +7515,14 @@ snapshots:
       '@emotion/utils': 1.4.1
       csstype: 3.1.3
 
+  '@emotion/serialize@1.3.3':
+    dependencies:
+      '@emotion/hash': 0.9.2
+      '@emotion/memoize': 0.9.0
+      '@emotion/unitless': 0.10.0
+      '@emotion/utils': 1.4.2
+      csstype: 3.1.3
+
   '@emotion/sheet@1.4.0': {}
 
   '@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)':
@@ -7387,6 +7547,8 @@ snapshots:
       react: 18.3.1
 
   '@emotion/utils@1.4.1': {}
+
+  '@emotion/utils@1.4.2': {}
 
   '@emotion/weak-memoize@0.4.0': {}
 
@@ -7762,14 +7924,14 @@ snapshots:
     dependencies:
       tslib: 2.7.0
 
-  '@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8))':
+  '@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.20
-      langsmith: 0.3.21(openai@4.96.0(zod@3.23.8))
+      langsmith: 0.3.21(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -7779,20 +7941,20 @@ snapshots:
     transitivePeerDependencies:
       - openai
 
-  '@langchain/openai@0.5.10(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))':
+  '@langchain/openai@0.5.10(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(ws@8.18.2(bufferutil@4.0.9))':
     dependencies:
-      '@langchain/core': 0.3.49(openai@4.96.0(zod@3.23.8))
+      '@langchain/core': 0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
       js-tiktoken: 1.0.20
-      openai: 4.96.0(zod@3.23.8)
+      openai: 4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)
       zod: 3.23.8
       zod-to-json-schema: 3.24.5(zod@3.23.8)
     transitivePeerDependencies:
       - encoding
       - ws
 
-  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))':
+  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))':
     dependencies:
-      '@langchain/core': 0.3.49(openai@4.96.0(zod@3.23.8))
+      '@langchain/core': 0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
       js-tiktoken: 1.0.20
 
   '@mendable/firecrawl-js@1.24.0':
@@ -7817,7 +7979,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.25.7
       '@floating-ui/react-dom': 2.1.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@mui/types': 7.2.17(@types/react@18.3.11)
+      '@mui/types': 7.4.2(@types/react@18.3.11)
       '@mui/utils': 5.16.6(@types/react@18.3.11)(react@18.3.1)
       '@popperjs/core': 2.11.8
       clsx: 2.1.1
@@ -7845,7 +8007,7 @@ snapshots:
       '@mui/base': 5.0.0-beta.40(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@mui/core-downloads-tracker': 5.16.7
       '@mui/system': 5.16.7(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
-      '@mui/types': 7.2.17(@types/react@18.3.11)
+      '@mui/types': 7.4.2(@types/react@18.3.11)
       '@mui/utils': 5.16.6(@types/react@18.3.11)(react@18.3.1)
       clsx: 2.1.1
       prop-types: 15.8.1
@@ -7858,10 +8020,10 @@ snapshots:
 
   '@mui/material@6.1.2(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.25.7
+      '@babel/runtime': 7.27.1
       '@mui/core-downloads-tracker': 6.1.2
       '@mui/system': 6.1.2(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
-      '@mui/types': 7.2.17(@types/react@18.3.11)
+      '@mui/types': 7.4.2(@types/react@18.3.11)
       '@mui/utils': 6.1.2(@types/react@18.3.11)(react@18.3.1)
       '@popperjs/core': 2.11.8
       '@types/react-transition-group': 4.4.11
@@ -7879,7 +8041,7 @@ snapshots:
 
   '@mui/private-theming@5.16.6(@types/react@18.3.11)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.25.7
+      '@babel/runtime': 7.27.1
       '@mui/utils': 5.16.6(@types/react@18.3.11)(react@18.3.1)
       prop-types: 15.8.1
       react: 18.3.1
@@ -7888,8 +8050,17 @@ snapshots:
 
   '@mui/private-theming@6.1.2(@types/react@18.3.11)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.25.7
+      '@babel/runtime': 7.27.1
       '@mui/utils': 6.1.2(@types/react@18.3.11)(react@18.3.1)
+      prop-types: 15.8.1
+      react: 18.3.1
+    optionalDependencies:
+      '@types/react': 18.3.11
+
+  '@mui/private-theming@7.1.0(@types/react@18.3.11)(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.27.1
+      '@mui/utils': 7.1.0(@types/react@18.3.11)(react@18.3.1)
       prop-types: 15.8.1
       react: 18.3.1
     optionalDependencies:
@@ -7897,7 +8068,7 @@ snapshots:
 
   '@mui/styled-engine@5.16.6(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.25.7
+      '@babel/runtime': 7.27.1
       '@emotion/cache': 11.13.1
       csstype: 3.1.3
       prop-types: 15.8.1
@@ -7908,8 +8079,21 @@ snapshots:
 
   '@mui/styled-engine@6.1.2(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.25.7
-      '@emotion/cache': 11.13.1
+      '@babel/runtime': 7.27.1
+      '@emotion/cache': 11.14.0
+      '@emotion/sheet': 1.4.0
+      csstype: 3.1.3
+      prop-types: 15.8.1
+      react: 18.3.1
+    optionalDependencies:
+      '@emotion/react': 11.13.3(@types/react@18.3.11)(react@18.3.1)
+      '@emotion/styled': 11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
+
+  '@mui/styled-engine@7.1.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.27.1
+      '@emotion/cache': 11.14.0
+      '@emotion/serialize': 1.3.3
       '@emotion/sheet': 1.4.0
       csstype: 3.1.3
       prop-types: 15.8.1
@@ -7923,7 +8107,7 @@ snapshots:
       '@babel/runtime': 7.25.7
       '@mui/private-theming': 5.16.6(@types/react@18.3.11)(react@18.3.1)
       '@mui/styled-engine': 5.16.6(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)
-      '@mui/types': 7.2.17(@types/react@18.3.11)
+      '@mui/types': 7.4.2(@types/react@18.3.11)
       '@mui/utils': 5.16.6(@types/react@18.3.11)(react@18.3.1)
       clsx: 2.1.1
       csstype: 3.1.3
@@ -7936,10 +8120,10 @@ snapshots:
 
   '@mui/system@6.1.2(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.25.7
+      '@babel/runtime': 7.27.1
       '@mui/private-theming': 6.1.2(@types/react@18.3.11)(react@18.3.1)
       '@mui/styled-engine': 6.1.2(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)
-      '@mui/types': 7.2.17(@types/react@18.3.11)
+      '@mui/types': 7.4.2(@types/react@18.3.11)
       '@mui/utils': 6.1.2(@types/react@18.3.11)(react@18.3.1)
       clsx: 2.1.1
       csstype: 3.1.3
@@ -7950,14 +8134,32 @@ snapshots:
       '@emotion/styled': 11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
       '@types/react': 18.3.11
 
-  '@mui/types@7.2.17(@types/react@18.3.11)':
+  '@mui/system@7.1.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.27.1
+      '@mui/private-theming': 7.1.0(@types/react@18.3.11)(react@18.3.1)
+      '@mui/styled-engine': 7.1.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)
+      '@mui/types': 7.4.2(@types/react@18.3.11)
+      '@mui/utils': 7.1.0(@types/react@18.3.11)(react@18.3.1)
+      clsx: 2.1.1
+      csstype: 3.1.3
+      prop-types: 15.8.1
+      react: 18.3.1
+    optionalDependencies:
+      '@emotion/react': 11.13.3(@types/react@18.3.11)(react@18.3.1)
+      '@emotion/styled': 11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
+      '@types/react': 18.3.11
+
+  '@mui/types@7.4.2(@types/react@18.3.11)':
+    dependencies:
+      '@babel/runtime': 7.27.1
     optionalDependencies:
       '@types/react': 18.3.11
 
   '@mui/utils@5.16.6(@types/react@18.3.11)(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.25.7
-      '@mui/types': 7.2.17(@types/react@18.3.11)
+      '@mui/types': 7.4.2(@types/react@18.3.11)
       '@types/prop-types': 15.7.13
       clsx: 2.1.1
       prop-types: 15.8.1
@@ -7969,7 +8171,7 @@ snapshots:
   '@mui/utils@6.1.2(@types/react@18.3.11)(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.25.7
-      '@mui/types': 7.2.17(@types/react@18.3.11)
+      '@mui/types': 7.4.2(@types/react@18.3.11)
       '@types/prop-types': 15.7.13
       clsx: 2.1.1
       prop-types: 15.8.1
@@ -7977,6 +8179,28 @@ snapshots:
       react-is: 18.3.1
     optionalDependencies:
       '@types/react': 18.3.11
+
+  '@mui/utils@7.1.0(@types/react@18.3.11)(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.27.1
+      '@mui/types': 7.4.2(@types/react@18.3.11)
+      '@types/prop-types': 15.7.14
+      clsx: 2.1.1
+      prop-types: 15.8.1
+      react: 18.3.1
+      react-is: 19.1.0
+    optionalDependencies:
+      '@types/react': 18.3.11
+
+  '@neondatabase/serverless@0.9.5':
+    dependencies:
+      '@types/pg': 8.11.6
+    optional: true
+
+  '@neondatabase/serverless@1.0.0':
+    dependencies:
+      '@types/node': 22.15.19
+      '@types/pg': 8.11.10
 
   '@next/env@14.2.13': {}
 
@@ -8241,10 +8465,15 @@ snapshots:
       '@types/node': 20.16.10
       zod: 3.23.8
 
-  '@ts-rest/next@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)':
+  '@ts-rest/core@3.51.0(@types/node@22.15.19)(zod@3.23.8)':
+    optionalDependencies:
+      '@types/node': 22.15.19
+      zod: 3.23.8
+
+  '@ts-rest/next@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)':
     dependencies:
       '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.23.8)
-      next: 14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      next: 14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     optionalDependencies:
       zod: 3.23.8
 
@@ -8256,12 +8485,12 @@ snapshots:
     optionalDependencies:
       zod: 3.23.8
 
-  '@ts-rest/serverless@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)':
+  '@ts-rest/serverless@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)':
     dependencies:
       '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.23.8)
       itty-router: 5.0.18
     optionalDependencies:
-      next: 14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      next: 14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       zod: 3.23.8
 
   '@tsconfig/node10@1.0.11': {}
@@ -8307,6 +8536,10 @@ snapshots:
     dependencies:
       undici-types: 6.19.8
 
+  '@types/node@22.15.19':
+    dependencies:
+      undici-types: 6.21.0
+
   '@types/normalize-package-data@2.4.4': {}
 
   '@types/parse-json@4.0.2': {}
@@ -8317,7 +8550,16 @@ snapshots:
       pg-protocol: 1.7.0
       pg-types: 4.0.2
 
+  '@types/pg@8.11.6':
+    dependencies:
+      '@types/node': 20.16.10
+      pg-protocol: 1.7.0
+      pg-types: 4.0.2
+    optional: true
+
   '@types/prop-types@15.7.13': {}
+
+  '@types/prop-types@15.7.14': {}
 
   '@types/react-dom@18.3.0':
     dependencies:
@@ -8329,7 +8571,7 @@ snapshots:
 
   '@types/react@18.3.11':
     dependencies:
-      '@types/prop-types': 15.7.13
+      '@types/prop-types': 15.7.14
       csstype: 3.1.3
 
   '@types/retry@0.12.0': {}
@@ -8338,10 +8580,14 @@ snapshots:
 
   '@types/uuid@10.0.0': {}
 
-  '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)':
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 20.16.10
+
+  '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)':
     dependencies:
       '@eslint-community/regexpp': 4.11.1
-      '@typescript-eslint/parser': 8.8.0(eslint@8.57.1)(typescript@5.6.2)
+      '@typescript-eslint/parser': 7.18.0(eslint@8.57.1)(typescript@5.6.2)
       '@typescript-eslint/scope-manager': 7.18.0
       '@typescript-eslint/type-utils': 7.18.0(eslint@8.57.1)(typescript@5.6.2)
       '@typescript-eslint/utils': 7.18.0(eslint@8.57.1)(typescript@5.6.2)
@@ -8543,12 +8789,21 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
+  '@vercel/postgres@0.10.0':
+    dependencies:
+      '@neondatabase/serverless': 0.9.5
+      bufferutil: 4.0.9
+      ws: 8.18.2(bufferutil@4.0.9)
+    transitivePeerDependencies:
+      - utf-8-validate
+    optional: true
+
   '@vercel/style-guide@6.0.0(@next/eslint-plugin-next@14.2.13)(eslint@8.57.1)(prettier@3.3.3)(typescript@5.6.2)':
     dependencies:
       '@babel/core': 7.25.7
       '@babel/eslint-parser': 7.25.7(@babel/core@7.25.7)(eslint@8.57.1)
       '@rushstack/eslint-patch': 1.10.4
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
       '@typescript-eslint/parser': 7.18.0(eslint@8.57.1)(typescript@5.6.2)
       eslint-config-prettier: 9.1.0(eslint@8.57.1)
       eslint-import-resolver-alias: 1.1.2(eslint-plugin-import@2.31.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.1))
@@ -8872,7 +9127,7 @@ snapshots:
 
   babel-plugin-macros@3.1.0:
     dependencies:
-      '@babel/runtime': 7.25.7
+      '@babel/runtime': 7.27.1
       cosmiconfig: 7.1.0
       resolve: 1.22.8
 
@@ -8999,6 +9254,11 @@ snapshots:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
+
+  bufferutil@4.0.9:
+    dependencies:
+      node-gyp-build: 4.8.4
+    optional: true
 
   builtin-modules@3.3.0: {}
 
@@ -9452,7 +9712,7 @@ snapshots:
 
   dom-helpers@5.2.1:
     dependencies:
-      '@babel/runtime': 7.25.7
+      '@babel/runtime': 7.27.1
       csstype: 3.1.3
 
   dotenv-cli@7.4.2:
@@ -9481,10 +9741,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.33.0(@types/pg@8.11.10)(@types/react@18.3.11)(kysely@0.27.4)(pg@8.13.0)(react@18.3.1):
+  drizzle-orm@0.33.0(@neondatabase/serverless@1.0.0)(@types/pg@8.11.10)(@types/react@18.3.11)(@vercel/postgres@0.10.0)(kysely@0.27.4)(pg@8.13.0)(react@18.3.1):
     optionalDependencies:
+      '@neondatabase/serverless': 1.0.0
       '@types/pg': 8.11.10
       '@types/react': 18.3.11
+      '@vercel/postgres': 0.10.0
       kysely: 0.27.4
       pg: 8.13.0
       react: 18.3.1
@@ -9938,7 +10200,7 @@ snapshots:
       '@typescript-eslint/utils': 5.62.0(eslint@8.57.1)(typescript@5.6.2)
       eslint: 8.57.1
     optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -10050,18 +10312,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-unused-imports@4.1.4(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1):
+  eslint-plugin-unused-imports@4.1.4(@typescript-eslint/eslint-plugin@8.8.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
     optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
+      '@typescript-eslint/eslint-plugin': 8.8.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
 
   eslint-plugin-vitest@0.3.26(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2):
     dependencies:
       '@typescript-eslint/utils': 7.18.0(eslint@8.57.1)(typescript@5.6.2)
       eslint: 8.57.1
     optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.6.2))(eslint@8.57.1)(typescript@5.6.2)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -11069,17 +11331,24 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
+  kysely-neon@1.3.0(@neondatabase/serverless@1.0.0)(kysely@0.27.4)(ws@8.18.2(bufferutil@4.0.9)):
+    dependencies:
+      '@neondatabase/serverless': 1.0.0
+      kysely: 0.27.4
+    optionalDependencies:
+      ws: 8.18.2(bufferutil@4.0.9)
+
   kysely@0.27.4: {}
 
-  langchain@0.3.24(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))(axios@1.7.7)(openai@4.96.0(zod@3.23.8)):
+  langchain@0.3.24(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(axios@1.7.7)(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))(ws@8.18.2(bufferutil@4.0.9)):
     dependencies:
-      '@langchain/core': 0.3.49(openai@4.96.0(zod@3.23.8))
-      '@langchain/openai': 0.5.10(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))
-      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.49(openai@4.96.0(zod@3.23.8)))
+      '@langchain/core': 0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
+      '@langchain/openai': 0.5.10(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(ws@8.18.2(bufferutil@4.0.9))
+      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))
       js-tiktoken: 1.0.20
       js-yaml: 4.1.0
       jsonpointer: 5.0.1
-      langsmith: 0.3.21(openai@4.96.0(zod@3.23.8))
+      langsmith: 0.3.21(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
       openapi-types: 12.1.3
       p-retry: 4.6.2
       uuid: 10.0.0
@@ -11093,7 +11362,7 @@ snapshots:
       - openai
       - ws
 
-  langsmith@0.3.21(openai@4.96.0(zod@3.23.8)):
+  langsmith@0.3.21(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)):
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -11103,7 +11372,7 @@ snapshots:
       semver: 7.6.3
       uuid: 10.0.0
     optionalDependencies:
-      openai: 4.96.0(zod@3.23.8)
+      openai: 4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)
 
   language-subtag-registry@0.3.23: {}
 
@@ -11348,7 +11617,7 @@ snapshots:
 
   next-tick@1.1.0: {}
 
-  next@14.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@next/env': 14.2.13
       '@swc/helpers': 0.5.5
@@ -11358,7 +11627,7 @@ snapshots:
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.1(react@18.3.1)
+      styled-jsx: 5.1.1(@babel/core@7.25.7)(react@18.3.1)
     optionalDependencies:
       '@next/swc-darwin-arm64': 14.2.13
       '@next/swc-darwin-x64': 14.2.13
@@ -11384,6 +11653,9 @@ snapshots:
   node-fetch@2.7.0:
     dependencies:
       whatwg-url: 5.0.0
+
+  node-gyp-build@4.8.4:
+    optional: true
 
   node-releases@2.0.18: {}
 
@@ -11526,7 +11798,7 @@ snapshots:
     dependencies:
       mimic-fn: 4.0.0
 
-  openai@4.96.0(zod@3.23.8):
+  openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8):
     dependencies:
       '@types/node': 18.19.87
       '@types/node-fetch': 2.6.12
@@ -11536,6 +11808,7 @@ snapshots:
       formdata-node: 4.4.1
       node-fetch: 2.7.0
     optionalDependencies:
+      ws: 8.18.2(bufferutil@4.0.9)
       zod: 3.23.8
     transitivePeerDependencies:
       - encoding
@@ -11887,9 +12160,11 @@ snapshots:
 
   react-is@18.3.1: {}
 
+  react-is@19.1.0: {}
+
   react-transition-group@4.4.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      '@babel/runtime': 7.25.7
+      '@babel/runtime': 7.27.1
       dom-helpers: 5.2.1
       loose-envify: 1.4.0
       prop-types: 15.8.1
@@ -11971,7 +12246,7 @@ snapshots:
 
   regenerator-transform@0.15.2:
     dependencies:
-      '@babel/runtime': 7.25.7
+      '@babel/runtime': 7.27.1
 
   regex-cache@0.4.4:
     dependencies:
@@ -12432,10 +12707,12 @@ snapshots:
 
   strip-json-comments@3.1.1: {}
 
-  styled-jsx@5.1.1(react@18.3.1):
+  styled-jsx@5.1.1(@babel/core@7.25.7)(react@18.3.1):
     dependencies:
       client-only: 0.0.1
       react: 18.3.1
+    optionalDependencies:
+      '@babel/core': 7.25.7
 
   stylis-plugin-rtl@2.1.1(stylis@4.2.0):
     dependencies:
@@ -12580,14 +12857,14 @@ snapshots:
     dependencies:
       typescript: 5.6.2
 
-  ts-node@10.9.2(@swc/core@1.9.2(@swc/helpers@0.5.5))(@types/node@20.16.10)(typescript@5.6.2):
+  ts-node@10.9.2(@swc/core@1.9.2(@swc/helpers@0.5.5))(@types/node@22.15.19)(typescript@5.6.2):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.11
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 20.16.10
+      '@types/node': 22.15.19
       acorn: 8.12.1
       acorn-walk: 8.3.4
       arg: 4.1.3
@@ -12735,6 +13012,8 @@ snapshots:
   undici-types@5.26.5: {}
 
   undici-types@6.19.8: {}
+
+  undici-types@6.21.0: {}
 
   unicode-canonical-property-names-ecmascript@2.0.1: {}
 
@@ -12919,6 +13198,10 @@ snapshots:
       strip-ansi: 7.1.0
 
   wrappy@1.0.2: {}
+
+  ws@8.18.2(bufferutil@4.0.9):
+    optionalDependencies:
+      bufferutil: 4.0.9
 
   xtend@4.0.2: {}
 

@@ -1,8 +1,5 @@
 import FirecrawlApp, { type FirecrawlError } from "@mendable/firecrawl-js";
-import {
-  type DataDatabase,
-  type InsertableStockNews,
-} from "@zysk/db";
+import { type DataDatabase, type InsertableStockNews } from "@zysk/db";
 import { StockNewsStatus } from "@zysk/db";
 import axios, { type AxiosError } from "axios";
 import { startOfDay } from "date-fns";
@@ -33,10 +30,12 @@ export class TickerNewsService {
 
   async scrapeUrl(
     url: string,
+    timeout = 60000,
   ): Promise<{ url: string; markdown: string | undefined }> {
     return this.app
       .scrapeUrl(url, {
         formats: ["markdown"],
+        timeout,
       })
       .then((r) => {
         if (!r.success) {
@@ -69,6 +68,7 @@ export class TickerNewsService {
         this.logger.error(
           {
             error: fe.message,
+            statusCode: fe.statusCode,
           },
           `Error scraping URL: ${url}`,
         );
@@ -226,9 +226,7 @@ export class TickerNewsService {
       .execute();
   }
 
-  async getNewsByNewsIds(
-    newsIds: string[],
-  ) {
+  async getNewsByNewsIds(newsIds: string[]) {
     return this.db
       .selectFrom("app_data.stock_news")
       .selectAll()

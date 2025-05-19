@@ -23,5 +23,3 @@ export class FinnhubService {
     return response.data.filter((d) => symbols.includes(d.symbol));
   }
 }
-
-// export const finnhubService = new FinnhubService();

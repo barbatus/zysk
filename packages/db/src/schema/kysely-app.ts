@@ -5,6 +5,9 @@ import {
   type Selectable,
 } from "kysely";
 
+import { type predictionsTable } from "./predictions";
+import { type subscriptionsTable } from "./subscriptions";
+
 export interface UsersTable {
   id: Generated<string>;
   firstName: string;
@@ -52,14 +55,28 @@ export interface TickerQuotesTable {
   date: Date;
 }
 
+type SubscriptionsTableBase = typeof subscriptionsTable.$inferSelect;
+export interface SubscriptionsTable extends Omit<SubscriptionsTableBase, "id"> {
+  id: Generated<string>;
+}
+
+type PredictionsTableBase = typeof predictionsTable.$inferSelect;
+export interface PredictionsTable extends Omit<PredictionsTableBase, "id"> {
+  id: Generated<string>;
+}
+
 export interface Database {
   users: UsersTable;
   tickers: TickersTable;
   userTickers: UserTickersTable;
   tickerQuotes: TickerQuotesTable;
+  subscriptions: SubscriptionsTable;
+  predictions: PredictionsTable;
 }
 
-export type Users = Selectable<UsersTable>;
-export type Tickers = Selectable<TickersTable>;
-export type UserTickers = Selectable<UserTickersTable>;
-export type TickerQuotes = Selectable<TickerQuotesTable>;
+export type User = Selectable<UsersTable>;
+export type Ticker = Selectable<TickersTable>;
+export type UserTicker = Selectable<UserTickersTable>;
+export type TickerQuote = Selectable<TickerQuotesTable>;
+export type Subscription = Selectable<SubscriptionsTable>;
+export type Prediction = Selectable<PredictionsTable>;

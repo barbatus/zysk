@@ -12,7 +12,7 @@ const nextConfig = {
       },
     ];
   },
-  transpilePackages: ["@zysk/ts-rest", "@zysk/db"],
+  transpilePackages: ["@zysk/ts-rest", "@zysk/db", "@zysk/services"],
 };
 
 export default nextConfig;

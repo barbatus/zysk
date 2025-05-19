@@ -15,11 +15,14 @@ export function ReactQueryProvider({
 }) {
   const [queryClient] = useState(() => new QueryClient());
 
+  if (!apis.length) return children;
+
+  const api = apis[0];
   return (
     <QueryClientProvider client={queryClient}>
-      {apis.map((api, index) => (
-        <api.ReactQueryProvider key={index}>{children}</api.ReactQueryProvider>
-      ))}
+      <api.ReactQueryProvider>
+        <ReactQueryProvider apis={apis.slice(1)}>{children}</ReactQueryProvider>
+      </api.ReactQueryProvider>
     </QueryClientProvider>
   );
 }

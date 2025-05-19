@@ -63,15 +63,20 @@ export async function scrapeSymbolNews(url: string) {
         nextRetryDelay: `${Math.pow(2, attempt - 1) * ex.retryInSec}s`,
       });
     }
-    if (ex instanceof RequestTimeoutError && attempt < 3) {
+    if (ex instanceof RequestTimeoutError) {
       throw ApplicationFailure.create({
         type: "RequestTimeout",
-        nonRetryable: false,
+        nonRetryable: attempt >= 3,
         message: ex.message,
-        nextRetryDelay: `${Math.pow(2, attempt - 1) * 60}s`,
+        nextRetryDelay: `${Math.pow(2, attempt - 1) * 100}s`,
       });
     }
-    throw ex;
+    throw ApplicationFailure.create({
+      type: "ScapeError",
+      nonRetryable: true,
+      message: (ex as Error).message,
+      cause: ex as Error,
+    });
   }
 }
 

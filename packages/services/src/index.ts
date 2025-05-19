@@ -5,6 +5,7 @@ export * from "./experiment.service";
 export * from "./finnhub.service";
 export * from "./metrics.service";
 export * from "./portfolio.service";
+export * from "./subscriptions.service";
 export * from "./ticker-news.service";
 export * from "./ticket-info.service";
 export * from "./utils/exceptions";

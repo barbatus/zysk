@@ -63,7 +63,11 @@ export async function scrapeSymbolNews(symbol: string, sinceDate: Date) {
     const newsDateMap = mapKeys(currentNews, "url");
     for (let i = 0; i < currentNews.length; i += 100) {
       const tmpScrape = await executeChild(scrapeSymbolNewsUrls, {
-        args: [currentNews.slice(i, i + 100).map((c) => ({ ...c, symbol }))],
+        args: [
+          currentNews
+            .slice(i, i + 100)
+            .map((c) => ({ newsDate: c.newsDate, url: c.url, symbol })),
+        ],
       });
       scrapedNews.push(
         ...tmpScrape

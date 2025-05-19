@@ -79,4 +79,3 @@ export type Experiment = Selectable<Iexperiment>;
 export type StockNews = Selectable<IstockNews>;
 
 export type InsertableStockNews = Insertable<IstockNews>;
-

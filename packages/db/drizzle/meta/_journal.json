@@ -43,6 +43,20 @@
       "when": 1747238111699,
       "tag": "0005_fix_news_url",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1747645604237,
+      "tag": "0006_add_predictions",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1747645665237,
+      "tag": "0007_add_subscriptions",
+      "breakpoints": true
     }
   ]
 }
