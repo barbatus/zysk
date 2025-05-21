@@ -1,8 +1,4 @@
-import { type HasDefault, type NotNull } from "drizzle-orm";
-import {
-  type PgTimestampBuilderInitial,
-  type PgTimestampConfig,
-} from "drizzle-orm/pg-core";
+import { type PgTimestampConfig } from "drizzle-orm/pg-core";
 
 import { getTimestampColumn } from "./columns";
 import { updatedAt } from "./custom-types";
@@ -13,28 +9,13 @@ interface Options {
   camelCase?: boolean;
 }
 
-type ColTypeWithDefaultNotNull = NotNull<
-  HasDefault<PgTimestampBuilderInitial<string>>
->;
-type ColTypeNoDefaultNullable = PgTimestampBuilderInitial<string>;
-
-interface AuditColumns {
-  createdAt: ColTypeWithDefaultNotNull;
-  updatedAt: ColTypeWithDefaultNotNull;
-  deletedAt?: ColTypeNoDefaultNullable;
-}
-type AuditColumnsNoDeletedAt = Omit<AuditColumns, "deletedAt">;
-type AuditColumnsWithDeletedAt = AuditColumnsNoDeletedAt & {
-  deletedAt: ColTypeNoDefaultNullable;
-};
-
 const COL_NAMES = {
   createdAt: ["created_at", "createdAt"],
   updatedAt: ["updated_at", "updatedAt"],
   deletedAt: ["deleted_at", "deletedAt"],
 };
 
-function baseAuditColumns(options?: Options): AuditColumns {
+function baseAuditColumns(options?: Options) {
   const { deletedAt = false, camelCase = false } = options ?? {};
   const config: PgTimestampConfig = { withTimezone: true };
 
@@ -53,17 +34,15 @@ function baseAuditColumns(options?: Options): AuditColumns {
   };
 }
 
-export function auditColumns(
-  options?: Omit<Options, "deletedAt">,
-): AuditColumnsNoDeletedAt {
+export function auditColumns(options?: Omit<Options, "deletedAt">) {
   const columns = baseAuditColumns(options);
   delete columns.deletedAt;
-  return columns;
+  return columns as Omit<typeof columns, "deletedAt">;
 }
 
 export function auditColumnsWithDeletedAt(
   options?: Omit<Options, "deletedAt">,
-): AuditColumnsWithDeletedAt {
+) {
   const opts = {
     ...(options ?? {}),
     deletedAt: true,
@@ -74,5 +53,5 @@ export function auditColumnsWithDeletedAt(
       "Unexpectedly missing deletedAt def when calling auditColumnsWithDeletedAt",
     );
   }
-  return columns as AuditColumnsWithDeletedAt;
+  return columns;
 }

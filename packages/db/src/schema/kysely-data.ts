@@ -1,81 +1,70 @@
+import { type ColumnType, type Insertable, type Selectable } from "kysely";
+
+import { type CreateTableType, type Optional } from "../utils/custom-types";
+import { type experimentsTable } from "./experiments";
+import { type stockNewsTable } from "./stock-news";
 import {
-  type ColumnType,
-  type Generated,
-  type Insertable,
-  type Selectable,
-} from "kysely";
+  type companyProfiles,
+  type etfProfiles,
+  type tickerTimeSeries,
+} from "./tickers-info";
 
-import {
-  type EvaluationDetails,
-  type ExperimentTaskStatus,
-} from "./experiments";
-import { type StockNewsStatus } from "./stock-news";
+type CompanyProfilesTableBase = typeof companyProfiles.$inferSelect;
+export type CompanyProfilesTable = CreateTableType<
+  CompanyProfilesTableBase,
+  {
+    beta: ColumnType<string, Optional<string | number>>;
+  }
+>;
 
-export interface IalphaVantageCompanyOverviews {
-  symbol: string;
-  description: string;
-  sector: string;
-  country: string;
-  beta: number | null;
-}
+type ETFProfilesTableBase = typeof etfProfiles.$inferSelect;
+export type ETFProfilesTable = CreateTableType<
+  ETFProfilesTableBase,
+  {
+    inceptionDate: ColumnType<Date | null, Optional<string | Date>>;
+  }
+>;
 
-export interface IalphaVantageETFProfiles {
-  symbol: string;
-  inceptionDate: ColumnType<Date | null, string | undefined>;
-  sectors: {
-    name: string;
-    weight: number;
-  }[];
-}
+type TickerTimeSeriesTableBase = typeof tickerTimeSeries.$inferSelect;
+export type TickerTimeSeriesTable = CreateTableType<
+  TickerTimeSeriesTableBase,
+  {
+    date: ColumnType<Date, string | Date>;
+    openPrice: ColumnType<number, string | number>;
+    closePrice: ColumnType<number, string | number>;
+    high: ColumnType<number, string | number>;
+    low: ColumnType<number, string | number>;
+    volume: ColumnType<number, string | number>;
+  }
+>;
 
-export interface IalphaVantageTimeSeries {
-  symbol: string;
-  openPrice: number;
-  closePrice: number;
-  high: number;
-  low: number;
-  volume: number;
-  date: Date;
-}
+type ExperimentsTableBase = typeof experimentsTable.$inferSelect;
+export type ExperimentsTable = CreateTableType<ExperimentsTableBase>;
 
-export interface Iexperiment {
-  id: Generated<string>;
-  responseText: string | null;
-  responseJson: object | null;
-  createdAt: Generated<Date>;
-  updatedAt: Generated<Date>;
-  status: ExperimentTaskStatus;
-  details: EvaluationDetails | null;
-  version: number;
-}
-
-export interface IstockNews {
-  id: Generated<string>;
-  symbol: string;
-  url: string;
-  status: StockNewsStatus;
-  tokenSize: number;
-  markdown: string | null;
-  newsDate: ColumnType<Date, string | Date>;
-}
+type StockNewsTableBase = typeof stockNewsTable.$inferSelect;
+type StockNewsTable = CreateTableType<
+  StockNewsTableBase,
+  {
+    newsDate: ColumnType<Date, string | Date>;
+  }
+>;
 
 export interface DataDatabase {
-  "app_data.alphaVantageCompanyOverviews": IalphaVantageCompanyOverviews;
-  "app_data.alphaVantageETFProfiles": IalphaVantageETFProfiles;
-  "app_data.alphaVantageTimeSeries": IalphaVantageTimeSeries;
-  "app_data.experiments": Iexperiment;
-  "app_data.stock_news": IstockNews;
+  "app_data.company_profiles": CompanyProfilesTable;
+  "app_data.etf_profiles": ETFProfilesTable;
+  "app_data.ticker_time_series": TickerTimeSeriesTable;
+  "app_data.experiments": ExperimentsTable;
+  "app_data.stock_news": StockNewsTable;
 }
 
-export type AlphaVantageCompanyOverviews =
-  Selectable<IalphaVantageCompanyOverviews>;
+export type CompanyProfile = Selectable<CompanyProfilesTable>;
 
-export type AlphaVantageETFProfiles = Selectable<IalphaVantageETFProfiles>;
+export type ETFProfile = Selectable<ETFProfilesTable>;
 
-export type AlphaVantageTimeSeries = Selectable<IalphaVantageTimeSeries>;
+export type TickerTimeSeries = Selectable<TickerTimeSeriesTable>;
 
-export type Experiment = Selectable<Iexperiment>;
+export type Experiment = Selectable<ExperimentsTable>;
 
-export type StockNews = Selectable<IstockNews>;
+export type StockNews = Selectable<StockNewsTable>;
 
-export type InsertableStockNews = Insertable<IstockNews>;
+export type StockNewsUpdate = Insertable<StockNewsTable>;

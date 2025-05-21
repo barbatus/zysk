@@ -57,6 +57,13 @@
       "when": 1747645665237,
       "tag": "0007_add_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1747845731615,
+      "tag": "0008_refactor_table_names",
+      "breakpoints": true
     }
   ]
 }

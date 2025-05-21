@@ -9,13 +9,13 @@
     "dist/**"
   ],
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsc && tsc-alias",
+    "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
     "lint": "eslint . --ext .ts --color",
     "lint:fix": "pnpm lint --fix",
-    "kysely-schema": "pnpm dlx dotenv-cli -e ../../apps/web/.env.development -- kysely-codegen --out-file src/generated/schema.ts",
-    "generate": "pnpm dlx dotenv-cli -e ../../apps/web/.env.development -- drizzle-kit generate --name",
-    "migrate": "pnpm dlx dotenv-cli -e ../../apps/web/.env.development -- drizzle-kit migrate"
+    "kysely-schema": "pnpm dlx dotenv-cli -e ../../apps/web/.env.local -- kysely-codegen --out-file src/generated/schema.ts",
+    "generate": "pnpm dlx dotenv-cli -e ../../apps/web/.env.local -- drizzle-kit generate --name",
+    "migrate": "pnpm dlx dotenv-cli -e ../../apps/web/.env.local -- drizzle-kit migrate"
   },
   "dependencies": {
     "drizzle-orm": "^0.33.0",
@@ -26,9 +26,11 @@
     "@types/pg": "^8.11.10",
     "@zysk/eslint-config": "workspace:*",
     "@zysk/typescript-config": "workspace:*",
+    "concurrently": "^9.1.2",
     "dotenv": "^16.4.5",
     "drizzle-kit": "^0.24.2",
     "kysely-codegen": "^0.16.8",
-    "kysely-ctl": "^0.9.0"
+    "kysely-ctl": "^0.9.0",
+    "tsc-alias": "^1.8.16"
   }
 }

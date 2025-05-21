@@ -5,8 +5,11 @@ import {
   type Selectable,
 } from "kysely";
 
+import { type CreateTableType, type Optional } from "../utils/custom-types";
 import { type predictionsTable } from "./predictions";
+import { type quotesTable } from "./quotes";
 import { type subscriptionsTable } from "./subscriptions";
+import { type tickersTable, type userTickersTable } from "./tickers";
 
 export interface UsersTable {
   id: Generated<string>;
@@ -17,53 +20,52 @@ export interface UsersTable {
 
 export type TickerType = "stock" | "etp" | "reit" | "adr";
 
-export interface TickersTable {
-  symbol: string;
-  type: TickerType;
-  currency: string;
-  figi: string | null;
-  about: string;
-  sectors: JSONColumnType<
-    {
-      name: string;
-      weight: number;
-    }[]
-  >;
-  foundedAt: ColumnType<Date | null, string | undefined>;
-}
+type TickersTableBase = typeof tickersTable.$inferSelect;
+export type TickersTable = CreateTableType<
+  TickersTableBase,
+  {
+    sectors: JSONColumnType<
+      {
+        name: string;
+        weight: number;
+      }[]
+    >;
+    foundedAt: ColumnType<Date | null, Optional<Date>>;
+  }
+>;
 
-export interface UserTickersTable {
-  id: Generated<string>;
-  userId: string;
-  symbol: string;
-  amount: number;
-  openedAt: ColumnType<Date, string, never>;
-  openPrice: number | null;
-  closedAt: ColumnType<Date, string, never>;
-  closePrice: number | null;
-}
+type UserTickersTableBase = typeof userTickersTable.$inferSelect;
+export type UserTickersTable = CreateTableType<
+  UserTickersTableBase,
+  {
+    openedAt: ColumnType<Date, string, never>;
+    closedAt: ColumnType<Date, string, never>;
+    amount: ColumnType<number, string | number>;
+    openPrice: ColumnType<number, string | number>;
+    closePrice: ColumnType<number, string | number>;
+  }
+>;
 
-export interface TickerQuotesTable {
-  symbol: string;
-  openPrice: number;
-  closePrice: number;
-  high: number;
-  low: number;
-  volume: number;
-  splitCoeff: number | null;
-  divident: number | null;
-  date: Date;
-}
+type TickerQuotesTableBase = typeof quotesTable.$inferSelect;
+export type TickerQuotesTable = CreateTableType<
+  TickerQuotesTableBase,
+  {
+    date: ColumnType<Date, string | Date>;
+    openPrice: ColumnType<number, string | number>;
+    closePrice: ColumnType<number, string | number>;
+    high: ColumnType<number, string | number>;
+    low: ColumnType<number, string | number>;
+    volume: ColumnType<number, string | number>;
+    splitCoeff: ColumnType<number, string | number | null>;
+    divident: ColumnType<number, string | number | null>;
+  }
+>;
 
 type SubscriptionsTableBase = typeof subscriptionsTable.$inferSelect;
-export interface SubscriptionsTable extends Omit<SubscriptionsTableBase, "id"> {
-  id: Generated<string>;
-}
+export type SubscriptionsTable = CreateTableType<SubscriptionsTableBase>;
 
 type PredictionsTableBase = typeof predictionsTable.$inferSelect;
-export interface PredictionsTable extends Omit<PredictionsTableBase, "id"> {
-  id: Generated<string>;
-}
+export type PredictionsTable = CreateTableType<PredictionsTableBase>;
 
 export interface Database {
   users: UsersTable;

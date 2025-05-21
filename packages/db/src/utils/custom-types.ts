@@ -4,6 +4,7 @@ import {
   type PgTimestampBuilderInitial,
   timestamp,
 } from "drizzle-orm/pg-core";
+import { type ColumnType as KyselyColumnType, type Generated } from "kysely";
 
 interface CustomTypeMeta {
   isUpdatedAt?: boolean;
@@ -68,3 +69,20 @@ export function createCustomTypeWithMeta<T extends ColumnType>(
 export const updatedAt = createCustomTypeWithMeta<typeof timestamp>(timestamp, {
   isUpdatedAt: true,
 });
+
+export interface BaseTableFields {
+  id: Generated<string>;
+  createdAt: Generated<Date>;
+  updatedAt: Generated<Date>;
+}
+
+export type CreateTableType<
+  TBase extends Record<string, unknown>,
+  TColumnFields extends Partial<
+    Record<keyof TBase, KyselyColumnType<unknown, unknown>>
+  > = Partial<Record<never, never>>,
+> = Omit<TBase, keyof TColumnFields | keyof BaseTableFields> &
+  BaseTableFields &
+  TColumnFields;
+
+export type Optional<T> = T | undefined | null;

@@ -24,9 +24,9 @@ export const stockNewsTable = mySchema.table(
     symbol: varchar("symbol", { length: 40 }).notNull(),
     url: varchar("url", { length: 2048 }).notNull(),
     status: validatedStringEnum("status", StockNewsStatus).notNull(),
-    token_size: integer("token_size"),
+    tokenSize: integer("token_size").notNull().default(0),
     markdown: text("markdown"),
-    news_date: timestamp("news_date", { withTimezone: true }).notNull(),
+    newsDate: timestamp("news_date", { withTimezone: true }).notNull(),
     ...auditColumns(),
   },
   (t) => ({

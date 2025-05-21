@@ -1,7 +1,5 @@
-import { type PgTimestampBuilderInitial, timestamp } from "drizzle-orm/pg-core";
+import { timestamp } from "drizzle-orm/pg-core";
 
-export function getTimestampColumn(
-  name: string,
-): PgTimestampBuilderInitial<string> {
+export function getTimestampColumn(name: string) {
   return timestamp(name, { withTimezone: true });
 }
