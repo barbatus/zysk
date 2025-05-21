@@ -4,6 +4,12 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  zod:
+    zod:
+      specifier: ^3.23.8
+      version: 3.25.17
+
 importers:
 
   .:
@@ -21,8 +27,8 @@ importers:
         specifier: ^4.17.21
         version: 4.17.21
       zod:
-        specifier: ^3.23.8
-        version: 3.23.8
+        specifier: catalog:zod
+        version: 3.25.17
     devDependencies:
       '@total-typescript/ts-reset':
         specifier: ^0.6.1
@@ -44,13 +50,13 @@ importers:
     dependencies:
       '@langchain/core':
         specifier: ^0.3.49
-        version: 0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
+        version: 0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
       '@langchain/openai':
         specifier: ^0.5.10
-        version: 0.5.10(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(ws@8.18.2(bufferutil@4.0.9))
+        version: 0.5.10(@langchain/core@0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(ws@8.18.2(bufferutil@4.0.9))
       '@langchain/textsplitters':
         specifier: ^0.1.0
-        version: 0.1.0(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))
+        version: 0.1.0(@langchain/core@0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))
       '@temporalio/activity':
         specifier: ^1.11.8
         version: 1.11.8
@@ -80,10 +86,13 @@ importers:
         version: 16.4.5
       langchain:
         specifier: ^0.3.24
-        version: 0.3.24(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(axios@1.7.7)(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))(ws@8.18.2(bufferutil@4.0.9))
+        version: 0.3.24(@langchain/core@0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(axios@1.7.7)(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))(ws@8.18.2(bufferutil@4.0.9))
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
+      openai:
+        specifier: ^4.100.0
+        version: 4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)
       pino:
         specifier: ^9.6.0
         version: 9.6.0
@@ -180,16 +189,16 @@ importers:
         version: 8.20.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@ts-rest/core':
         specifier: ^3.51.0
-        version: 3.51.0(@types/node@20.16.10)(zod@3.23.8)
+        version: 3.51.0(@types/node@20.16.10)(zod@3.25.17)
       '@ts-rest/next':
         specifier: ^3.51.0
-        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)
+        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)
       '@ts-rest/react-query':
         specifier: ^3.51.0
-        version: 3.51.0(@tanstack/react-query@5.59.15(react@18.3.1))(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(react@18.3.1)(zod@3.23.8)
+        version: 3.51.0(@tanstack/react-query@5.59.15(react@18.3.1))(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(react@18.3.1)(zod@3.25.17)
       '@ts-rest/serverless':
         specifier: ^3.51.0
-        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)
+        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)
       '@zysk/cube':
         specifier: workspace:*
         version: link:../cube
@@ -224,8 +233,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1(stylis@4.2.0)
       zod:
-        specifier: ^3.23.8
-        version: 3.23.8
+        specifier: catalog:zod
+        version: 3.25.17
     devDependencies:
       '@mui/types':
         specifier: ^7.4.2
@@ -284,6 +293,9 @@ importers:
       '@zysk/typescript-config':
         specifier: workspace:*
         version: link:../config-typescript
+      concurrently:
+        specifier: ^9.1.2
+        version: 9.1.2
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -296,6 +308,9 @@ importers:
       kysely-ctl:
         specifier: ^0.9.0
         version: 0.9.0(kysely@0.27.4)
+      tsc-alias:
+        specifier: ^1.8.16
+        version: 1.8.16
 
   packages/eslint-config:
     dependencies:
@@ -368,8 +383,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       '@mendable/firecrawl-js':
-        specifier: ^1.24.0
-        version: 1.24.0
+        specifier: ^1.25.0
+        version: 1.25.0
       '@neondatabase/serverless':
         specifier: ^1.0.0
         version: 1.0.0
@@ -425,8 +440,8 @@ importers:
         specifier: ^8.18.2
         version: 8.18.2(bufferutil@4.0.9)
       zod:
-        specifier: ^3.23.8
-        version: 3.23.8
+        specifier: catalog:zod
+        version: 3.25.17
     devDependencies:
       '@total-typescript/ts-reset':
         specifier: ^0.6.1
@@ -460,13 +475,13 @@ importers:
     dependencies:
       '@ts-rest/core':
         specifier: ^3.51.0
-        version: 3.51.0(@types/node@22.15.19)(zod@3.23.8)
+        version: 3.51.0(@types/node@22.15.19)(zod@3.25.17)
       '@zysk/cube':
         specifier: workspace:*
         version: link:../../apps/cube
       zod:
-        specifier: ^3.23.8
-        version: 3.23.8
+        specifier: catalog:zod
+        version: 3.25.17
     devDependencies:
       '@zysk/typescript-config':
         specifier: workspace:*
@@ -1743,8 +1758,8 @@ packages:
     peerDependencies:
       '@langchain/core': '>=0.2.21 <0.4.0'
 
-  '@mendable/firecrawl-js@1.24.0':
-    resolution: {integrity: sha512-UWcyeZm23OmfskRamaT0MERn6jAmVjFsDh9/FIuj4YmG8VCZw9FvLGEioXKhTAITZ8uCeGTGarcybF86txIpkA==}
+  '@mendable/firecrawl-js@1.25.0':
+    resolution: {integrity: sha512-5wiUwII3sWUDrFAXl4mHrh6vRtpuemkYJmngzNLJeLgyIsaVHNu38dDAjp2FaLKAuu9AS1gNOKYOn+add9pKHA==}
     engines: {node: '>=22.0.0'}
 
   '@microsoft/tsdoc-config@0.16.2':
@@ -1767,8 +1782,8 @@ packages:
   '@mui/core-downloads-tracker@5.16.7':
     resolution: {integrity: sha512-RtsCt4Geed2/v74sbihWzzRs+HsIQCfclHeORh5Ynu2fS4icIKozcSubwuG7vtzq2uW3fOR1zITSP84TNt2GoQ==}
 
-  '@mui/core-downloads-tracker@6.1.2':
-    resolution: {integrity: sha512-1oE4U38/TtzLWRYWEm/m70dUbpcvBx0QvDVg6NtpOmSNQC1Mbx0X/rNvYDdZnn8DIsAiVQ+SZ3am6doSswUQ4g==}
+  '@mui/core-downloads-tracker@6.4.11':
+    resolution: {integrity: sha512-CzAQs9CTzlwbsF9ZYB4o4lLwBv1/qNE264NjuYao+ctAXsmlPtYa8RtER4UsUXSMxNN9Qi+aQdYcKl2sUpnmAw==}
 
   '@mui/icons-material@6.1.2':
     resolution: {integrity: sha512-7NNcjW5JoT9jHagrVbARA1o41vQY2xezDamtke+mEKKZmsJyejfRBOacSrPDfjZQ//lyhIjNKyzAwisxYJR47w==}
@@ -1828,8 +1843,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@mui/private-theming@6.1.2':
-    resolution: {integrity: sha512-S8WcjZdNdi++8UhrrY8Lton5h/suRiQexvdTfdcPAlbajlvgM+kx+uJstuVIEyTb3gMkxzIZep87knZ0tqcR0g==}
+  '@mui/private-theming@6.4.9':
+    resolution: {integrity: sha512-LktcVmI5X17/Q5SkwjCcdOLBzt1hXuc14jYa7NPShog0GBDCDvKtcnP0V7a2s6EiVRlv7BzbWEJzH6+l/zaCxw==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -1861,8 +1876,8 @@ packages:
       '@emotion/styled':
         optional: true
 
-  '@mui/styled-engine@6.1.2':
-    resolution: {integrity: sha512-uKOfWkR23X39xj7th2nyTcCHqInTAXtUnqD3T5qRVdJcOPvu1rlgTleTwJC/FJvWZJBU6ieuTWDhbcx5SNViHQ==}
+  '@mui/styled-engine@6.4.11':
+    resolution: {integrity: sha512-74AUmlHXaGNbyUqdK/+NwDJOZqgRQw6BcNvhoWYLq3LGbLTkE+khaJ7soz6cIabE4CPYqO2/QAIU1Z/HEjjpcw==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@emotion/react': ^11.4.1
@@ -1903,8 +1918,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@mui/system@6.1.2':
-    resolution: {integrity: sha512-mzW7F1ZMIYS1aLON48Nrk9c65OrVEVQ+R4lUcTWs1lCSul0VGK23eo4dmY0NX5PS7Oe4xz3P5B9tQZZ7SYgxcg==}
+  '@mui/system@6.4.11':
+    resolution: {integrity: sha512-gibtsrZEwnDaT5+I/KloOj/yHluX5G8heknuxBpQOdEQ3Gc0avjSImn5hSeKp8D4thiwZiApuggIjZw1dQguUA==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@emotion/react': ^11.5.0
@@ -1935,6 +1950,14 @@ packages:
       '@types/react':
         optional: true
 
+  '@mui/types@7.2.24':
+    resolution: {integrity: sha512-3c8tRt/CbWZ+pEg7QpSwbdxOk36EfmhbKf6AGZsD1EcLDLTSZoxxJ86FVtcjxvjuhdyBiWKSTGZFaXCnidO2kw==}
+    peerDependencies:
+      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
   '@mui/types@7.4.2':
     resolution: {integrity: sha512-edRc5JcLPsrlNFYyTPxds+d5oUovuUxnnDtpJUbP6WMeV4+6eaX/mqai1ZIWT62lCOe0nlrON0s9HDiv5en5bA==}
     peerDependencies:
@@ -1955,6 +1978,16 @@ packages:
 
   '@mui/utils@6.1.2':
     resolution: {integrity: sha512-6+B1YZ8cCBWD1fc3RjqpclF9UA0MLUiuXhyCO+XowD/Z2ku5IlxeEhHHlgglyBWFGMu4kib4YU3CDsG5/zVjJQ==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
+  '@mui/utils@6.4.9':
+    resolution: {integrity: sha512-Y12Q9hbK9g+ZY0T3Rxrx9m2m10gaphDuUMgWxyV5kNJevVxXYCLclYUCC9vXaIk1/NdNDTcW2Yfr2OGvNFNmHg==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -2371,8 +2404,10 @@ packages:
   '@types/react-dom@18.3.0':
     resolution: {integrity: sha512-EhwApuTmMBmXuFOikhQLIBUn6uFg81SwLMOAUgodJF14SOBOCMdU04gDoYi0WOJJHD144TL32z4yDqCW3dnkQg==}
 
-  '@types/react-transition-group@4.4.11':
-    resolution: {integrity: sha512-RM05tAniPZ5DZPzzNFP+DmrcOdD0efDUxMy3145oljWSl3x9ZV5vhme98gTxFrj2lhXvmGNnUiuDyJgY9IKkNA==}
+  '@types/react-transition-group@4.4.12':
+    resolution: {integrity: sha512-8TV6R3h2j7a91c+1DXdJi3Syo69zzIZbz7Lg5tORM5LEJG7X/E6a1V3drRyBRZq7/utz7A+c4OgYLiLcYGHG6w==}
+    peerDependencies:
+      '@types/react': '*'
 
   '@types/react@18.3.11':
     resolution: {integrity: sha512-r6QZ069rFTjrEYgFdOck1gK7FLVsgJE7tTz0pQBczlBNUhBNk0MQH4UbnFSwjpQLMkLzgqvBBa+qGpLje16eTQ==}
@@ -5181,8 +5216,8 @@ packages:
     resolution: {integrity: sha512-1FlR+gjXK7X+AsAHso35MnyN5KqGwJRi/31ft6x0M194ht7S+rWAvd7PHss9xSKMzE0asv1pyIHaJYq+BbacAQ==}
     engines: {node: '>=12'}
 
-  openai@4.96.0:
-    resolution: {integrity: sha512-dKoW56i02Prv2XQolJ9Rl9Svqubqkzg3QpwEOBuSVZLk05Shelu7s+ErRTwFc1Bs3JZ2qBqBfVpXQiJhwOGG8A==}
+  openai@4.100.0:
+    resolution: {integrity: sha512-9soq/wukv3utxcuD7TWFqKdKp0INWdeyhUCvxwrne5KwnxaCp4eHL4GdT/tMFhYolxgNhxFzg5GFwM331Z5CZg==}
     hasBin: true
     peerDependencies:
       ws: ^8.18.0
@@ -5332,6 +5367,9 @@ packages:
     resolution: {integrity: sha512-ZOBQForurqh4zZWjrgSwwAtzJ7QiRX0ovFkZr2klsen3Nm0aoh33Ls0fzfv3imeH/nw/O27cjdz5kzYJfeGp/g==}
     peerDependencies:
       pg: '>=8.0'
+
+  pg-protocol@1.10.0:
+    resolution: {integrity: sha512-IpdytjudNuLv8nhlHs/UrVBhU0e78J0oIS/0AVdTbWxSOkFUVdsHC/NrorO6nXsQNDTT1kzDSOMJubBQviX18Q==}
 
   pg-protocol@1.7.0:
     resolution: {integrity: sha512-hTK/mE36i8fDDhgDFjy6xNOG+LCorxLG3WO17tku+ij6sVHXh1jQUJ8hYAnRhNla4QVD2H8er/FOjc/+EgC6yQ==}
@@ -6557,6 +6595,9 @@ packages:
 
   zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
+
+  zod@3.25.17:
+    resolution: {integrity: sha512-8hQzQ/kMOIFbwOgPrm9Sf9rtFHpFUMy4HvN0yEB0spw14aYi0uT5xG5CE2DB9cd51GWNsz+DNO7se1kztHMKnw==}
 
 snapshots:
 
@@ -7924,45 +7965,45 @@ snapshots:
     dependencies:
       tslib: 2.7.0
 
-  '@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))':
+  '@langchain/core@0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.20
-      langsmith: 0.3.21(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
+      langsmith: 0.3.21(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
       uuid: 10.0.0
-      zod: 3.23.8
-      zod-to-json-schema: 3.24.5(zod@3.23.8)
+      zod: 3.25.17
+      zod-to-json-schema: 3.24.5(zod@3.25.17)
     transitivePeerDependencies:
       - openai
 
-  '@langchain/openai@0.5.10(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(ws@8.18.2(bufferutil@4.0.9))':
+  '@langchain/openai@0.5.10(@langchain/core@0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(ws@8.18.2(bufferutil@4.0.9))':
     dependencies:
-      '@langchain/core': 0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
+      '@langchain/core': 0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
       js-tiktoken: 1.0.20
-      openai: 4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)
-      zod: 3.23.8
-      zod-to-json-schema: 3.24.5(zod@3.23.8)
+      openai: 4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.25.17)
+      zod: 3.25.17
+      zod-to-json-schema: 3.24.5(zod@3.25.17)
     transitivePeerDependencies:
       - encoding
       - ws
 
-  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))':
+  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))':
     dependencies:
-      '@langchain/core': 0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
+      '@langchain/core': 0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
       js-tiktoken: 1.0.20
 
-  '@mendable/firecrawl-js@1.24.0':
+  '@mendable/firecrawl-js@1.25.0':
     dependencies:
       axios: 1.7.7
       typescript-event-target: 1.1.1
-      zod: 3.23.8
-      zod-to-json-schema: 3.24.5(zod@3.23.8)
+      zod: 3.25.17
+      zod-to-json-schema: 3.24.5(zod@3.25.17)
     transitivePeerDependencies:
       - debug
 
@@ -7991,7 +8032,7 @@ snapshots:
 
   '@mui/core-downloads-tracker@5.16.7': {}
 
-  '@mui/core-downloads-tracker@6.1.2': {}
+  '@mui/core-downloads-tracker@6.4.11': {}
 
   '@mui/icons-material@6.1.2(@mui/material@6.1.2(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)':
     dependencies:
@@ -8021,12 +8062,12 @@ snapshots:
   '@mui/material@6.1.2(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.27.1
-      '@mui/core-downloads-tracker': 6.1.2
-      '@mui/system': 6.1.2(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
+      '@mui/core-downloads-tracker': 6.4.11
+      '@mui/system': 6.4.11(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
       '@mui/types': 7.4.2(@types/react@18.3.11)
-      '@mui/utils': 6.1.2(@types/react@18.3.11)(react@18.3.1)
+      '@mui/utils': 6.4.9(@types/react@18.3.11)(react@18.3.1)
       '@popperjs/core': 2.11.8
-      '@types/react-transition-group': 4.4.11
+      '@types/react-transition-group': 4.4.12(@types/react@18.3.11)
       clsx: 2.1.1
       csstype: 3.1.3
       prop-types: 15.8.1
@@ -8048,10 +8089,10 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.11
 
-  '@mui/private-theming@6.1.2(@types/react@18.3.11)(react@18.3.1)':
+  '@mui/private-theming@6.4.9(@types/react@18.3.11)(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.27.1
-      '@mui/utils': 6.1.2(@types/react@18.3.11)(react@18.3.1)
+      '@mui/utils': 6.4.9(@types/react@18.3.11)(react@18.3.1)
       prop-types: 15.8.1
       react: 18.3.1
     optionalDependencies:
@@ -8077,10 +8118,11 @@ snapshots:
       '@emotion/react': 11.13.3(@types/react@18.3.11)(react@18.3.1)
       '@emotion/styled': 11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
 
-  '@mui/styled-engine@6.1.2(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)':
+  '@mui/styled-engine@6.4.11(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.27.1
       '@emotion/cache': 11.14.0
+      '@emotion/serialize': 1.3.3
       '@emotion/sheet': 1.4.0
       csstype: 3.1.3
       prop-types: 15.8.1
@@ -8118,13 +8160,13 @@ snapshots:
       '@emotion/styled': 11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
       '@types/react': 18.3.11
 
-  '@mui/system@6.1.2(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)':
+  '@mui/system@6.4.11(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.27.1
-      '@mui/private-theming': 6.1.2(@types/react@18.3.11)(react@18.3.1)
-      '@mui/styled-engine': 6.1.2(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)
-      '@mui/types': 7.4.2(@types/react@18.3.11)
-      '@mui/utils': 6.1.2(@types/react@18.3.11)(react@18.3.1)
+      '@mui/private-theming': 6.4.9(@types/react@18.3.11)(react@18.3.1)
+      '@mui/styled-engine': 6.4.11(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)
+      '@mui/types': 7.2.24(@types/react@18.3.11)
+      '@mui/utils': 6.4.9(@types/react@18.3.11)(react@18.3.1)
       clsx: 2.1.1
       csstype: 3.1.3
       prop-types: 15.8.1
@@ -8148,6 +8190,10 @@ snapshots:
     optionalDependencies:
       '@emotion/react': 11.13.3(@types/react@18.3.11)(react@18.3.1)
       '@emotion/styled': 11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
+      '@types/react': 18.3.11
+
+  '@mui/types@7.2.24(@types/react@18.3.11)':
+    optionalDependencies:
       '@types/react': 18.3.11
 
   '@mui/types@7.4.2(@types/react@18.3.11)':
@@ -8177,6 +8223,18 @@ snapshots:
       prop-types: 15.8.1
       react: 18.3.1
       react-is: 18.3.1
+    optionalDependencies:
+      '@types/react': 18.3.11
+
+  '@mui/utils@6.4.9(@types/react@18.3.11)(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.27.1
+      '@mui/types': 7.2.24(@types/react@18.3.11)
+      '@types/prop-types': 15.7.14
+      clsx: 2.1.1
+      prop-types: 15.8.1
+      react: 18.3.1
+      react-is: 19.1.0
     optionalDependencies:
       '@types/react': 18.3.11
 
@@ -8460,38 +8518,38 @@ snapshots:
 
   '@total-typescript/ts-reset@0.6.1': {}
 
-  '@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8)':
+  '@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17)':
     optionalDependencies:
       '@types/node': 20.16.10
-      zod: 3.23.8
+      zod: 3.25.17
 
-  '@ts-rest/core@3.51.0(@types/node@22.15.19)(zod@3.23.8)':
+  '@ts-rest/core@3.51.0(@types/node@22.15.19)(zod@3.25.17)':
     optionalDependencies:
       '@types/node': 22.15.19
-      zod: 3.23.8
+      zod: 3.25.17
 
-  '@ts-rest/next@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)':
+  '@ts-rest/next@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)':
     dependencies:
-      '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.23.8)
+      '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.25.17)
       next: 14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     optionalDependencies:
-      zod: 3.23.8
+      zod: 3.25.17
 
-  '@ts-rest/react-query@3.51.0(@tanstack/react-query@5.59.15(react@18.3.1))(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(react@18.3.1)(zod@3.23.8)':
+  '@ts-rest/react-query@3.51.0(@tanstack/react-query@5.59.15(react@18.3.1))(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(react@18.3.1)(zod@3.25.17)':
     dependencies:
       '@tanstack/react-query': 5.59.15(react@18.3.1)
-      '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.23.8)
+      '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.25.17)
       react: 18.3.1
     optionalDependencies:
-      zod: 3.23.8
+      zod: 3.25.17
 
-  '@ts-rest/serverless@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.23.8))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)':
+  '@ts-rest/serverless@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)':
     dependencies:
-      '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.23.8)
+      '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.25.17)
       itty-router: 5.0.18
     optionalDependencies:
       next: 14.2.13(@babel/core@7.25.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      zod: 3.23.8
+      zod: 3.25.17
 
   '@tsconfig/node10@1.0.11': {}
 
@@ -8553,7 +8611,7 @@ snapshots:
   '@types/pg@8.11.6':
     dependencies:
       '@types/node': 20.16.10
-      pg-protocol: 1.7.0
+      pg-protocol: 1.10.0
       pg-types: 4.0.2
     optional: true
 
@@ -8565,7 +8623,7 @@ snapshots:
     dependencies:
       '@types/react': 18.3.11
 
-  '@types/react-transition-group@4.4.11':
+  '@types/react-transition-group@4.4.12(@types/react@18.3.11)':
     dependencies:
       '@types/react': 18.3.11
 
@@ -11340,21 +11398,21 @@ snapshots:
 
   kysely@0.27.4: {}
 
-  langchain@0.3.24(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(axios@1.7.7)(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))(ws@8.18.2(bufferutil@4.0.9)):
+  langchain@0.3.24(@langchain/core@0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(axios@1.7.7)(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))(ws@8.18.2(bufferutil@4.0.9)):
     dependencies:
-      '@langchain/core': 0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
-      '@langchain/openai': 0.5.10(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(ws@8.18.2(bufferutil@4.0.9))
-      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.49(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))
+      '@langchain/core': 0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
+      '@langchain/openai': 0.5.10(@langchain/core@0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))(ws@8.18.2(bufferutil@4.0.9))
+      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)))
       js-tiktoken: 1.0.20
       js-yaml: 4.1.0
       jsonpointer: 5.0.1
-      langsmith: 0.3.21(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
+      langsmith: 0.3.21(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8))
       openapi-types: 12.1.3
       p-retry: 4.6.2
       uuid: 10.0.0
       yaml: 2.7.1
-      zod: 3.23.8
-      zod-to-json-schema: 3.24.5(zod@3.23.8)
+      zod: 3.25.17
+      zod-to-json-schema: 3.24.5(zod@3.25.17)
     optionalDependencies:
       axios: 1.7.7
     transitivePeerDependencies:
@@ -11362,7 +11420,7 @@ snapshots:
       - openai
       - ws
 
-  langsmith@0.3.21(openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)):
+  langsmith@0.3.21(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)):
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -11372,7 +11430,7 @@ snapshots:
       semver: 7.6.3
       uuid: 10.0.0
     optionalDependencies:
-      openai: 4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)
+      openai: 4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8)
 
   language-subtag-registry@0.3.23: {}
 
@@ -11798,7 +11856,7 @@ snapshots:
     dependencies:
       mimic-fn: 4.0.0
 
-  openai@4.96.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8):
+  openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.23.8):
     dependencies:
       '@types/node': 18.19.87
       '@types/node-fetch': 2.6.12
@@ -11810,6 +11868,21 @@ snapshots:
     optionalDependencies:
       ws: 8.18.2(bufferutil@4.0.9)
       zod: 3.23.8
+    transitivePeerDependencies:
+      - encoding
+
+  openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.25.17):
+    dependencies:
+      '@types/node': 18.19.87
+      '@types/node-fetch': 2.6.12
+      abort-controller: 3.0.0
+      agentkeepalive: 4.6.0
+      form-data-encoder: 1.7.2
+      formdata-node: 4.4.1
+      node-fetch: 2.7.0
+    optionalDependencies:
+      ws: 8.18.2(bufferutil@4.0.9)
+      zod: 3.25.17
     transitivePeerDependencies:
       - encoding
 
@@ -11935,6 +12008,9 @@ snapshots:
   pg-pool@3.7.0(pg@8.13.0):
     dependencies:
       pg: 8.13.0
+
+  pg-protocol@1.10.0:
+    optional: true
 
   pg-protocol@1.7.0: {}
 
@@ -13236,8 +13312,10 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-to-json-schema@3.24.5(zod@3.23.8):
+  zod-to-json-schema@3.24.5(zod@3.25.17):
     dependencies:
-      zod: 3.23.8
+      zod: 3.25.17
 
   zod@3.23.8: {}
+
+  zod@3.25.17: {}

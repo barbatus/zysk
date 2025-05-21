@@ -1,3 +1,7 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+catalogs:
+  zod:
+    zod: ^3.23.8
