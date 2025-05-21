@@ -1,10 +1,25 @@
-import { neonConfig } from "@neondatabase/serverless";
+import { neonConfig, types } from "@neondatabase/serverless";
 import { type Database, type DataDatabase } from "@zysk/db";
 import { CamelCasePlugin, Kysely } from "kysely";
 import { NeonDialect } from "kysely-neon";
 import ws from "ws";
 
 import { type AppConfig, NodeEnvironment } from "../config";
+
+// date
+types.setTypeParser(170, (val) => {
+  return new Date(val);
+});
+
+// float
+types.setTypeParser(175, (val) => {
+  return parseFloat(val);
+});
+
+// bigint
+types.setTypeParser(20, (val) => {
+  return parseInt(val, 10);
+});
 
 export function createDb<T extends DataDatabase | Database>(config: AppConfig) {
   const dbHost =

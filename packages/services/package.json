@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@cubejs-client/core": "^1.0.0",
-    "@mendable/firecrawl-js": "^1.24.0",
+    "@mendable/firecrawl-js": "^1.25.0",
     "@neondatabase/serverless": "^1.0.0",
     "@temporalio/workflow": "^1.11.3",
     "@zysk/cube": "workspace:*",
@@ -35,7 +35,7 @@
     "pino": "^9.6.0",
     "pino-pretty": "^13.0.0",
     "ws": "^8.18.2",
-    "zod": "^3.23.8"
+    "zod": "catalog:zod"
   },
   "devDependencies": {
     "@total-typescript/ts-reset": "^0.6.1",

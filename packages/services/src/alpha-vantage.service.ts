@@ -147,5 +147,3 @@ export class AlphaVantageService {
     };
   }
 }
-
-// export const alphaVantageService = new AlphaVantageService();

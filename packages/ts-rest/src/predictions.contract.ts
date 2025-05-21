@@ -20,7 +20,7 @@ export const PredictionSchema = z.object({
   symbol: z.string(),
   prediction: z.nativeEnum(PredictionEnum),
   confidence: z.number(),
-  createdAt: z.date(),
+  createdAt: z.coerce.date(),
   insights: z.array(InsightSchema),
 });
 

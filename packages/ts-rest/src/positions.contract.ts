@@ -7,8 +7,8 @@ const PositionSchema = z.object({
   id: z.string().uuid(),
   symbol: z.string(),
   amount: z.number(),
-  openedAt: z.date(),
-  closedAt: z.date().nullable(),
+  openedAt: z.coerce.date(),
+  closedAt: z.coerce.date().nullable(),
   openPrice: z.number().nullable(),
   closePrice: z.number().nullable(),
 });
