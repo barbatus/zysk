@@ -7,23 +7,32 @@ import { type AbstractContainer } from "../core/base";
 import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
 import { type AgentPrompt, ExperimentAgent } from "./experiment.agent";
-import { nextWeekTicketMarketPredictionPrompt } from "./prompts/next-week-prediction.prompt";
+import {
+  nextWeekGeneralMarketPredictionPrompt,
+  nextWeekTicketMarketPredictionPrompt,
+} from "./prompts/next-week-prediction.prompt";
 import { type Prediction } from "./prompts/prediction-parser";
 import { predictionsMergerPrompt } from "./prompts/predictions-merger.prompt";
 
 const experimentService = resolve(ExperimentService);
 
-export class NewsBasedTickerMarketPredictorAgent extends ExperimentAgent<Prediction> {
-  private readonly symbol: string;
-  private readonly news: { markdown: string; date: Date; url: string }[];
+interface NewsBasedSymbolPredictorParams {
+  state: Experiment;
+  symbol: string;
+  prompt: AgentPrompt<Prediction>;
+  model: AbstractContainer;
+  news: { markdown: string; url: string; date: Date }[];
+}
 
-  constructor(params: {
-    state: Experiment;
-    symbol: string;
-    prompt: AgentPrompt<Prediction>;
-    model: AbstractContainer;
-    news: { markdown: string; url: string; date: Date }[];
-  }) {
+export class NewsBasedSymbolMarketPredictorAgent extends ExperimentAgent<Prediction> {
+  private readonly symbol: string;
+  private readonly news: {
+    markdown: string;
+    date: Date;
+    url: string;
+  }[];
+
+  constructor(params: NewsBasedSymbolPredictorParams) {
     super(params.state, params.prompt, params.model);
     this.symbol = params.symbol;
     this.news = params.news;
@@ -38,7 +47,6 @@ export class NewsBasedTickerMarketPredictorAgent extends ExperimentAgent<Predict
             `# ARTICLE TITLE: ${n.date.toISOString()}, DATE: ${n.date.toISOString()}, URL: ${n.url}\n${n.markdown}`,
         )
         .join("\n---\n"),
-      marketPrognosis: "",
     };
   }
 
@@ -49,7 +57,7 @@ export class NewsBasedTickerMarketPredictorAgent extends ExperimentAgent<Predict
     news: { markdown: string; url: string; date: Date }[];
   }) {
     const state = await experimentService.create();
-    return new NewsBasedTickerMarketPredictorAgent({
+    return new NewsBasedSymbolMarketPredictorAgent({
       state,
       ...params,
       prompt: params.prompt as AgentPrompt<Prediction>,
@@ -58,10 +66,31 @@ export class NewsBasedTickerMarketPredictorAgent extends ExperimentAgent<Predict
   }
 }
 
-export class ShortTermNewsBasedPredictorAgent extends ExperimentAgent<Prediction> {
+export class NewsBasedTickerMarketPredictorAgent extends NewsBasedSymbolMarketPredictorAgent {
+  private readonly marketPrediction: Prediction;
+
+  constructor(
+    params: NewsBasedSymbolPredictorParams & {
+      marketPrediction: Prediction;
+    },
+  ) {
+    super(params);
+    this.marketPrediction = params.marketPrediction;
+  }
+
+  override async mapPromptValues(): Promise<Record<string, string>> {
+    return {
+      ...(await super.mapPromptValues()),
+      marketPrediction: JSON.stringify(this.marketPrediction),
+    };
+  }
+}
+
+export class NextWeekNewsBasedPredictorAgent extends ExperimentAgent<Prediction> {
   static override async create(params: {
     symbol: string;
     news: { markdown: string; url: string; date: Date }[];
+    marketPrediction: Prediction;
   }) {
     const state = await experimentService.create();
     return new NewsBasedTickerMarketPredictorAgent({
@@ -72,7 +101,23 @@ export class ShortTermNewsBasedPredictorAgent extends ExperimentAgent<Prediction
     });
   }
 }
-export class PreditionsMergerAgent extends ExperimentAgent<Prediction> {
+
+export class NextWeekMarketPredictionAgent extends ExperimentAgent<Prediction> {
+  static override async create(params: {
+    news: { markdown: string; url: string; date: Date }[];
+  }) {
+    const state = await experimentService.create();
+    return new NewsBasedSymbolMarketPredictorAgent({
+      state,
+      ...params,
+      symbol: "GENERAL",
+      prompt: nextWeekGeneralMarketPredictionPrompt,
+      model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
+    });
+  }
+}
+
+export class PredictionsMergerAgent extends ExperimentAgent<Prediction> {
   private readonly predictions: Prediction[];
 
   constructor(params: { state: Experiment; predictions: Prediction[] }) {
@@ -94,7 +139,7 @@ export class PreditionsMergerAgent extends ExperimentAgent<Prediction> {
 
   static override async create(params: { predictions: Prediction[] }) {
     const state = await experimentService.create();
-    return new PreditionsMergerAgent({
+    return new PredictionsMergerAgent({
       state,
       predictions: params.predictions,
     });

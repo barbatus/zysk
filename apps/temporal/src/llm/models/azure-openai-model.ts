@@ -8,18 +8,15 @@ import {
 } from "@zysk/services";
 
 import { BaseLLMRunner, ModelContainer, ModelIdentity } from "../core/base";
-import { ModelProviderEnum, ModelVendorEnum } from "../core/enums";
+import {
+  ModelKeyEnum,
+  ModelProviderEnum,
+  ModelVendorEnum,
+} from "../core/enums";
 import { type ExecutionResult } from "../core/schemas";
-import { OpenAICallbackHandler } from "./callbacks";
+import { OpenAICallbackHandler, wrapOpenAIError } from "./callbacks";
 
 type ReasoningEffort = "low" | "medium" | "high" | undefined;
-
-type ContainerType =
-  | "4o_containers"
-  | "4omini_containers"
-  | "o1_mini_containers"
-  | "o1_containers"
-  | "o3_mini_containers";
 
 interface AzureOpenAIModelConfig {
   endpointUrl: string;
@@ -31,42 +28,48 @@ interface AzureOpenAIModelConfig {
   apiVersion: string | undefined;
 }
 
-class AzureOpenAIRunner extends BaseLLMRunner {
+export class OpenAIRunner extends BaseLLMRunner {
   async arun(
     message: string,
     config?: RunnableConfig,
   ): Promise<ExecutionResult> {
-    const callback = new OpenAICallbackHandler();
-    const start = performance.now();
-    const result = await super.ainvoke(message, {
-      ...config,
-      callbacks: [callback],
-    });
-    const end = performance.now();
-    return {
-      response:
-        result instanceof AIMessage ? (result.content as string) : result,
-      evaluationDetails: {
-        promptTokens: callback.promptTokens,
-        completionTokens: callback.completionTokens,
-        successfulRequests: callback.successfulRequests,
-        totalCost: callback.totalCost,
-        responseTimeMs: Math.round(end - start),
-      },
-    };
+    try {
+      const callback = new OpenAICallbackHandler();
+      const start = performance.now();
+      const result = await super.ainvoke(message, {
+        ...config,
+        callbacks: [callback],
+      });
+      const end = performance.now();
+      return {
+        response:
+          result instanceof AIMessage ? (result.content as string) : result,
+        evaluationDetails: {
+          promptTokens: callback.promptTokens,
+          completionTokens: callback.completionTokens,
+          successfulRequests: callback.successfulRequests,
+          totalCost: callback.totalCost,
+          responseTimeMs: Math.round(end - start),
+        },
+      };
+    } catch (error) {
+      throw wrapOpenAIError(error as Error);
+    }
   }
 }
 
 const apiVersion = "2024-02-01";
 
 function buildAzureOpenAIModelConfigs(
-  modelName: string,
+  modelKey: ModelKeyEnum,
   services: AzureOpenAIServiceConfig[],
   deployments: AzureOpenAIDeploymentConfig[],
   reasoningEffort?: ReasoningEffort,
 ) {
   const res: AzureOpenAIModelConfig[] = [];
-  const modelDeployments = deployments.filter((d) => d.modelName === modelName);
+  const modelDeployments = deployments.filter(
+    (d) => d.modelName === String(modelKey),
+  );
 
   for (const deployment of modelDeployments) {
     const service = services.find((s) => s.name === deployment.services[0]);
@@ -98,7 +101,7 @@ function getOpenaiContainers(config: AzureOpenAIModelConfig[]) {
   const res: ModelContainer[] = [];
   for (const conf of config) {
     const container = new ModelContainer(
-      new AzureOpenAIRunner(
+      new OpenAIRunner(
         new AzureChatOpenAI({
           azureOpenAIEndpoint: conf.endpointUrl,
           azureOpenAIApiKey: conf.apiKey,
@@ -123,27 +126,13 @@ function getOpenaiContainers(config: AzureOpenAIModelConfig[]) {
   return res;
 }
 
-export function getAzureLLMContainers(type: ContainerType) {
-  const map = {
-    "4o_containers": "gpt-4o",
-    "4omini_containers": "gpt-4o-mini",
-    o1_mini_containers: "o1-mini",
-    o1_containers: "o1",
-    o3_mini_containers: "o3-mini",
-  };
-
-  const modelName = map[type];
-
-  if (!modelName) {
-    throw new Error(`Invalid container type: ${type}`);
-  }
-
+export function getAzureLLMContainers(modelKey: ModelKeyEnum) {
   const appConfig = getConfig();
   const configs = buildAzureOpenAIModelConfigs(
-    modelName,
+    modelKey,
     appConfig.azureOpenAI.services,
     appConfig.azureOpenAI.deployments,
-    modelName === "o3-mini" ? "high" : undefined,
+    modelKey === ModelKeyEnum.GptO3Mini ? "high" : undefined,
   );
 
   return getOpenaiContainers(configs);

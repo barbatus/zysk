@@ -2,8 +2,9 @@ import {
   SequentialModelContainer,
   SequentialModelContainerWithFallback,
 } from "../core/base";
-import { ModelKeyEnum } from "../core/enums";
-import { getAzureLLMContainers } from "./azure-model";
+import { ModelKeyEnum, ModelProviderEnum } from "../core/enums";
+import { getAzureLLMContainers } from "./azure-openai-model";
+import { getOpenAIModelContainers } from "./openai-model";
 
 export class ModelNotFoundError extends Error {
   constructor(modelKey: ModelKeyEnum) {
@@ -12,55 +13,46 @@ export class ModelNotFoundError extends Error {
   }
 }
 
-function createSequentialModelContainer(modelKey: ModelKeyEnum) {
-  switch (modelKey) {
-    case ModelKeyEnum.Gpt4o:
-      return new SequentialModelContainer(
-        modelKey,
-        getAzureLLMContainers("4o_containers"),
-        128_000,
-      );
-    case ModelKeyEnum.Gpt4oMini:
-      return new SequentialModelContainer(
-        modelKey,
-        getAzureLLMContainers("4omini_containers"),
-        128_000,
-      );
-    case ModelKeyEnum.GptO1Mini:
-      return new SequentialModelContainer(
-        modelKey,
-        getAzureLLMContainers("o1_mini_containers"),
-        128_000,
-      );
-    case ModelKeyEnum.GptO1:
-      return new SequentialModelContainer(
-        modelKey,
-        getAzureLLMContainers("o1_containers"),
-        200_000,
-      );
-    case ModelKeyEnum.GptO3Mini:
-      return new SequentialModelContainer(
-        modelKey,
-        getAzureLLMContainers("o3_mini_containers"),
-        200_000,
-      );
-    default:
-      throw new ModelNotFoundError(modelKey);
-  }
+const modelToMaxTokens = {
+  [ModelKeyEnum.Gpt4o]: 128_000,
+  [ModelKeyEnum.Gpt4oMini]: 128_000,
+  [ModelKeyEnum.GptO1Mini]: 128_000,
+  [ModelKeyEnum.GptO1]: 200_000,
+  [ModelKeyEnum.GptO3Mini]: 200_000,
+};
+
+type OpenAIModelKey =
+  | ModelKeyEnum.Gpt4o
+  | ModelKeyEnum.Gpt4oMini
+  | ModelKeyEnum.GptO1Mini
+  | ModelKeyEnum.GptO1
+  | ModelKeyEnum.GptO3Mini;
+
+function createSequentialModelContainer(
+  modelKey: OpenAIModelKey,
+  provider = ModelProviderEnum.OpenAI,
+) {
+  return new SequentialModelContainer(
+    modelKey,
+    provider === ModelProviderEnum.Azure
+      ? getAzureLLMContainers(modelKey)
+      : getOpenAIModelContainers(modelKey),
+    modelToMaxTokens[modelKey],
+  );
 }
 
 const models = new Proxy(
-  {} as Record<ModelKeyEnum, SequentialModelContainer | undefined>,
+  {} as Record<OpenAIModelKey, SequentialModelContainer | undefined>,
   {
     get: (target, prop: string) => {
-      const modelKey = prop as ModelKeyEnum;
+      const modelKey = prop as OpenAIModelKey;
       const model =
         target[modelKey] ?? createSequentialModelContainer(modelKey);
       target[modelKey] = model;
       return model;
     },
     has: (target, prop: string) => {
-      return target[prop as ModelKeyEnum] !== undefined;
+      return target[prop as OpenAIModelKey] !== undefined;
     },
   },
 );

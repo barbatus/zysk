@@ -60,7 +60,7 @@ Apr 12, 2025 - 77.55
 
 # MARKET PROGNOSIS FOR NEXT WEEK
 \`\`\`markdown
-{marketPrognosis}
+{marketPrediction}
 \`\`\`
 
 # NEWS ARTICLES
@@ -68,7 +68,7 @@ Apr 12, 2025 - 77.55
 {news}
 \`\`\`
   `,
-    inputVariables: ["symbol", "news", "marketPrognosis"],
+    inputVariables: ["symbol", "news", "marketPrediction"],
     partialVariables: {
       formatInstructions: predictionParser.getFormatInstructions(),
     },

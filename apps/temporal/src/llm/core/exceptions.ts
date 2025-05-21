@@ -1,6 +1,6 @@
 export interface ErrorDetails {
   message: string;
-  details?: Record<string, string | number | boolean>;
+  details?: Record<string, string | number | boolean | object | undefined>;
 }
 
 export interface BaseLLMErrorWrapper {
@@ -8,7 +8,7 @@ export interface BaseLLMErrorWrapper {
 }
 
 export class LLMError extends Error {
-  details?: Record<string, string | number | boolean>;
+  details?: Record<string, string | number | boolean | object | undefined>;
 
   constructor({ message, details }: ErrorDetails) {
     super(message);
@@ -19,7 +19,17 @@ export class LLMError extends Error {
 
 export class InternalLLMError extends LLMError {}
 export class PromptTooLongError extends LLMError {}
-export class RateLimitExceededError extends LLMError {}
+export class RateLimitExceededError extends LLMError {
+  retryInSeconds?: number;
+
+  constructor({
+    message,
+    retryInSeconds,
+  }: ErrorDetails & { retryInSeconds?: number }) {
+    super({ message, details: { retryInSeconds } });
+    this.retryInSeconds = retryInSeconds;
+  }
+}
 export class ResponseTimeoutError extends LLMError {}
 export class NetworkError extends LLMError {}
 export class InvalidPromptError extends LLMError {}

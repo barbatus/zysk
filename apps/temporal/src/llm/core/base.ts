@@ -164,6 +164,7 @@ export class SequentialModelContainer implements AbstractRunner {
   private maxAttempts: number;
   private modelKey: ModelKeyEnum;
   private onRetryHandlers: (() => Promise<void> | void)[] = [];
+  private lastRateLimitTTL = 60; // TTL of a rate limited model in seconds
   // private rateLimitTtl = 60; // TTL of a rate limited model in seconds
 
   constructor(
@@ -279,9 +280,9 @@ export class SequentialModelContainer implements AbstractRunner {
     };
 
     let consecutiveTimeouts = 0;
-    const callModel = async () => {
+    const callModel = async (attempt: number) => {
       try {
-        this.currentContainer = await this.getAvailable(emitRetry);
+        this.currentContainer = await this.getAvailable(emitRetry, attempt);
         logger.info(
           {
             modelKey: this.modelKey,
@@ -300,7 +301,7 @@ export class SequentialModelContainer implements AbstractRunner {
             );
           }
         } else if (error instanceof RateLimitExceededError) {
-          this.markRateLimited(this.currentContainer.id);
+          this.markRateLimited(this.currentContainer.id, error);
         }
         throw error;
       }
@@ -330,16 +331,30 @@ export class SequentialModelContainer implements AbstractRunner {
     throw new Error("No response received");
   }
 
-  private markRateLimited(modelId: string): void {
+  private markRateLimited(
+    modelId: string,
+    error: RateLimitExceededError,
+  ): void {
     logger.warn(`Model ${modelId} is rate limited`);
+    this.lastRateLimitTTL = error.retryInSeconds ?? 60;
   }
 
   private async getAvailable(
-    _onRetry?: () => Promise<void>,
+    _onRetry: () => Promise<void>,
+    attempt: number,
   ): Promise<ModelContainer> {
-    return this.modelContainers[
-      Math.floor(Math.random() * this.modelContainers.length)
-    ];
+    const waitTime =
+      attempt > this.modelContainers.length ? this.lastRateLimitTTL * 1000 : 0;
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(
+          this.modelContainers[
+            Math.floor(Math.random() * this.modelContainers.length)
+          ],
+        );
+      }, waitTime);
+    });
 
     // for (const waitTime of [this.rateLimitTtl, 0]) {
     //   for (const container of this.modelContainers) {

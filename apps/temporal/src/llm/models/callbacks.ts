@@ -4,6 +4,15 @@ import { AIMessage } from "@langchain/core/messages";
 import { type Generation, type LLMResult } from "@langchain/core/outputs";
 import { getLogger } from "@zysk/services";
 import dedent from "dedent";
+import { APIConnectionError, BadRequestError, RateLimitError } from "openai";
+
+import {
+  InternalLLMError,
+  InvalidPromptError,
+  NetworkError,
+  PromptTooLongError,
+  RateLimitExceededError,
+} from "../core/exceptions";
 
 const logger = getLogger();
 
@@ -164,4 +173,53 @@ export class OpenAICallbackHandler extends BaseCallbackHandler {
       Successful Requests: ${this.successfulRequests}
       Total Cost (USD): $${this.totalCost.toFixed(2)}`;
   }
+}
+
+export function wrapOpenAIError(error: Error) {
+  if (error instanceof BadRequestError) {
+    if (
+      error.type === "invalid_request_error" &&
+      error.code === "context_length_exceeded"
+    ) {
+      return new PromptTooLongError({
+        message: error.message,
+      });
+    }
+    if (
+      error.type === "invalid_request_error" &&
+      error.code === "invalid_prompt"
+    ) {
+      return new InvalidPromptError({
+        message: error.message,
+        details: {
+          cause: error.cause as object,
+        },
+      });
+    }
+  }
+  if (error instanceof APIConnectionError) {
+    return new NetworkError({
+      message: error.message,
+    });
+  }
+  if (error instanceof RateLimitError) {
+    const retryMatch = /retry in (?<seconds>\d+)s/i.exec(error.message);
+    const retryInSeconds = retryMatch
+      ? parseInt(retryMatch.groups?.seconds ?? "0", 10)
+      : undefined;
+
+    return new RateLimitExceededError({
+      message: error.message,
+      details: {
+        retryInSeconds,
+      },
+    });
+  }
+
+  return new InternalLLMError({
+    message: error.message,
+    details: {
+      cause: error.cause as object,
+    },
+  });
 }

@@ -13,7 +13,7 @@ export function retryIfException(predicate: (error: Error) => boolean) {
 
 export class AsyncRetrying<T> {
   constructor(
-    private callback: () => Promise<T>,
+    private callback: (attempt: number) => Promise<T>,
     private shouldRetry: (error: Error) => boolean,
     private options: {
       before?: (state: RetryCallState<T>) => Promise<void>;
@@ -38,7 +38,7 @@ export class AsyncRetrying<T> {
           break;
         }
 
-        const res = await this.callback();
+        const res = await this.callback(attempt);
         state.response = res;
         yield state;
 
