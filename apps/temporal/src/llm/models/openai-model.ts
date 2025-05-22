@@ -5,7 +5,7 @@ import { getConfig, type OpenAIModelConfig } from "@zysk/services";
 
 import { BaseLLMRunner, ModelContainer, ModelIdentity } from "../core/base";
 import {
-  ModelKeyEnum,
+  type ModelKeyEnum,
   ModelProviderEnum,
   ModelVendorEnum,
 } from "../core/enums";
@@ -66,9 +66,5 @@ export function getOpenAIModelContainers(modelKey: ModelKeyEnum) {
   if (!modelConfig) {
     throw new Error(`Model config not found: ${modelKey}`);
   }
-  modelConfig.reasoningEffort =
-    modelConfig.modelName === String(ModelKeyEnum.GptO3Mini)
-      ? "high"
-      : undefined;
   return [getOpenaiContainer(appConfig.openAI.apiKey, modelConfig)];
 }

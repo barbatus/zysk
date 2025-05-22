@@ -35,10 +35,7 @@ export class SubscriptionsService {
         "lp.responseJson",
       ]);
 
-    const result = await query.execute().catch((e) => {
-      console.error(e);
-      throw e;
-    });
+    const result = await query.execute();
 
     const groupedPredictions = groupBy(result, "id");
 
