@@ -5,6 +5,8 @@ import {
   pgSchema,
   text,
   timestamp,
+  uniqueIndex,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 
@@ -41,13 +43,20 @@ export const etfProfiles = mySchema.table("etf_profiles", {
   ...auditColumns,
 });
 
-export const tickerTimeSeries = mySchema.table("ticker_time_series", {
-  symbol: varchar("symbol", { length: 40 }).primaryKey(),
-  openPrice: numeric("open_price").notNull(),
-  closePrice: numeric("close_price").notNull(),
-  high: numeric("high").notNull(),
-  low: numeric("low").notNull(),
-  volume: numeric("volume").notNull(),
-  date: date("date").notNull(),
-  ...auditColumns,
-});
+export const tickerTimeSeries = mySchema.table(
+  "ticker_time_series",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    symbol: varchar("symbol", { length: 40 }),
+    openPrice: numeric("open_price").notNull(),
+    closePrice: numeric("close_price").notNull(),
+    high: numeric("high").notNull(),
+    low: numeric("low").notNull(),
+    volume: numeric("volume").notNull(),
+    date: date("date").notNull(),
+    ...auditColumns,
+  },
+  (t) => ({
+    symbolDateIndex: uniqueIndex("symbol_date_index").on(t.symbol, t.date),
+  }),
+);

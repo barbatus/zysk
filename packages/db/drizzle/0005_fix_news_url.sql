@@ -1,1 +1,0 @@
-ALTER TABLE "app_data"."stock_news" ALTER COLUMN "url" SET DATA TYPE varchar(2048);

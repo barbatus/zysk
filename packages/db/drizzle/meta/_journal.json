@@ -5,64 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1746289624915,
+      "when": 1747947804361,
       "tag": "0000_initial",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1746296760604,
-      "tag": "0001_add_audit",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1747135705651,
-      "tag": "0002_add_data_db",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1747139480067,
-      "tag": "0003_add_news_id",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1747145021752,
-      "tag": "0004_add_add_version",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1747238111699,
-      "tag": "0005_fix_news_url",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1747645604237,
-      "tag": "0006_add_predictions",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1747645665237,
-      "tag": "0007_add_subscriptions",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1747845731615,
-      "tag": "0008_refactor_table_names",
       "breakpoints": true
     }
   ]
