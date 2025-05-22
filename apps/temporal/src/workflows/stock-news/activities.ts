@@ -1,56 +1,63 @@
 import { activityInfo } from "@temporalio/activity";
 import { ApplicationFailure } from "@temporalio/workflow";
-import { type InsertableStockNews } from "@zysk/db";
+import { type StockNewsUpdate } from "@zysk/db";
 import {
   RateLimitExceededError,
   RequestTimeoutError,
   resolve,
   TickerNewsService,
 } from "@zysk/services";
-import { subDays } from "date-fns";
+import { addDays, startOfDay, subDays } from "date-fns";
 import { isNil } from "lodash";
 // eslint-disable-next-line camelcase
 import { encoding_for_model } from "tiktoken";
 
 const tickerNewsService = resolve(TickerNewsService);
 
-async function _fetchSymbolsToProcess(symbols: string[]) {
+async function _fetchTickersToProcess(symbols: string[]) {
   const latestNewsDate =
     await tickerNewsService.getLatestNewsDatePerTicker(symbols);
+  const lastMonth = subDays(new Date(), 30);
+  const startOfDay_ = (date: Date) => startOfDay(date);
   const sinceDates = symbols.map((symbol) =>
     isNil(latestNewsDate[symbol])
-      ? { symbol, sinceDate: subDays(new Date(), 30) }
-      : { symbol, sinceDate: latestNewsDate[symbol].newsDate },
+      ? { symbol, sinceDate: startOfDay_(lastMonth) }
+      : {
+          symbol,
+          sinceDate: startOfDay_(addDays(latestNewsDate[symbol].newsDate, 1)),
+        },
   );
   return sinceDates;
 }
 
-export async function fetchSymbolsToProcess() {
-  const symbols = ["AAPL", "TSLA", "NVDA"];
-  const sinceDates = await _fetchSymbolsToProcess(symbols);
+export async function fetchTickersForNews() {
+  const symbols = ["AAPL"];
+  const sinceDates = await _fetchTickersToProcess(symbols);
   return sinceDates;
 }
 
-export async function fetchGeneralLastNewsDate() {
+export async function fetchGeneralMarketLastNewsDate() {
   const symbols = ["GENERAL"];
-  const sinceDates = await _fetchSymbolsToProcess(symbols);
+  const sinceDates = await _fetchTickersToProcess(symbols);
   return sinceDates[0].sinceDate;
 }
 
-export async function fetchSymbolNewsByPage(symbol: string, page: number) {
+export async function fetchSymbolNewsByPage(symbol: string, sinceDate: Date) {
   if (symbol === "GENERAL") {
-    return tickerNewsService.getGeneralNewsPage(page);
+    return tickerNewsService.getGeneralNewsPage(sinceDate);
   }
-  return tickerNewsService.getNewsPage(symbol, page);
+  return tickerNewsService.getTickerNews(symbol, sinceDate);
 }
 
 export async function scrapeSymbolNews(url: string) {
   try {
-    const result = await tickerNewsService.scrapeUrl(url);
+    const result = await tickerNewsService.scrapeUrl(url, 180);
     const tokenizer = encoding_for_model("gpt-4o");
     const tokens = tokenizer.encode(result.markdown ?? "");
     return {
       ...result,
+      url: result.url || url,
+      originalUrl: url,
       tokenSize: tokens.length,
     };
   } catch (ex) {
@@ -80,6 +87,6 @@ export async function scrapeSymbolNews(url: string) {
   }
 }
 
-export async function saveNews(news: InsertableStockNews[]) {
+export async function saveNews(news: StockNewsUpdate[]) {
   return tickerNewsService.saveNews(news);
 }

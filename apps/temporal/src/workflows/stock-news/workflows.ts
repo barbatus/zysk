@@ -1,6 +1,6 @@
 import { executeChild, proxyActivities } from "@temporalio/workflow";
-import { type InsertableStockNews, StockNewsStatus } from "@zysk/db";
-import { mapKeys } from "lodash";
+import { StockNewsStatus } from "@zysk/db";
+import { chunk, mapKeys, omit } from "lodash";
 
 import type * as activities from "./activities";
 
@@ -40,74 +40,66 @@ export async function scrapeSymbolNewsUrls(
   );
 }
 
-type SymbolNews = Awaited<
-  ReturnType<typeof proxy.fetchSymbolNewsByPage>
->[number];
-export async function scrapeSymbolNews(symbol: string, sinceDate: Date) {
-  const fetchNewsSince = async (page: number) => {
-    const news = await proxy
-      .fetchSymbolNewsByPage(symbol, page)
-      .then((n) => n.filter((a) => a.newsDate >= sinceDate));
-    if (news.length === 0) {
-      return [];
-    }
-    return news;
-  };
+export async function scrapeSymbolNewsBatchAndSave(
+  symbol: string,
+  batch: { newsDate: Date; url: string }[],
+) {
+  const newsDateMap = mapKeys(batch, "url");
+  const scrapedNews = await executeChild(scrapeSymbolNewsUrls, {
+    args: [batch.map((b) => ({ ...b, symbol }))],
+  });
+  await proxy.saveNews(
+    scrapedNews
+      .flat()
+      .map((n) =>
+        n.markdown
+          ? {
+              ...omit(n, "originalUrl"),
+              symbol,
+              markdown: n.markdown,
+              newsDate: newsDateMap[n.originalUrl].newsDate,
+              status: StockNewsStatus.Scraped,
+            }
+          : null,
+      )
+      .filter(Boolean),
+  );
+}
 
-  let page = 1;
-  let currentNews: SymbolNews[] = [];
-  let hasMore = true;
-  while (hasMore) {
-    currentNews = await fetchNewsSince(page);
-    const scrapedNews: InsertableStockNews[] = [];
-    const newsDateMap = mapKeys(currentNews, "url");
-    for (let i = 0; i < currentNews.length; i += 100) {
-      const tmpScrape = await executeChild(scrapeSymbolNewsUrls, {
-        args: [
-          currentNews
-            .slice(i, i + 100)
-            .map((c) => ({ newsDate: c.newsDate, url: c.url, symbol })),
-        ],
-      });
-      scrapedNews.push(
-        ...tmpScrape
-          .flat()
-          .map((n) =>
-            n.markdown
-              ? {
-                  ...n,
-                  symbol,
-                  markdown: n.markdown,
-                  newsDate: newsDateMap[n.url].newsDate,
-                  status: StockNewsStatus.Scraped,
-                }
-              : null,
-          )
-          .filter(Boolean),
-      );
-    }
-    if (scrapedNews.length > 0) {
-      await proxy.saveNews(scrapedNews);
-    }
-    hasMore = currentNews.length > 0;
-    page += 1;
+export async function scrapeSymbolNews(symbol: string, sinceDate: Date) {
+  const currentNews = await proxy.fetchSymbolNewsByPage(symbol, sinceDate);
+  for (let i = 0; i < currentNews.length; i += 60) {
+    await Promise.allSettled(
+      // Scraping by 20 URLs to make to sure it does not exceed gRPC size limit
+      // and all together 80 URLs in parralel to respect firecrawl rate limits.
+      chunk(currentNews.slice(i, i + 80), 20).map((batch) =>
+        executeChild(scrapeSymbolNewsBatchAndSave, {
+          args: [symbol, batch],
+        }),
+      ),
+    );
   }
 }
 
 export async function scrapeGeneralNews() {
-  const sinceDate = await proxy.fetchGeneralLastNewsDate();
+  const sinceDate = await proxy.fetchGeneralMarketLastNewsDate();
 
   await executeChild(scrapeSymbolNews, {
     args: ["GENERAL", sinceDate],
   });
 }
 
-export async function scrapeNews() {
-  const symbols = await proxy.fetchSymbolsToProcess();
+export async function scrapeTickersNews() {
+  const symbols = await proxy.fetchTickersForNews();
 
   for (const { symbol, sinceDate } of symbols) {
     await executeChild(scrapeSymbolNews, {
       args: [symbol, sinceDate],
     });
   }
+}
+
+export async function scrapeAllNews() {
+  await executeChild(scrapeGeneralNews);
+  await executeChild(scrapeTickersNews);
 }
