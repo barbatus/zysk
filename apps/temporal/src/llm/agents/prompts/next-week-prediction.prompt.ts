@@ -58,8 +58,8 @@ Apr 13, 2025 - 79.18
 Apr 12, 2025 - 77.55
 \`\`\`
 
-# MARKET PROGNOSIS FOR NEXT WEEK
-\`\`\`markdown
+# MARKET PREDICTION FOR NEXT WEEK
+\`\`\`json
 {marketPrediction}
 \`\`\`
 

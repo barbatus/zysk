@@ -1,6 +1,6 @@
-import { z } from "zod";
+import { z, type ZodError } from "zod";
 
-import { JsonOutputParser } from "./parsers";
+import { JsonOutputParser, ParserError } from "./parsers";
 
 const SignalSchema = z.object({
   description: z.string(),
@@ -29,8 +29,12 @@ const PredictionSchema = z.object({
 export type Prediction = z.infer<typeof PredictionSchema>;
 
 export class PredictionParser extends JsonOutputParser<Prediction> {
-  override parse(response: string): Promise<Prediction> {
-    return Promise.resolve(PredictionSchema.parse(super.parse(response)));
+  override async parse(response: string): Promise<Prediction> {
+    try {
+      return PredictionSchema.parse(await super.parse(response));
+    } catch (error) {
+      throw new ParserError((error as ZodError).message);
+    }
   }
 
   override getFormatInstructions(): string {

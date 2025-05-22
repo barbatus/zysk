@@ -1,10 +1,12 @@
 export interface RetryCallState<T> {
   attemptNumber: number;
   response?: T;
+  success?: boolean;
+  lastError?: Error;
 }
 
 export function stopAfterAttempt<T>(maxAttempts: number) {
-  return (state: RetryCallState<T>) => state.attemptNumber >= maxAttempts;
+  return (state: RetryCallState<T>) => state.attemptNumber > maxAttempts;
 }
 
 export function retryIfException(predicate: (error: Error) => boolean) {
@@ -23,22 +25,23 @@ export class AsyncRetrying<T> {
 
   async *[Symbol.asyncIterator]() {
     let attempt = 0;
-    const retrying = true;
+    const state: RetryCallState<T> = {
+      attemptNumber: attempt,
+      response: undefined,
+    };
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    while (retrying) {
+    while (true) {
       attempt++;
-      const state: RetryCallState<T> = {
-        attemptNumber: attempt,
-        response: undefined,
-      };
+      state.attemptNumber = attempt;
       try {
         await this.options.before?.(state);
 
         if (this.options.stop?.(state)) {
-          break;
+          throw new Error("AsyncRetrying exceeded max attempts");
         }
 
         const res = await this.callback(attempt);
+        state.success = true;
         state.response = res;
         yield state;
 
@@ -47,6 +50,8 @@ export class AsyncRetrying<T> {
         if (!this.shouldRetry(error as Error)) {
           throw error;
         }
+        state.success = false;
+        state.lastError = error as Error;
         yield state;
       }
     }

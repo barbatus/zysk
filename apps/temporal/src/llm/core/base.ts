@@ -312,8 +312,8 @@ export class SequentialModelContainer implements AbstractRunner {
         retryIfException(shouldRetryException),
         { before: onBeforeRetry, stop: stopAfterAttempt(this.maxAttempts) },
       )) {
-        if (state.response !== undefined) {
-          return state.response;
+        if (state.success) {
+          return state.response!;
         }
       }
     } catch (error) {

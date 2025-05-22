@@ -4,9 +4,15 @@ import { ExperimentService, getLogger, resolve } from "@zysk/services";
 
 import { type AbstractContainer } from "#/llm/core/base";
 import { type AgentExecutionResult } from "#/llm/core/schemas";
+import {
+  AsyncRetrying,
+  retryIfException,
+  stopAfterAttempt,
+} from "#/utils/async-retrying";
 
 import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
+import { ParserError } from "./prompts/parsers";
 
 const experimentService = resolve(ExperimentService);
 
@@ -61,18 +67,43 @@ export abstract class StatefulAgent<
     const promptValues = await this.mapPromptValues();
 
     try {
-      const result = await this.arun(promptValues);
-      return this.setSuccess(result);
+      for await (const state of new AsyncRetrying<TResult>(
+        async () => {
+          const result = await this.arun(promptValues);
+          return this.setSuccess(result);
+        },
+        retryIfException((error) => error instanceof ParserError),
+        {
+          stop: stopAfterAttempt(2),
+          before: async (beforeState) => {
+            if (beforeState.attemptNumber > 1) {
+              logger.warn(
+                {
+                  name: this.constructor.name,
+                  attempt: beforeState.attemptNumber,
+                  lastError: beforeState.lastError!.message,
+                },
+                `Retrying due to parser error`,
+              );
+            }
+          },
+        },
+      )) {
+        if (state.success) {
+          return state.response!;
+        }
+      }
     } catch (error) {
       logger.error(
         {
           name: this.constructor.name,
-          error,
+          error: (error as Error).message,
         },
         `Agent failed`,
       );
       throw error;
     }
+    throw new Error("Failed to run agent");
   }
 
   protected abstract mapPromptValues(): Promise<Record<string, string>>;

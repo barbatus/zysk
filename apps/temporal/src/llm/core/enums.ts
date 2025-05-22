@@ -20,7 +20,7 @@ export enum ModelProviderEnum {
 }
 
 export enum ModelKeyEnum {
-  Gpt4o = "4o",
+  Gpt4o = "gpt-4o",
   Gpt4oMini = "4o-mini",
   GptO1Mini = "o1-mini",
   GptO1 = "o1",
