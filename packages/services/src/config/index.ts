@@ -68,6 +68,15 @@ export type AzureOpenAIServiceConfig = z.infer<
   typeof AzureOpenAIServiceConfigSchema
 >;
 
+export const OpenAIModelConfigSchema = z.object({
+  modelName: z.string(),
+  temperature: z.number().optional(),
+  reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
+  apiVersion: z.string().optional(),
+});
+
+export type OpenAIModelConfig = z.infer<typeof OpenAIModelConfigSchema>;
+
 const appPostgresEnvVars = getPostgresEnvVariables("APP");
 
 export const AppConfigEnvVariablesSchema = z.object({
@@ -98,6 +107,11 @@ export const AppConfigEnvVariablesSchema = z.object({
   STOCK_NEWS_API_KEY: z.string(),
   FIRECRAWL_API_KEY: z.string(),
   ALPHA_VANTAGE_API_KEY: z.string(),
+  OPENAI_API_KEY: z.string(),
+  OPENAI_MODEL_CONFIGS: z.preprocess(
+    (val) => JSON.parse(val as string),
+    z.array(OpenAIModelConfigSchema),
+  ),
 });
 
 export type AppConfigEnvVariables = z.infer<typeof AppConfigEnvVariablesSchema>;
@@ -143,6 +157,10 @@ export interface AppConfig {
   azureOpenAI: {
     deployments: AzureOpenAIDeploymentConfig[];
     services: AzureOpenAIServiceConfig[];
+  };
+  openAI: {
+    apiKey: string;
+    modelConfigs: OpenAIModelConfig[];
   };
 }
 
@@ -201,6 +219,10 @@ export function validate(config: Record<string, unknown>) {
     azureOpenAI: {
       deployments: appConfigValidated.AZURE_OPENAI_DEPLOYMENTS,
       services: appConfigValidated.AZURE_OPENAI_SERVICES,
+    },
+    openAI: {
+      apiKey: appConfigValidated.OPENAI_API_KEY,
+      modelConfigs: appConfigValidated.OPENAI_MODEL_CONFIGS,
     },
   };
 

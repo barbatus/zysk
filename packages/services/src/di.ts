@@ -9,14 +9,15 @@ import { ExperimentService } from "./experiment.service";
 import { FinnhubService } from "./finnhub.service";
 import { MetricsService } from "./metrics.service";
 import { PortfolioService } from "./portfolio.service";
+import { StockNewsApiService } from "./stock-news-api.service";
 import { SubscriptionsService } from "./subscriptions.service";
+import { TickerInfoService } from "./ticker-info.service";
 import { TickerNewsService } from "./ticker-news.service";
-import { TickerInfoService } from "./ticket-info.service";
 import { createLogger, type Logger, loggerSymbol } from "./utils/logger";
 
 export const container = new Container();
 
-container.bind(appConfigSymbol).toConstantValue(getAppConfigStatic());
+container.bind(appConfigSymbol).toResolvedValue(() => getAppConfigStatic());
 
 container
   .bind<Kysely<DataDatabase>>(dataDBSymbol)
@@ -42,6 +43,7 @@ const services = [
   PortfolioService,
   MetricsService,
   SubscriptionsService,
+  StockNewsApiService,
 ] as const;
 
 services.forEach((service) => {

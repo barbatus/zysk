@@ -6,7 +6,7 @@ export * from "./finnhub.service";
 export * from "./metrics.service";
 export * from "./portfolio.service";
 export * from "./subscriptions.service";
+export * from "./ticker-info.service";
 export * from "./ticker-news.service";
-export * from "./ticket-info.service";
 export * from "./utils/exceptions";
 export * from "./utils/logger";

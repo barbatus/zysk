@@ -1,10 +1,10 @@
-import { ApplicationFailure } from "@temporalio/workflow";
 import axios, { type AxiosResponse } from "axios";
 import { subYears } from "date-fns";
 import { inject, injectable } from "inversify";
 import { isEmpty } from "lodash";
 
 import { type AppConfig, appConfigSymbol } from "#/config";
+import { RateLimitExceededError } from "#/utils/exceptions";
 
 function processResponse<
   T extends
@@ -28,7 +28,7 @@ function processResponse<
   }
 
   if (response.data.Information?.includes("rate limits")) {
-    throw new ApplicationFailure("Rate limit exceeded", "RATE_LIMIT_EXCEEDED");
+    throw new RateLimitExceededError(response.data.Information, 60);
   }
 
   return response.data;
