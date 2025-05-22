@@ -1,6 +1,7 @@
 import { type DataDatabase } from "@zysk/db";
 import { inject, injectable } from "inversify";
 import { type Kysely } from "kysely";
+import { keyBy } from "lodash";
 
 import { AlphaVantageService } from "./alpha-vantage.service";
 import { dataDBSymbol } from "./db";
@@ -12,7 +13,7 @@ export class TickerInfoService {
     private readonly alphaVantageService: AlphaVantageService,
   ) {}
 
-  async saveAVOverviews(
+  async saveCompanyProfiles(
     data: {
       symbol: string;
       currency: string;
@@ -23,7 +24,7 @@ export class TickerInfoService {
     }[],
   ) {
     return this.db
-      .insertInto("app_data.alphaVantageCompanyOverviews")
+      .insertInto("app_data.company_profiles")
       .values(data)
       .onConflict((oc) =>
         oc.columns(["symbol"]).doUpdateSet({
@@ -35,25 +36,30 @@ export class TickerInfoService {
       .execute();
   }
 
-  async getAVOverviews(symbols: string[]) {
+  async getCompanyProfiles(symbols: string[]) {
     return this.db
-      .selectFrom("app_data.alphaVantageCompanyOverviews")
+      .selectFrom("app_data.company_profiles")
       .selectAll()
       .where("symbol", "in", symbols)
       .execute();
   }
 
-  async getAVTimeSeries(symbol: string) {
-    return this.db
-      .selectFrom("app_data.alphaVantageTimeSeries")
-      .selectAll()
-      .where("symbol", "=", symbol)
-      .orderBy("date", "desc")
-      .limit(1)
-      .executeTakeFirst();
+  async getCompanyProfileApi(symbol: string) {
+    const result = await this.alphaVantageService.getSymbolOverview(symbol);
+    if (!result) {
+      return undefined;
+    }
+    return {
+      symbol: result.symbol,
+      description: result.Description,
+      country: result.Country,
+      currency: result.Currency,
+      sector: result.Sector.toLowerCase(),
+      beta: result.Beta,
+    };
   }
 
-  async saveAVTimeSeries(
+  async saveTickerTimeSeries(
     data: {
       symbol: string;
       date: Date;
@@ -65,12 +71,21 @@ export class TickerInfoService {
     }[],
   ) {
     return this.db
-      .insertInto("app_data.alphaVantageTimeSeries")
+      .insertInto("app_data.ticker_time_series")
       .values(data)
+      .onConflict((oc) =>
+        oc.columns(["symbol", "date"]).doUpdateSet({
+          openPrice: (eb) => eb.ref("excluded.openPrice"),
+          closePrice: (eb) => eb.ref("excluded.closePrice"),
+          high: (eb) => eb.ref("excluded.high"),
+          low: (eb) => eb.ref("excluded.low"),
+          volume: (eb) => eb.ref("excluded.volume"),
+        }),
+      )
       .execute();
   }
 
-  async saveAVETFDetails(
+  async saveETFProfiles(
     data: {
       symbol: string;
       inceptionDate: Date | undefined;
@@ -81,7 +96,7 @@ export class TickerInfoService {
     }[],
   ) {
     return this.db
-      .insertInto("app_data.alphaVantageETFProfiles")
+      .insertInto("app_data.etf_profiles")
       .values(
         data.map((d) => ({
           ...d,
@@ -91,18 +106,24 @@ export class TickerInfoService {
       .execute();
   }
 
-  async getTimeSeries(symbol: string) {
-    const data = await this.getAVTimeSeries(symbol);
+  async getLatestQuoteDatePerTicker(symbols: string[]) {
+    const result = await this.db
+      .selectFrom("app_data.ticker_time_series")
+      .select(["symbol", (eb) => eb.fn.max("date").as("date")])
+      .where("symbol", "in", symbols)
+      .groupBy("symbol")
+      .execute();
+    return keyBy(result, "symbol");
+  }
+
+  async getTickerTimeSeriesApi(symbol: string, sinceDate: Date) {
     const result = await this.alphaVantageService.getTimeSeriesDaily(
       symbol,
-      data ? "compact" : "full",
+      "compact",
     );
     if (!result) {
-      return undefined;
+      return [] as Exclude<typeof result, undefined>["quotes"];
     }
-    const quotes = data
-      ? result.quotes.filter((q) => q.date > data.date)
-      : result.quotes;
-    return quotes;
+    return result.quotes.filter((q) => q.date >= sinceDate);
   }
 }

@@ -1,14 +1,17 @@
 import FirecrawlApp, { type FirecrawlError } from "@mendable/firecrawl-js";
-import { type DataDatabase, type InsertableStockNews } from "@zysk/db";
-import { StockNewsStatus } from "@zysk/db";
-import axios, { type AxiosError } from "axios";
+import {
+  type DataDatabase,
+  StockNewsStatus,
+  type StockNewsUpdate,
+} from "@zysk/db";
 import { startOfDay } from "date-fns";
 import { inject, injectable } from "inversify";
 import { type Kysely, NotNull } from "kysely";
-import { keyBy, omit } from "lodash";
+import { keyBy } from "lodash";
 
 import { type AppConfig, appConfigSymbol } from "./config";
 import { dataDBSymbol } from "./db";
+import { FinnhubService } from "./finnhub.service";
 import {
   RateLimitExceededError,
   RequestTimeoutError,
@@ -22,6 +25,7 @@ export class TickerNewsService {
     @inject(appConfigSymbol) private readonly appConfig: AppConfig,
     @inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>,
     @inject(loggerSymbol) private readonly logger: Logger,
+    private readonly finnhubService: FinnhubService,
   ) {
     this.app = new FirecrawlApp({
       apiKey: this.appConfig.firecrawlApiKey,
@@ -30,18 +34,20 @@ export class TickerNewsService {
 
   async scrapeUrl(
     url: string,
-    timeout = 60000,
+    timeoutSeconds = 60,
   ): Promise<{ url: string; markdown: string | undefined }> {
     return this.app
       .scrapeUrl(url, {
         formats: ["markdown"],
-        timeout,
+        timeout: timeoutSeconds * 1000,
+        proxy: "stealth",
+        waitFor: 5000,
       })
       .then((r) => {
         if (!r.success) {
           throw new Error("Failed to scrape URL");
         }
-        return { url, markdown: r.markdown };
+        return { url: r.url!, markdown: r.markdown };
       })
       .catch((e) => {
         const fe = e as FirecrawlError;
@@ -76,98 +82,49 @@ export class TickerNewsService {
       });
   }
 
-  async getNewsPage(symbol: string, page: number) {
-    return this.getStockNewsApiPage({ symbol, page });
-  }
-
-  async getGeneralNewsPage(page: number) {
-    return this.getStockNewsApiPage({ page, section: "general" });
-  }
-
-  private async getStockNewsApiPage(params: {
-    symbol?: string;
-    section?: string;
-    page: number;
-  }) {
-    const { symbol: tickers, section, page } = params;
-    const path = section ? `/category` : "/";
-    return axios
-      .get<{
-        data: {
-          news_url: string;
-          date: string;
-          title: string;
-        }[];
-      }>(`https://stocknewsapi.com/api/v1${path}`, {
-        params: {
-          tickers,
-          section,
-          items: 100,
-          token: this.appConfig.stockNewsApiKey,
-          page,
-        },
-      })
-      .then(({ data }) =>
-        data.data.map((n) => ({
-          ...omit(n, "news_url", "date"),
-          url: n.news_url,
-          newsDate: new Date(n.date),
-        })),
-      )
-      .catch((e) => {
-        if (
-          (e as AxiosError<{ message?: string }>).response?.status === 403 &&
-          (
-            e as AxiosError<{ message?: string }>
-          ).response?.data.message?.includes(
-            "Basic plans can query up to 5 pages",
-          )
-        ) {
-          return [] as { url: string; title: string; newsDate: Date }[];
-        }
-        throw e;
-      });
-  }
-
-  *getNewsSince(
+  async getTickerNews(
     symbol: string,
     sinceDate: Date,
-  ): Generator<
-    Promise<{ url: string; title: string; newsDate: Date }[]>,
-    void,
-    { url: string; title: string; newsDate: Date }[]
-  > {
-    let page = 1;
-    const news = yield this.getNewsPage(symbol, page);
-    if (news.length === 0) return;
-
-    const filteredNews = news.filter((n) => n.newsDate >= sinceDate);
-    yield Promise.resolve(filteredNews);
-
-    page++;
+  ): Promise<{ url: string; title: string; newsDate: Date }[]> {
+    return this.finnhubService.getTickerNews({ symbol, sinceDate });
   }
 
-  async getAllNews(symbol: string) {
-    // Basic supports only 5 pages
-    const pages = Array.from({ length: 5 }).map((_, page) => {
-      return this.getNewsPage(symbol, page);
+  async getGeneralNewsPage(sinceDate: Date) {
+    return this.finnhubService.getTickerNews({
+      symbol: "general",
+      sinceDate,
     });
-    const news = await Promise.all(pages);
-    return news.flat();
   }
+
+  // *getNewsSince(
+  //   symbol: string,
+  //   sinceDate: Date,
+  // ): Generator<
+  //   Promise<{ url: string; title: string; newsDate: Date }[]>,
+  //   void,
+  //   { url: string; title: string; newsDate: Date }[]
+  // > {
+  //   let page = 1;
+  //   const news = yield this.getNewsPage(symbol, page);
+  //   if (news.length === 0) return;
+
+  //   const filteredNews = news.filter((n) => n.newsDate >= sinceDate);
+  //   yield Promise.resolve(filteredNews);
+
+  //   page++;
+  // }
 
   async getTodayNews(symbol: string) {
-    // 100 URLs is usually enough for a day
-    const news = await this.getNewsPage(symbol, 1);
-    return news.filter((n) => {
-      const date = new Date(n.newsDate);
-      return date >= startOfDay(new Date());
-    });
+    return this.getTickerNews(symbol, startOfDay(new Date()));
   }
 
   async scrapeTodayNews(symbol: string) {
     const news = await this.getTodayNews(symbol);
-    const result: { url: string; markdown: string; newsDate: Date }[] = [];
+    const result: {
+      url: string;
+      markdown: string;
+      newsDate: Date;
+    }[] = [];
     const dateMap = keyBy(news, "newsUrl");
     // Currently, Firecrawl's RL is 100 requests per minute
     for (let i = 0; i < news.length; i += 100) {
@@ -190,7 +147,7 @@ export class TickerNewsService {
     return result;
   }
 
-  async saveNews(news: InsertableStockNews[]) {
+  async saveNews(news: StockNewsUpdate[]) {
     return this.db
       .insertInto("app_data.stock_news")
       .values(news)
@@ -222,6 +179,7 @@ export class TickerNewsService {
       .where((eb) =>
         eb("symbol", "=", symbol).and(eb("newsDate", ">=", sinceDate)),
       )
+      .where("status", "=", StockNewsStatus.Scraped)
       .orderBy("newsDate", "desc")
       .execute();
   }
@@ -236,5 +194,3 @@ export class TickerNewsService {
       .execute();
   }
 }
-
-// export const tickerNewsService = new TickerNewsService();
