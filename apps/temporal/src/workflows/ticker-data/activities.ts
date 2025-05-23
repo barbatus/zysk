@@ -3,12 +3,12 @@ import { ApplicationFailure } from "@temporalio/workflow";
 import {
   RateLimitExceededError,
   resolve,
-  TickerInfoService,
+  TickerDataService,
 } from "@zysk/services";
 import { startOfDay, subMonths } from "date-fns";
 import { isNil } from "lodash";
 
-const tickerInfoService = resolve(TickerInfoService);
+const tickerInfoService = resolve(TickerDataService);
 
 export async function fetchAndSaveTickerTimeSeries(
   symbol: string,
@@ -52,8 +52,7 @@ async function _fetchTickersToProcess(symbols: string[]) {
   return sinceDates;
 }
 
-export async function fetchTickersForTimeSeries() {
-  const symbols = ["AAPL"];
+export async function fetchTickersForTimeSeries(symbols: string[]) {
   const sinceDates = await _fetchTickersToProcess(symbols);
   return sinceDates;
 }

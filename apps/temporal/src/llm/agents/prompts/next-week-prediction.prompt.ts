@@ -45,17 +45,7 @@ Output should be strictly in JSON format as specified in the OUTPUT FORMAT secti
 
 # {symbol} STOCK PRICE LAST 2 WEEKS
 \`\`\`markdown
-Apr 25, 2025 - 82.74
-Apr 24, 2025 - 79.84
-Apr 23, 2025 - 78.74
-Apr 22, 2025 - 78.97
-Apr 21, 2025 - 77.85
-Apr 17, 2025 - 78.0
-Apr 16, 2025 - 76.46
-Apr 15, 2025 - 78.39
-Apr 14, 2025 - 79.17
-Apr 13, 2025 - 79.18
-Apr 12, 2025 - 77.55
+{quotes}
 \`\`\`
 
 # MARKET PREDICTION FOR NEXT WEEK
@@ -68,7 +58,7 @@ Apr 12, 2025 - 77.55
 {news}
 \`\`\`
   `,
-    inputVariables: ["symbol", "news", "marketPrediction"],
+    inputVariables: ["symbol", "news", "marketPrediction", "quotes"],
     partialVariables: {
       formatInstructions: predictionParser.getFormatInstructions(),
     },

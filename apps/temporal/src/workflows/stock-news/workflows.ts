@@ -89,17 +89,19 @@ export async function scrapeGeneralNews() {
   });
 }
 
-export async function scrapeTickersNews() {
-  const symbols = await proxy.fetchTickersForNews();
+export async function scrapeTickersNews(symbols: string[]) {
+  const symbolsSince = await proxy.fetchTickersForNews(symbols);
 
-  for (const { symbol, sinceDate } of symbols) {
+  for (const { symbol, sinceDate } of symbolsSince) {
     await executeChild(scrapeSymbolNews, {
       args: [symbol, sinceDate],
     });
   }
 }
 
-export async function scrapeAllNews() {
+export async function scrapeAllNews(symbols: string[]) {
   await executeChild(scrapeGeneralNews);
-  await executeChild(scrapeTickersNews);
+  await executeChild(scrapeTickersNews, {
+    args: [symbols],
+  });
 }

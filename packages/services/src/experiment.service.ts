@@ -27,7 +27,7 @@ export class ExperimentService implements StateService<Experiment> {
       .executeTakeFirstOrThrow();
   }
 
-  async load(id: string): Promise<Experiment> {
+  async get(id: string): Promise<Experiment> {
     return this.db
       .selectFrom("app_data.experiments")
       .selectAll()

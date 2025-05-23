@@ -11,10 +11,10 @@ const proxy = proxyActivities<typeof activities>({
   },
 });
 
-export async function fetchTickersTimeSeries() {
-  const symbols = await proxy.fetchTickersForTimeSeries();
+export async function fetchTickersTimeSeries(symbols: string[]) {
+  const sinceDates = await proxy.fetchTickersForTimeSeries(symbols);
 
-  for (const chunk of makeChunks(symbols, 50)) {
+  for (const chunk of makeChunks(sinceDates, 50)) {
     await Promise.all(
       chunk.map((s) =>
         proxy.fetchAndSaveTickerTimeSeries(s.symbol, s.sinceDate),

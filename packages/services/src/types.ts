@@ -3,7 +3,7 @@ import { type ExperimentTaskStatus } from "@zysk/db";
 export interface StateService<T> {
   create: () => Promise<T>;
 
-  load: (id: string) => Promise<T>;
+  get: (id: string) => Promise<T>;
 
   setStatus: (
     id: string,

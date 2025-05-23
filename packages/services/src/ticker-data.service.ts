@@ -7,7 +7,7 @@ import { AlphaVantageService } from "./alpha-vantage.service";
 import { dataDBSymbol } from "./db";
 
 @injectable()
-export class TickerInfoService {
+export class TickerDataService {
   constructor(
     @inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>,
     private readonly alphaVantageService: AlphaVantageService,
@@ -114,6 +114,17 @@ export class TickerInfoService {
       .groupBy("symbol")
       .execute();
     return keyBy(result, "symbol");
+  }
+
+  async getSymbolTimeSeries(symbol: string, sinceDate: Date) {
+    const result = await this.db
+      .selectFrom("app_data.ticker_time_series")
+      .selectAll()
+      .where("symbol", "=", symbol)
+      .where("date", ">=", sinceDate)
+      .orderBy("date", "asc")
+      .execute();
+    return result;
   }
 
   async getTickerTimeSeriesApi(symbol: string, sinceDate: Date) {

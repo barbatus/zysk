@@ -1,7 +1,5 @@
-import { type Experiment } from "@zysk/db";
+import { type Experiment, type PredictionModel } from "@zysk/db";
 import { ExperimentService, resolve } from "@zysk/services";
-
-import { type AgentExecutionResult } from "#/llm/core/schemas";
 
 import { type AbstractContainer } from "../core/base";
 import { ModelKeyEnum } from "../core/enums";
@@ -12,10 +10,8 @@ import {
   nextWeekTicketMarketPredictionPrompt,
 } from "./prompts/next-week-prediction.prompt";
 import { type Prediction } from "./prompts/prediction-parser";
-import { predictionsMergerPrompt } from "./prompts/predictions-merger.prompt";
 
 const experimentService = resolve(ExperimentService);
-
 interface NewsBasedSymbolPredictorParams {
   state: Experiment;
   symbol: string;
@@ -24,7 +20,10 @@ interface NewsBasedSymbolPredictorParams {
   news: { markdown: string; url: string; date: Date }[];
 }
 
-export class NewsBasedSymbolMarketPredictorAgent extends ExperimentAgent<Prediction> {
+export class NewsBasedSymbolMarketPredictorAgent extends ExperimentAgent<
+  Prediction,
+  Prediction
+> {
   private readonly symbol: string;
   private readonly news: {
     markdown: string;
@@ -67,30 +66,40 @@ export class NewsBasedSymbolMarketPredictorAgent extends ExperimentAgent<Predict
 }
 
 export class NewsBasedTickerMarketPredictorAgent extends NewsBasedSymbolMarketPredictorAgent {
-  private readonly marketPrediction: Prediction;
+  private readonly marketPrediction: PredictionModel["responseJson"];
+  private readonly timeSeries: { date: Date; closePrice: number }[];
 
   constructor(
     params: NewsBasedSymbolPredictorParams & {
-      marketPrediction: Prediction;
+      marketPrediction: PredictionModel["responseJson"];
+      timeSeries: { date: Date; closePrice: number }[];
     },
   ) {
     super(params);
     this.marketPrediction = params.marketPrediction;
+    this.timeSeries = params.timeSeries;
   }
 
   override async mapPromptValues(): Promise<Record<string, string>> {
     return {
       ...(await super.mapPromptValues()),
       marketPrediction: JSON.stringify(this.marketPrediction),
+      quotes: this.timeSeries
+        .map((t) => `${new Date(t.date).toISOString()}: ${t.closePrice}`)
+        .join("\n"),
     };
   }
 }
 
-export class NextWeekNewsBasedPredictorAgent extends ExperimentAgent<Prediction> {
+export class NextWeekNewsBasedPredictorAgent extends ExperimentAgent<
+  Prediction,
+  Prediction
+> {
   static override async create(params: {
     symbol: string;
     news: { markdown: string; url: string; date: Date }[];
-    marketPrediction: Prediction;
+    marketPrediction: PredictionModel["responseJson"];
+    timeSeries: { date: Date; closePrice: number }[];
   }) {
     const state = await experimentService.create();
     return new NewsBasedTickerMarketPredictorAgent({
@@ -102,7 +111,10 @@ export class NextWeekNewsBasedPredictorAgent extends ExperimentAgent<Prediction>
   }
 }
 
-export class NextWeekMarketPredictionAgent extends ExperimentAgent<Prediction> {
+export class NextWeekMarketPredictionAgent extends ExperimentAgent<
+  Prediction,
+  Prediction
+> {
   static override async create(params: {
     news: { markdown: string; url: string; date: Date }[];
   }) {
@@ -114,44 +126,5 @@ export class NextWeekMarketPredictionAgent extends ExperimentAgent<Prediction> {
       prompt: nextWeekGeneralMarketPredictionPrompt,
       model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
     });
-  }
-}
-
-export class PredictionsMergerAgent extends ExperimentAgent<Prediction> {
-  private readonly predictions: Prediction[];
-
-  constructor(params: { state: Experiment; predictions: Prediction[] }) {
-    super(
-      params.state,
-      predictionsMergerPrompt,
-      modelsWithFallback[ModelKeyEnum.GptO3Mini],
-    );
-    this.predictions = params.predictions;
-  }
-
-  override async mapPromptValues(): Promise<Record<string, string>> {
-    return {
-      predictions: this.predictions
-        .map((p) => `\`\`\`json\n${JSON.stringify(p, null, 2)}\`\`\``)
-        .join("\n"),
-    };
-  }
-
-  static override async create(params: { predictions: Prediction[] }) {
-    const state = await experimentService.create();
-    return new PredictionsMergerAgent({
-      state,
-      predictions: params.predictions,
-    });
-  }
-
-  override async setSuccess(result: AgentExecutionResult<Prediction>) {
-    await experimentService.setSuccess(
-      this.state.id,
-      result.response as string | object,
-      result.evaluationDetails,
-      2,
-    );
-    return result.response;
   }
 }

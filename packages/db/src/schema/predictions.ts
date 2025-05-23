@@ -20,7 +20,7 @@ export interface PredictionResponse {
     impact: "positive" | "negative" | "mixed";
     reasoning: string;
     url?: string;
-    date: Date;
+    date: string;
     confidence: number;
   }[];
 }

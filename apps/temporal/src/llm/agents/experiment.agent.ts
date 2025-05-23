@@ -111,11 +111,10 @@ export abstract class StatefulAgent<
   protected abstract setStatus(status: ExperimentTaskStatus): Promise<void>;
 }
 
-export class ExperimentAgent<TResult = string> extends StatefulAgent<
-  Experiment,
-  TResult,
-  TResult
-> {
+export class ExperimentAgent<
+  AResult = string,
+  TResult = string,
+> extends StatefulAgent<Experiment, AResult, TResult> {
   static async create<TResult = string>(params: {
     prompt?: AgentPrompt<TResult>;
     model?: AbstractContainer;
@@ -136,12 +135,12 @@ export class ExperimentAgent<TResult = string> extends StatefulAgent<
     await experimentService.setStatus(this.state.id, status);
   }
 
-  async setSuccess(result: AgentExecutionResult<TResult>) {
+  async setSuccess(result: AgentExecutionResult<AResult>) {
     await experimentService.setSuccess(
       this.state.id,
       result.response as string | object,
       result.evaluationDetails,
     );
-    return result.response;
+    return result.response as unknown as TResult;
   }
 }

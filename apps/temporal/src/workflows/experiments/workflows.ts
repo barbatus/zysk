@@ -1,35 +1,78 @@
-import { proxyActivities } from "@temporalio/workflow";
+import { executeChild, proxyActivities } from "@temporalio/workflow";
 
+import { scrapeAllNews } from "../stock-news/workflows";
+import { fetchTickersTimeSeries } from "../ticker-data/workflows";
 import type * as activities from "./activities";
 
 const proxy = proxyActivities<typeof activities>({
   startToCloseTimeout: "7 minutes",
   retry: {
     nonRetryableErrorTypes: ["NonRetryable"],
-    maximumAttempts: 1,
+    maximumAttempts: 2,
   },
 });
 
-export async function runPredictionExperiment(symbol: string) {
-  const newsBatches = await proxy.fetchLastWeekNews({
+export async function runTickerPredictionExperiment(symbol: string) {
+  const { newsBatchIds, timeSeries } =
+    await proxy.fetchSymbolNextWeekPredictionExperimentData({
+      symbol,
+    });
+
+  const predictions = await Promise.all(
+    newsBatchIds.map((newsBatchId) =>
+      proxy.runNextWeekTickerPredictionExperiment({
+        symbol,
+        newsIds: newsBatchId,
+        timeSeries,
+      }),
+    ),
+  );
+
+  return proxy.makePredictions({
     symbol,
+    predictions,
+  });
+}
+
+export async function runMarketPredictionExperiment() {
+  const newsBatches = await proxy.fetchLastWeekNews({
+    symbol: "GENERAL",
   });
 
   const predictions = await Promise.all(
     newsBatches.map((batch) =>
-      proxy.runShortTermMarketPredictionExperiment({
-        symbol,
+      proxy.runNextWeekMarketPredictionExperiment({
         newsIds: batch,
       }),
     ),
   );
 
-  await proxy.mergePredictions({
+  return proxy.makePredictions({
+    symbol: "GENERAL",
     predictions,
   });
 }
 
-export async function runPredictionExperiments() {
-  const symbols = ["AAPL", "TSLA", "NVDA"];
-  await Promise.all(symbols.map(runPredictionExperiment));
+export async function runTickersPredictionExperiments(symbols: string[]) {
+  await Promise.all(
+    symbols.map((symbol) => runTickerPredictionExperiment(symbol)),
+  );
+}
+
+export async function runAllTogetherExperiment(onlyTickers = true) {
+  const symbols = await proxy.getSupportedTickers();
+
+  if (!onlyTickers) {
+    await Promise.all([
+      executeChild(fetchTickersTimeSeries, {
+        args: [symbols],
+      }),
+      executeChild(scrapeAllNews, {
+        args: [symbols],
+      }),
+    ]);
+    await executeChild(runMarketPredictionExperiment);
+  }
+
+  await runTickersPredictionExperiments(symbols);
 }

@@ -9,9 +9,11 @@ import { ExperimentService } from "./experiment.service";
 import { FinnhubService } from "./finnhub.service";
 import { MetricsService } from "./metrics.service";
 import { PortfolioService } from "./portfolio.service";
+import { PredictionService } from "./prediction.service";
 import { StockNewsApiService } from "./stock-news-api.service";
 import { SubscriptionsService } from "./subscriptions.service";
-import { TickerInfoService } from "./ticker-info.service";
+import { TickerService } from "./ticker.service";
+import { TickerDataService } from "./ticker-data.service";
 import { TickerNewsService } from "./ticker-news.service";
 import { createLogger, type Logger, loggerSymbol } from "./utils/logger";
 
@@ -36,7 +38,7 @@ container
 
 const services = [
   AlphaVantageService,
-  TickerInfoService,
+  TickerDataService,
   TickerNewsService,
   FinnhubService,
   ExperimentService,
@@ -44,6 +46,8 @@ const services = [
   MetricsService,
   SubscriptionsService,
   StockNewsApiService,
+  TickerService,
+  PredictionService,
 ] as const;
 
 services.forEach((service) => {

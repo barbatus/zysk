@@ -1,6 +1,7 @@
 import {
   type ColumnType,
   type Generated,
+  type Insertable,
   type JSONColumnType,
   type Selectable,
 } from "kysely";
@@ -65,7 +66,12 @@ type SubscriptionsTableBase = typeof subscriptionsTable.$inferSelect;
 export type SubscriptionsTable = CreateTableType<SubscriptionsTableBase>;
 
 type PredictionsTableBase = typeof predictionsTable.$inferSelect;
-export type PredictionsTable = CreateTableType<PredictionsTableBase>;
+export type PredictionsTable = CreateTableType<
+  PredictionsTableBase,
+  {
+    confidence: ColumnType<number, string | number>;
+  }
+>;
 
 export interface Database {
   users: UsersTable;
@@ -82,3 +88,4 @@ export type UserTicker = Selectable<UserTickersTable>;
 export type TickerQuote = Selectable<TickerQuotesTable>;
 export type Subscription = Selectable<SubscriptionsTable>;
 export type Prediction = Selectable<PredictionsTable>;
+export type PredictionModel = Insertable<PredictionsTable>;

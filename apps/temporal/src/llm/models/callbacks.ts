@@ -203,7 +203,7 @@ export function wrapOpenAIError(error: Error) {
     });
   }
   if (error instanceof RateLimitError) {
-    const retryMatch = /retry in (?<seconds>\d+)s/i.exec(error.message);
+    const retryMatch = /in (?<seconds>\d+)s/i.exec(error.message);
     const retryInSeconds = retryMatch
       ? parseInt(retryMatch.groups?.seconds ?? "0", 10)
       : undefined;

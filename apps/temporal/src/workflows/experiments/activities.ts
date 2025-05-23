@@ -1,14 +1,23 @@
-import { type StockNews } from "@zysk/db";
-import { resolve, TickerNewsService } from "@zysk/services";
-import { subDays } from "date-fns";
+import {
+  PredictionService,
+  resolve,
+  TickerDataService,
+  TickerNewsService,
+  TickerService,
+} from "@zysk/services";
+import { startOfDay, subDays } from "date-fns";
 
 import {
-  PreditionsMergerAgent,
-  ShortTermNewsBasedPredictorAgent,
-} from "#/llm/agents/market-predictor.agent";
+  NextWeekMarketPredictionAgent,
+  NextWeekNewsBasedPredictorAgent,
+} from "#/llm/agents/news-based-predictor.agent";
+import { PredictorAgent } from "#/llm/agents/predictor.agent";
 import { type Prediction } from "#/llm/agents/prompts/prediction-parser";
 
 const tickerNewsService = resolve(TickerNewsService);
+const predictionService = resolve(PredictionService);
+const tickerService = resolve(TickerService);
+const tickerDataService = resolve(TickerDataService);
 
 export async function fetchLastWeekNews(params: {
   symbol: string;
@@ -19,17 +28,17 @@ export async function fetchLastWeekNews(params: {
 
   const news = await tickerNewsService.getNewsBySymbol(
     symbol,
-    subDays(new Date(), 30),
+    subDays(new Date(), 7),
   );
   let count = 0;
-  const newsBatches: StockNews[][] = [];
-  const currentBatch: StockNews[] = [];
+  const newsBatches: (typeof news)[] = [];
+  const currentBatch: typeof news = [];
 
   const addCurrentBatch = () => {
     const prevBatch = newsBatches.length
       ? newsBatches[newsBatches.length - 1]
       : [];
-    const overlap: StockNews[] = [];
+    const overlap: typeof news = [];
     let _count = 0;
     for (const _n of prevBatch) {
       if (_count + _n.tokenSize > overlapLimit) {
@@ -56,15 +65,63 @@ export async function fetchLastWeekNews(params: {
   return newsBatches.map((batch) => batch.map((n) => n.id));
 }
 
-export async function runShortTermMarketPredictionExperiment(params: {
+export async function fetchSymbolTimeSeries(
+  symbol: string,
+  sinceDate: Date = startOfDay(subDays(new Date(), 14)),
+) {
+  return tickerDataService.getSymbolTimeSeries(symbol, sinceDate);
+}
+
+export async function fetchSymbolNextWeekPredictionExperimentData(params: {
+  symbol: string;
+  tokesLimit?: number;
+  overlapLimit?: number;
+}) {
+  const { symbol, tokesLimit, overlapLimit } = params;
+  const newsBatchIds = await fetchLastWeekNews({
+    symbol,
+    tokesLimit,
+    overlapLimit,
+  });
+  const timeSeries = await fetchSymbolTimeSeries(symbol);
+  return { newsBatchIds, timeSeries };
+}
+
+export async function runNextWeekTickerPredictionExperiment(params: {
   symbol: string;
   newsIds: string[];
+  timeSeries: { date: Date; closePrice: number }[];
 }) {
-  const { symbol, newsIds } = params;
+  const { symbol, newsIds, timeSeries } = params;
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
 
-  const agent = await ShortTermNewsBasedPredictorAgent.create({
+  const marketPrediction =
+    await predictionService.getLastGeneralMarketPrediction();
+
+  if (!marketPrediction) {
+    throw new Error("No market prediction found");
+  }
+
+  const agent = await NextWeekNewsBasedPredictorAgent.create({
     symbol,
+    news: news.map((n) => ({
+      ...n,
+      date: n.newsDate,
+    })),
+    timeSeries,
+    marketPrediction: marketPrediction.responseJson,
+  });
+
+  return await agent.run();
+}
+
+export async function runNextWeekMarketPredictionExperiment(params: {
+  newsIds: string[];
+}) {
+  const { newsIds } = params;
+  const news = await tickerNewsService.getNewsByNewsIds(newsIds);
+
+  const agent = await NextWeekMarketPredictionAgent.create({
     news: news.map((n) => ({
       ...n,
       date: n.newsDate,
@@ -73,8 +130,15 @@ export async function runShortTermMarketPredictionExperiment(params: {
   return await agent.run();
 }
 
-export async function mergePredictions(params: { predictions: Prediction[] }) {
-  const { predictions } = params;
-  const agent = await PreditionsMergerAgent.create({ predictions });
-  await agent.run();
+export async function makePredictions(params: {
+  symbol: string;
+  predictions: Prediction[];
+}) {
+  const { symbol, predictions } = params;
+  const agent = await PredictorAgent.create({ symbol, predictions });
+  return await agent.run();
+}
+
+export async function getSupportedTickers() {
+  return tickerService.getSupportedTickers();
 }

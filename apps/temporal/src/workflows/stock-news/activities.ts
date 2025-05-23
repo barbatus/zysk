@@ -30,15 +30,13 @@ async function _fetchTickersToProcess(symbols: string[]) {
   return sinceDates;
 }
 
-export async function fetchTickersForNews() {
-  const symbols = ["AAPL"];
+export async function fetchTickersForNews(symbols: string[]) {
   const sinceDates = await _fetchTickersToProcess(symbols);
   return sinceDates;
 }
 
 export async function fetchGeneralMarketLastNewsDate() {
-  const symbols = ["GENERAL"];
-  const sinceDates = await _fetchTickersToProcess(symbols);
+  const sinceDates = await _fetchTickersToProcess(["GENERAL"]);
   return sinceDates[0].sinceDate;
 }
 
