@@ -33,6 +33,7 @@ export class FinnhubService {
     const { symbol, sinceDate } = params;
     const from = format(sinceDate, "yyyy-MM-dd");
     const to = format(new Date(), "yyyy-MM-dd");
+    const path = symbol === "general" ? "news" : "company-news";
     const response = await axios.get<
       {
         id: number;
@@ -42,7 +43,7 @@ export class FinnhubService {
         url: string;
       }[]
     >(
-      `${finnhubApiUrl}/company-news?symbol=${symbol}&from=${from}&to=${to}&token=${this.appConfig.finnhubApiKey}`,
+      `${finnhubApiUrl}/${path}?symbol=${symbol}&from=${from}&to=${to}&token=${this.appConfig.finnhubApiKey}`,
     );
     return response.data.map((d) => ({
       url: d.url,

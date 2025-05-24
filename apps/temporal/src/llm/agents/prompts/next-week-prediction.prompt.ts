@@ -16,12 +16,12 @@ Output should be strictly in JSON format as specified in the OUTPUT FORMAT secti
 # YOUR TASK
 1. Read the news articles about {symbol} (in NEWS ARTICLES section) and identify any insights that may have a meaningful impact on the stock price in the **next week (5 days)**.
 2. Produce your conclusions and insights as a structured **JSON response**, **strictly** following the format in the **Output Format** section.
-3. Take into account {symbol} STOCK PRICE LAST 2 WEEKS data.
+3. Take into account {symbol} quotes from {symbol} STOCK PRICE LAST 2 WEEKS section.
 4. **Watch out** for all signals that could negatively affect short term stock price of {symbol} such as:
-   - market downturn prediction in **MARKET PROGNOSIS LAST WEEK**
-   - **very negative** news about {symbol} in **NEWS ARTICLES**
-   - big short interest in {symbol} in **NEWS ARTICLES**
-   - signs that stock is overbought in **NEWS ARTICLES**
+   - market downturn prediction in MARKET PROGNOSIS LAST WEEK section
+   - **very negative** news about {symbol} in NEWS ARTICLES section
+   - big short interest in {symbol} in NEWS ARTICLES section
+   - signs that stock is overbought in NEWS ARTICLES section
    - etc
 5. If there is a very negative news signal present as described in point 4, but prediction for growth is still positive, or **vice versa**,
    provide explanation in the **signal** field of the JSON response.

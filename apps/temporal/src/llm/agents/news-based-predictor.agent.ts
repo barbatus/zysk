@@ -1,5 +1,6 @@
 import { type Experiment, type PredictionModel } from "@zysk/db";
 import { ExperimentService, resolve } from "@zysk/services";
+import { format } from "date-fns";
 
 import { type AbstractContainer } from "../core/base";
 import { ModelKeyEnum } from "../core/enums";
@@ -18,6 +19,7 @@ interface NewsBasedSymbolPredictorParams {
   prompt: AgentPrompt<Prediction>;
   model: AbstractContainer;
   news: { markdown: string; url: string; date: Date }[];
+  onHeartbeat?: () => Promise<void>;
 }
 
 export class NewsBasedSymbolMarketPredictorAgent extends ExperimentAgent<
@@ -32,7 +34,7 @@ export class NewsBasedSymbolMarketPredictorAgent extends ExperimentAgent<
   }[];
 
   constructor(params: NewsBasedSymbolPredictorParams) {
-    super(params.state, params.prompt, params.model);
+    super(params.state, params.prompt, params.model, params.onHeartbeat);
     this.symbol = params.symbol;
     this.news = params.news;
   }
@@ -54,6 +56,7 @@ export class NewsBasedSymbolMarketPredictorAgent extends ExperimentAgent<
     prompt: AgentPrompt<TResult>;
     model?: AbstractContainer;
     news: { markdown: string; url: string; date: Date }[];
+    onHeartbeat?: () => Promise<void>;
   }) {
     const state = await experimentService.create();
     return new NewsBasedSymbolMarketPredictorAgent({
@@ -61,6 +64,7 @@ export class NewsBasedSymbolMarketPredictorAgent extends ExperimentAgent<
       ...params,
       prompt: params.prompt as AgentPrompt<Prediction>,
       model: params.model ?? modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
+      onHeartbeat: params.onHeartbeat,
     });
   }
 }
@@ -85,7 +89,7 @@ export class NewsBasedTickerMarketPredictorAgent extends NewsBasedSymbolMarketPr
       ...(await super.mapPromptValues()),
       marketPrediction: JSON.stringify(this.marketPrediction),
       quotes: this.timeSeries
-        .map((t) => `${new Date(t.date).toISOString()}: ${t.closePrice}`)
+        .map((t) => `${format(t.date, "yyyy-MM-dd")}: ${t.closePrice}`)
         .join("\n"),
     };
   }
@@ -100,6 +104,7 @@ export class NextWeekNewsBasedPredictorAgent extends ExperimentAgent<
     news: { markdown: string; url: string; date: Date }[];
     marketPrediction: PredictionModel["responseJson"];
     timeSeries: { date: Date; closePrice: number }[];
+    onHeartbeat?: () => Promise<void>;
   }) {
     const state = await experimentService.create();
     return new NewsBasedTickerMarketPredictorAgent({
@@ -117,6 +122,7 @@ export class NextWeekMarketPredictionAgent extends ExperimentAgent<
 > {
   static override async create(params: {
     news: { markdown: string; url: string; date: Date }[];
+    onHeartbeat?: () => Promise<void>;
   }) {
     const state = await experimentService.create();
     return new NewsBasedSymbolMarketPredictorAgent({

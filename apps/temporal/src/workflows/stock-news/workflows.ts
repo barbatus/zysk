@@ -67,8 +67,10 @@ export async function scrapeSymbolNewsBatchAndSave(
 }
 
 export async function scrapeSymbolNews(symbol: string, sinceDate: Date) {
-  const currentNews = await proxy.fetchSymbolNewsByPage(symbol, sinceDate);
-  for (let i = 0; i < currentNews.length; i += 60) {
+  const currentNews = (
+    await proxy.fetchSymbolNewsByPage(symbol, sinceDate)
+  ).map((n) => omit(n, "title"));
+  for (let i = 0; i < currentNews.length; i += 80) {
     await Promise.allSettled(
       // Scraping by 20 URLs to make to sure it does not exceed gRPC size limit
       // and all together 80 URLs in parralel to respect firecrawl rate limits.

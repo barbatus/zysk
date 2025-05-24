@@ -38,14 +38,22 @@ export abstract class StatefulAgent<
   AResult = string,
   TResult = string,
 > extends Agent<AResult> {
+  private readonly onHeartbeat?: () => Promise<void>;
+  private readonly unsubscribeModel?: () => void;
+
   constructor(
     protected readonly state: TState,
     protected readonly prompt: AgentPrompt<AResult>,
     protected readonly model: AbstractContainer = modelsWithFallback[
       ModelKeyEnum.GptO1
     ]!,
+    onHeartbeat?: () => Promise<void>,
   ) {
     super();
+    this.onHeartbeat = onHeartbeat;
+    if (onHeartbeat) {
+      this.unsubscribeModel = this.model.onRetry(onHeartbeat);
+    }
   }
 
   override async arun(
@@ -69,8 +77,10 @@ export abstract class StatefulAgent<
     try {
       for await (const state of new AsyncRetrying<TResult>(
         async () => {
-          const result = await this.arun(promptValues);
-          return this.setSuccess(result);
+          const response = await this.arun(promptValues);
+          const result = await this.setSuccess(response);
+          await this.onComplete();
+          return result;
         },
         retryIfException((error) => error instanceof ParserError),
         {
@@ -85,6 +95,7 @@ export abstract class StatefulAgent<
                 },
                 `Retrying due to parser error`,
               );
+              await this.onHeartbeat?.();
             }
           },
         },
@@ -109,6 +120,10 @@ export abstract class StatefulAgent<
   protected abstract mapPromptValues(): Promise<Record<string, string>>;
 
   protected abstract setStatus(status: ExperimentTaskStatus): Promise<void>;
+
+  protected async onComplete(): Promise<void> {
+    this.unsubscribeModel?.();
+  }
 }
 
 export class ExperimentAgent<
@@ -118,13 +133,19 @@ export class ExperimentAgent<
   static async create<TResult = string>(params: {
     prompt?: AgentPrompt<TResult>;
     model?: AbstractContainer;
+    onHeartbeat?: () => Promise<void>;
     [key: string]: unknown;
   }): Promise<object> {
     const state = await experimentService.create();
     if (!params.prompt) {
       throw new Error("Prompt is required");
     }
-    return new ExperimentAgent(state, params.prompt, params.model);
+    return new ExperimentAgent(
+      state,
+      params.prompt,
+      params.model,
+      params.onHeartbeat,
+    );
   }
 
   async mapPromptValues(): Promise<Record<string, string>> {

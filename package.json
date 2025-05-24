@@ -17,6 +17,7 @@
   },
   "scripts": {
     "dev:web": "turbo watch dev --filter=@zysk/web --filter=@zysk/cube",
+    "dev:temporal": "turbo watch dev --filter=@zysk/temporal",
     "dev": "turbo watch dev",
     "build": "turbo run build",
     "lint": "turbo run lint",

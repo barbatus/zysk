@@ -7,7 +7,7 @@ const predictionParser = new PredictionParser();
 
 export const predictionsMergerPrompt = new AgentPrompt<Prediction>({
   template: dedent`
-You are an expert financial analyst whose goal is to merge multiple stock price predictions into a single coherent and justified prediction.
+You are an expert financial analyst whose goal is to merge multiple stock price or market predictions into a single coherent and justified prediction.
 
 # YOUR TASK
 1. Carefully review all the given predictions.
@@ -21,6 +21,8 @@ You are an expert financial analyst whose goal is to merge multiple stock price 
    - **Prediction**: one of \`grow\`, \`fall\`, or \`same\`.
    - **Confidence**: integer from 0–100.
    - If there’s contradiction, provide a \`signal\` field explaining why the final decision leans one way despite opposing evidence.
+5. Do not mention that predictions converge, anything about that you are merging predictions in the \`reasoning\` field.
+   It should be entirely focused on the reasoning for the final prediction.
 
 ---
 

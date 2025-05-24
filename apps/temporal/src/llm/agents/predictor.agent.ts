@@ -5,6 +5,7 @@ import {
   type PredictionModel,
 } from "@zysk/db";
 import { ExperimentService, PredictionService, resolve } from "@zysk/services";
+import { omit } from "lodash";
 
 import { type AgentExecutionResult } from "#/llm/core/schemas";
 
@@ -116,7 +117,7 @@ export class PredictorAgent extends ExperimentAgent<
   private evalPrediction(prediction: Prediction) {
     const predictionEnum = this.estimatePrediction(prediction);
     const predictionResponse = {
-      ...prediction,
+      ...omit(prediction, "newsInsights"),
       prediction: predictionEnum,
       insights: prediction.newsInsights,
     };

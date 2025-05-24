@@ -2,7 +2,6 @@
   "$schema": "https://turbo.build/schema.json",
   "globalEnv": [
     "DATABASE_URL",
-    "ALPHA_VANTAGE_API_KEY",
     "CUBE_API_TOKEN",
     "CUBE_API_URL",
     "CUBE_API_SECRET",

@@ -50,6 +50,8 @@ export class ModelIdentity {
  */
 export interface AbstractRunner {
   arun: (message: string, config?: RunnableConfig) => Promise<ExecutionResult>;
+
+  onRetry: (handler: () => Promise<void> | void) => () => void;
 }
 
 export abstract class BaseLLMRunner implements AbstractRunner {
@@ -57,6 +59,10 @@ export abstract class BaseLLMRunner implements AbstractRunner {
 
   constructor(llm: AnyLLMModelType) {
     this.llm = llm;
+  }
+
+  onRetry(_handler: () => Promise<void> | void): () => void {
+    throw new Error("Method not implemented.");
   }
 
   protected async ainvoke(
@@ -122,6 +128,10 @@ export class ModelContainer implements AbstractContainer {
     public identity: ModelIdentity,
   ) {}
 
+  onRetry(_handler: () => Promise<void> | void): () => void {
+    throw new Error("Method not implemented.");
+  }
+
   get id(): string {
     return this.identity.id;
   }
@@ -164,8 +174,7 @@ export class SequentialModelContainer implements AbstractRunner {
   private maxAttempts: number;
   private modelKey: ModelKeyEnum;
   private onRetryHandlers: (() => Promise<void> | void)[] = [];
-  private lastRateLimitTTL = 60; // TTL of a rate limited model in seconds
-  // private rateLimitTtl = 60; // TTL of a rate limited model in seconds
+  private lastRateLimitTTL = 60;
 
   constructor(
     modelKey: ModelKeyEnum,
@@ -180,7 +189,7 @@ export class SequentialModelContainer implements AbstractRunner {
     this.shuffle(this.modelContainers);
     this.maxInputTokens = maxInputTokens;
     this.charsPerToken = charsPerToken;
-    this.maxAttempts = Math.max(2, Math.floor(this.modelContainers.length / 2));
+    this.maxAttempts = Math.max(3, Math.floor(this.modelContainers.length / 2));
     this.modelKey = modelKey;
     this.currentContainer = this.modelContainers[0];
   }
@@ -343,6 +352,14 @@ export class SequentialModelContainer implements AbstractRunner {
     _onRetry: () => Promise<void>,
     attempt: number,
   ): Promise<ModelContainer> {
+    logger.info(
+      {
+        attempt,
+        lastRateLimitTTL: this.lastRateLimitTTL,
+      },
+      `[SequentialModelContainer.getAvailable]`,
+    );
+
     const waitTime =
       attempt > this.modelContainers.length ? this.lastRateLimitTTL * 1000 : 0;
 

@@ -1,3 +1,4 @@
+import { heartbeat } from "@temporalio/activity";
 import {
   PredictionService,
   resolve,
@@ -14,11 +15,6 @@ import {
 import { PredictorAgent } from "#/llm/agents/predictor.agent";
 import { type Prediction } from "#/llm/agents/prompts/prediction-parser";
 
-const tickerNewsService = resolve(TickerNewsService);
-const predictionService = resolve(PredictionService);
-const tickerService = resolve(TickerService);
-const tickerDataService = resolve(TickerDataService);
-
 export async function fetchLastWeekNews(params: {
   symbol: string;
   tokesLimit?: number;
@@ -26,6 +22,7 @@ export async function fetchLastWeekNews(params: {
 }) {
   const { symbol, tokesLimit = 150000, overlapLimit = 20000 } = params;
 
+  const tickerNewsService = resolve(TickerNewsService);
   const news = await tickerNewsService.getNewsBySymbol(
     symbol,
     subDays(new Date(), 7),
@@ -69,6 +66,7 @@ export async function fetchSymbolTimeSeries(
   symbol: string,
   sinceDate: Date = startOfDay(subDays(new Date(), 14)),
 ) {
+  const tickerDataService = resolve(TickerDataService);
   return tickerDataService.getSymbolTimeSeries(symbol, sinceDate);
 }
 
@@ -93,8 +91,10 @@ export async function runNextWeekTickerPredictionExperiment(params: {
   timeSeries: { date: Date; closePrice: number }[];
 }) {
   const { symbol, newsIds, timeSeries } = params;
+  const tickerNewsService = resolve(TickerNewsService);
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
 
+  const predictionService = resolve(PredictionService);
   const marketPrediction =
     await predictionService.getLastGeneralMarketPrediction();
 
@@ -110,6 +110,9 @@ export async function runNextWeekTickerPredictionExperiment(params: {
     })),
     timeSeries,
     marketPrediction: marketPrediction.responseJson,
+    onHeartbeat: async () => {
+      heartbeat("NextWeekNewsBasedPredictorAgent");
+    },
   });
 
   return await agent.run();
@@ -119,6 +122,7 @@ export async function runNextWeekMarketPredictionExperiment(params: {
   newsIds: string[];
 }) {
   const { newsIds } = params;
+  const tickerNewsService = resolve(TickerNewsService);
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
 
   const agent = await NextWeekMarketPredictionAgent.create({
@@ -126,6 +130,9 @@ export async function runNextWeekMarketPredictionExperiment(params: {
       ...n,
       date: n.newsDate,
     })),
+    onHeartbeat: async () => {
+      heartbeat("NextWeekMarketPredictionAgent");
+    },
   });
   return await agent.run();
 }
@@ -135,10 +142,14 @@ export async function makePredictions(params: {
   predictions: Prediction[];
 }) {
   const { symbol, predictions } = params;
-  const agent = await PredictorAgent.create({ symbol, predictions });
+  const agent = await PredictorAgent.create({
+    symbol,
+    predictions,
+  });
   return await agent.run();
 }
 
 export async function getSupportedTickers() {
+  const tickerService = resolve(TickerService);
   return tickerService.getSupportedTickers();
 }

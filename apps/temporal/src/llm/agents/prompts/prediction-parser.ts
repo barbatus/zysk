@@ -13,7 +13,7 @@ const NewsInsightSchema = z.object({
   date: z.string(),
   url: z.string(),
   insight: z.string(),
-  impact: z.enum(["positive", "negative", "mixed"]),
+  impact: z.enum(["positive", "negative", "mixed", "neutral"]),
   reasoning: z.string(),
   confidence: z.number(),
 });
@@ -33,7 +33,10 @@ export class PredictionParser extends JsonOutputParser<Prediction> {
     try {
       return PredictionSchema.parse(await super.parse(response));
     } catch (error) {
-      throw new ParserError((error as ZodError).message);
+      const issue = (error as ZodError).issues[0];
+      throw new ParserError(
+        `${issue.code}: ${String(issue.path)}: ${issue.message}`,
+      );
     }
   }
 

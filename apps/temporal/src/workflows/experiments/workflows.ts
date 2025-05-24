@@ -59,7 +59,7 @@ export async function runTickersPredictionExperiments(symbols: string[]) {
   );
 }
 
-export async function runAllTogetherExperiment(onlyTickers = true) {
+export async function runAllTogetherExperiment(onlyTickers = false) {
   const symbols = await proxy.getSupportedTickers();
 
   if (!onlyTickers) {

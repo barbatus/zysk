@@ -6,6 +6,7 @@ import {
   type AzureOpenAIServiceConfig,
   getConfig,
 } from "@zysk/services";
+import { type APIError } from "openai";
 
 import { BaseLLMRunner, ModelContainer, ModelIdentity } from "../core/base";
 import {
@@ -53,7 +54,7 @@ export class OpenAIRunner extends BaseLLMRunner {
         },
       };
     } catch (error) {
-      throw wrapOpenAIError(error as Error);
+      throw wrapOpenAIError(error as APIError);
     }
   }
 }

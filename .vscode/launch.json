@@ -1,0 +1,26 @@
+{
+  "version": "0.0.0",
+  "configurations": [
+      {
+          "name": "Temporal Worker",
+          "type": "node-terminal",
+          "request": "launch",
+          "command": "pnpm run dev:temporal"
+      },
+      {
+        "name": "Temporal Server",
+        "type": "node-terminal",
+        "request": "launch",
+        "command": "temporal server start-dev"
+      }
+  ],
+  "compounds": [
+      {
+          "name": "Temporal Server + Worker",
+          "configurations": [
+              "Temporal Server",
+              "Temporal Worker"
+          ]
+      }
+  ]
+}

@@ -17,7 +17,7 @@ export interface PredictionResponse {
   reasoning: string;
   insights: {
     insight: string;
-    impact: "positive" | "negative" | "mixed";
+    impact: "positive" | "negative" | "mixed" | "neutral";
     reasoning: string;
     url?: string;
     date: string;
