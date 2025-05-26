@@ -5,3 +5,13 @@ packages:
 catalogs:
   zod:
     zod: ^3.23.8
+
+  "@emotion/styled":
+    "@emotion/styled": ^11.13.0
+
+  "@emotion/react":
+    "@emotion/react": ^11.13.3
+
+  "@emotion/cache":
+    "@emotion/cache": ^11.13.1
+

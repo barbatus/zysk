@@ -8,10 +8,10 @@ import { inject, injectable } from "inversify";
 import { type Kysely } from "kysely";
 
 import { dataDBSymbol } from "./db";
-import { type StateService } from "./types";
+import { type AgentStateService } from "./utils/types";
 
 @injectable()
-export class ExperimentService implements StateService<Experiment> {
+export class ExperimentService implements AgentStateService<Experiment> {
   constructor(
     @inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>,
   ) {}

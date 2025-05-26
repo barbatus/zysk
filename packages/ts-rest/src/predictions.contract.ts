@@ -10,7 +10,7 @@ export enum PredictionEnum {
 
 const InsightSchema = z.object({
   insight: z.string(),
-  impact: z.enum(["positive", "negative", "mixed"]),
+  impact: z.enum(["positive", "negative", "mixed", "neutral"]),
   reasoning: z.string(),
   url: z.string().url().optional(),
 });
@@ -19,6 +19,7 @@ export const PredictionSchema = z.object({
   id: z.string(),
   symbol: z.string(),
   prediction: z.nativeEnum(PredictionEnum),
+  reasoning: z.string(),
   confidence: z.number(),
   createdAt: z.coerce.date(),
   insights: z.array(InsightSchema),

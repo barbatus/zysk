@@ -1,6 +1,6 @@
 import { type ExperimentTaskStatus } from "@zysk/db";
 
-export interface StateService<T> {
+export interface AgentStateService<T> {
   create: () => Promise<T>;
 
   get: (id: string) => Promise<T>;
@@ -14,3 +14,9 @@ export interface StateService<T> {
     },
   ) => Promise<void>;
 }
+
+export type Exact<T, Shape> = T extends Shape
+  ? Exclude<keyof T, keyof Shape> extends never
+    ? T
+    : never
+  : never;

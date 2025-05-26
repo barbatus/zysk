@@ -1,4 +1,5 @@
+export * from "./admin.contract";
 export * from "./metrics.contract";
 export * from "./positions.contract";
 export * from "./predictions.contract";
-export * from "./subscriptions.contract";
+export * from "./watchlist.contract";

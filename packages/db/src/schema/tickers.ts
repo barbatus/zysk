@@ -1,4 +1,5 @@
 import {
+  boolean,
   jsonb,
   numeric,
   pgTable,
@@ -12,7 +13,7 @@ import { auditColumns } from "../utils/audit";
 import { validatedStringEnum } from "./columns/validated-enum";
 import { usersTable } from "./users";
 
-enum TickerType {
+export enum TickerType {
   Stock = "stock",
   ETP = "etp",
   REIT = "reit",
@@ -35,6 +36,7 @@ export const tickersTable = pgTable("tickers", {
     >()
     .default([]),
   foundedAt: timestamp("founded_at", { withTimezone: true }),
+  supported: boolean("supported").notNull().default(false),
   ...auditColumns(),
 });
 

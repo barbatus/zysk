@@ -11,8 +11,9 @@
   "scripts": {
     "start": "docker compose up -d",
     "build": "tsc",
-    "dev": "npm-run-all --parallel dev:tsc copy-model",
+    "dev": "npm-run-all --parallel dev:tsc dev:cube:tsc",
     "dev:tsc": "tsc --watch",
+    "dev:cube:tsc": "tsc --project tsconfig.cube.json --watch",
     "lint": "eslint . --ext .ts --color",
     "lint:fix": "pnpm lint --fix",
     "copy-model": "cpx dist/shared/constants.js model/shared --watch",

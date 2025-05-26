@@ -1,10 +1,11 @@
 import { parseProgramArgsAndRun } from "./commander";
-import { syncTickers } from "./tickers";
+import { syncTickerOverviews, syncTickerQuotes, syncTickers } from "./tickers";
 
-export const allScripts = [syncTickers];
+export const allScripts = [syncTickers, syncTickerQuotes, syncTickerOverviews];
 
 async function runScripts() {
   let error: Error | undefined;
+  console.log("Running scripts...");
   try {
     await parseProgramArgsAndRun(allScripts);
   } catch (e) {

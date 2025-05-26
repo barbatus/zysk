@@ -12,14 +12,21 @@
         "type": "node-terminal",
         "request": "launch",
         "command": "temporal server start-dev"
+      },
+      {
+        "name": "Web",
+        "type": "node-terminal",
+        "request": "launch",
+        "command": "pnpm run dev:web"
       }
   ],
   "compounds": [
       {
-          "name": "Temporal Server + Worker",
+          "name": "Temporal Server + Worker + Web",
           "configurations": [
               "Temporal Server",
-              "Temporal Worker"
+              "Temporal Worker",
+              "Web"
           ]
       }
   ]

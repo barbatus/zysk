@@ -2,6 +2,7 @@ import { activityInfo } from "@temporalio/activity";
 import { ApplicationFailure } from "@temporalio/workflow";
 import { type StockNewsUpdate } from "@zysk/db";
 import {
+  type Exact,
   RateLimitExceededError,
   RequestTimeoutError,
   resolve,
@@ -85,6 +86,8 @@ export async function scrapeSymbolNews(url: string) {
   }
 }
 
-export async function saveNews(news: StockNewsUpdate[]) {
+export async function saveNews<T extends StockNewsUpdate>(
+  news: Exact<T, StockNewsUpdate>[],
+) {
   return tickerNewsService.saveNews(news);
 }

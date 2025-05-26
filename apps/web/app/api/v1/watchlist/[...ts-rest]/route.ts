@@ -1,15 +1,15 @@
 import { createNextHandler } from "@ts-rest/serverless/next";
-import { resolve, SubscriptionsService } from "@zysk/services";
-import { subscriptionsContract } from "@zysk/ts-rest";
+import { resolve, WatchlistService } from "@zysk/services";
+import { watchlistContract } from "@zysk/ts-rest";
 
 const handler = createNextHandler(
-  subscriptionsContract,
+  watchlistContract,
   {
-    getSubscriptions: async () => {
-      const service = resolve(SubscriptionsService);
+    getWatchlist: async () => {
+      const service = resolve(WatchlistService);
       return {
         status: 200,
-        body: await service.getSubscriptions(
+        body: await service.getWatchlist(
           "b655f123-9f69-4d6f-83d9-270e4673befb",
         ),
       };

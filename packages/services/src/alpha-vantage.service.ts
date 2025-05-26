@@ -38,7 +38,7 @@ function processResponse<
 export class AlphaVantageService {
   constructor(@inject(appConfigSymbol) private readonly appConfig: AppConfig) {}
 
-  async getSymbolOverview(symbol: string) {
+  async getCompanyOverview(symbol: string) {
     const response = await axios.get<
       | {
           Description: string;

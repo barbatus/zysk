@@ -16,7 +16,7 @@
     "typescript": "5.6.2"
   },
   "scripts": {
-    "dev:web": "turbo watch dev --filter=@zysk/web --filter=@zysk/cube",
+    "dev:web": "turbo watch dev --filter=@zysk/web",
     "dev:temporal": "turbo watch dev --filter=@zysk/temporal",
     "dev": "turbo watch dev",
     "build": "turbo run build",

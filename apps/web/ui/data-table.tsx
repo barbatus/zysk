@@ -94,20 +94,22 @@ export function DataTable<
             </tr>
           ))}
         </tbody>
-        <tfoot>
-          {table.getFooterGroups().map((footerGroup) => (
-            <tr key={footerGroup.id}>
-              {footerGroup.headers.map((header) => (
-                <td key={header.id}>
-                  {flexRender(header.column.columnDef.footer, {
-                    ...header.getContext(),
-                    row: footerRow,
-                  })}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tfoot>
+        {footerRow ? (
+          <tfoot>
+            {table.getFooterGroups().map((footerGroup) => (
+              <tr key={footerGroup.id}>
+                {footerGroup.headers.map((header) => (
+                  <td key={header.id}>
+                    {flexRender(header.column.columnDef.footer, {
+                      ...header.getContext(),
+                      row: footerRow,
+                    })}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tfoot>
+        ) : null}
       </Table>
     </Sheet>
   );

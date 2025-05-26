@@ -5,6 +5,7 @@ import {
   DIMENSION_NAME_POSITION_ID,
   DIMENSION_NAME_PERIOD,
   DIMENSION_NAME_TICKER,
+  DIMENSION_NAME_QUOTE,
 } from "./shared/constants";
 
 cube(`PortfolioCube`, {
@@ -93,17 +94,19 @@ cube(`PortfolioCube`, {
     openValue: {
       type: `number`,
       sql: `
-        CASE WHEN ${CUBE.openedAt} >= ${CUBE.period} THEN COALESCE(${CUBE.openPrice}, ${CUBE}.ticker_open_price)
-             ELSE ${CUBE}.start_price
+        CASE
+          WHEN ${CUBE.openedAt} >= ${CUBE.period} THEN COALESCE(${CUBE.openPrice}, ${CUBE}.ticker_open_price)
+          ELSE ${CUBE}.start_price
         END
       `,
     },
     closeValue: {
       type: `number`,
       sql: `
-        CASE WHEN ${CUBE.closedAt} >= ${CUBE.period} THEN COALESCE(${CUBE.closePrice}, ${CUBE}.ticker_close_price)
-             WHEN ${CUBE.closedAt} IS NULL THEN ${CurrentQuote.price}
-             ELSE NULL
+        CASE
+          WHEN ${CUBE.closedAt} >= ${CUBE.period} THEN COALESCE(${CUBE.closePrice}, ${CUBE}.ticker_close_price)
+          WHEN ${CUBE.closedAt} IS NULL THEN ${CurrentQuotes[DIMENSION_NAME_QUOTE]}
+          ELSE NULL
         END
       `,
     },

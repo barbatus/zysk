@@ -1,43 +1,158 @@
 import CloseIcon from "@mui/icons-material/Close";
+import Box from "@mui/joy/Box";
+import Button from "@mui/joy/Button";
+import Card from "@mui/joy/Card";
+import CardActions from "@mui/joy/CardActions";
+import CardContent from "@mui/joy/CardContent";
+import CardOverflow from "@mui/joy/CardOverflow";
+import Chip from "@mui/joy/Chip";
+import IconButton from "@mui/joy/IconButton";
+import Skeleton from "@mui/joy/Skeleton";
+import Stack from "@mui/joy/Stack";
+import Switch from "@mui/joy/Switch";
+import Tooltip from "@mui/joy/Tooltip";
+import Typography from "@mui/joy/Typography";
+import Popover, { type PopoverProps } from "@mui/material/Popover";
 import {
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  CardOverflow,
-  Chip,
-  IconButton,
-  Stack,
-  Switch,
-  Typography,
-} from "@mui/joy";
+  createTheme as createMuiTheme,
+  ThemeProvider as MuiThemeProvider,
+} from "@mui/material/styles";
 import { type SxProps } from "@mui/system";
-import { type PredictionEnum } from "@zysk/ts-rest";
+import {
+  DIMENSION_NAME_QUOTE,
+  METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE,
+} from "@zysk/cube";
+import { type Prediction } from "@zysk/ts-rest";
 import { format } from "date-fns";
+import { Info, TrendingDown, TrendingUp } from "lucide-react";
+import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
 import Link from "next/link";
 
+import { type MetricsRow } from "#/api/metrics";
+
 import { PredictionBadge } from "./prediction-badge";
+
+const muiTheme = createMuiTheme({});
+
+function MuiPopover(props: PopoverProps) {
+  return (
+    <MuiThemeProvider theme={muiTheme}>
+      <Popover {...props} />
+    </MuiThemeProvider>
+  );
+}
+
+export function PredictionCardSkeleton() {
+  return (
+    <Card
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        maxWidth: 400,
+      }}
+    >
+      <CardContent sx={{ flex: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            mb: 2,
+          }}
+        >
+          <Skeleton
+            variant="rectangular"
+            width={100}
+            height={24}
+            sx={{ borderRadius: "sm" }}
+          />
+          <Skeleton variant="circular" width={24} height={24} />
+        </Box>
+
+        <Box sx={{ mb: 2 }}>
+          <Skeleton
+            variant="rectangular"
+            width={200}
+            height={16}
+            sx={{ borderRadius: "sm" }}
+          />
+        </Box>
+
+        <Stack direction="column" spacing={0.5} sx={{ mb: 2 }}>
+          <Skeleton
+            variant="text"
+            width="100%"
+            height={16}
+            sx={{ borderRadius: "sm" }}
+          />
+          <Skeleton
+            variant="text"
+            width="85%"
+            height={16}
+            sx={{ borderRadius: "sm" }}
+          />
+          <Skeleton
+            variant="text"
+            width="95%"
+            height={16}
+            sx={{ borderRadius: "sm" }}
+          />
+          <Skeleton
+            variant="text"
+            width="85%"
+            height={16}
+            sx={{ borderRadius: "sm" }}
+          />
+          <Skeleton
+            variant="text"
+            width="100%"
+            height={16}
+            sx={{ borderRadius: "sm" }}
+          />
+        </Stack>
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            pt: 2,
+            borderTop: "1px solid",
+            borderColor: "divider",
+            mt: "auto",
+          }}
+        >
+          <Skeleton
+            variant="rectangular"
+            width={72}
+            height={20}
+            sx={{ borderRadius: "sm" }}
+          />
+          <Skeleton
+            variant="rectangular"
+            width={100}
+            height={20}
+            sx={{ borderRadius: "sm" }}
+          />
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
 
 export function TickerPredictionCard({
   symbol,
   title,
   lastPrediction,
   sx,
+  currentQuote,
 }: {
   symbol: string;
   title?: string;
-  lastPrediction?: {
-    createdAt: Date;
-    prediction: PredictionEnum;
-    insights: {
-      insight: string;
-      impact: "positive" | "negative" | "mixed";
-      reasoning: string;
-      url?: string;
-    }[];
-  };
+  lastPrediction?: Prediction;
   sx?: SxProps;
+  currentQuote?: MetricsRow;
 }) {
   return (
     <Card sx={sx}>
@@ -46,12 +161,63 @@ export function TickerPredictionCard({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "flex-start",
-          mb: 1,
         }}
       >
         <Stack spacing={0.5}>
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1} alignItems="center">
             <Typography level="title-lg">{symbol}</Typography>
+            {currentQuote ? (
+              <>
+                {currentQuote[DIMENSION_NAME_QUOTE] ? (
+                  <Typography level="title-md" fontWeight="lg">
+                    ${currentQuote[DIMENSION_NAME_QUOTE]}
+                  </Typography>
+                ) : null}
+                {currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE] ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      color:
+                        Number(
+                          currentQuote[
+                            METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE
+                          ],
+                        ) >= 0
+                          ? "success.500"
+                          : "danger.500",
+                    }}
+                  >
+                    {Number(
+                      currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE],
+                    ) >= 0 ? (
+                      <TrendingUp size={14} />
+                    ) : (
+                      <TrendingDown size={14} />
+                    )}
+                    <Typography
+                      level="body-sm"
+                      fontWeight="lg"
+                      sx={{
+                        color: "inherit",
+                      }}
+                    >
+                      {Number(
+                        currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE],
+                      ) >= 0
+                        ? "+"
+                        : ""}
+                      {Number(
+                        currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE],
+                      ).toFixed(1)}
+                      %
+                    </Typography>
+                  </Box>
+                ) : null}
+              </>
+            ) : null}
+
             {title ? (
               <Chip color="neutral" size="sm" variant="outlined">
                 {title}
@@ -60,7 +226,7 @@ export function TickerPredictionCard({
           </Stack>
           {lastPrediction ? (
             <Typography level="body-sm" color="neutral">
-              Last analysis: {format(lastPrediction.createdAt, "MMM d, yyyy")}
+              Generated: {format(lastPrediction.createdAt, "MMM d, yyyy")}
             </Typography>
           ) : null}
         </Stack>
@@ -76,16 +242,82 @@ export function TickerPredictionCard({
               <PredictionBadge prediction={lastPrediction.prediction} />
             </Stack>
             <Stack spacing={0.5}>
-              {lastPrediction.insights.slice(0, 3).map(({ insight }) => (
+              <Tooltip
+                title={lastPrediction.reasoning}
+                size="lg"
+                sx={{
+                  maxWidth: 400,
+                  padding: 2,
+                  fontWeight: "sm",
+                }}
+                variant="outlined"
+                placement="right"
+                arrow
+              >
                 <Typography
-                  key={insight}
-                  level="body-sm"
+                  level="body-md"
+                  fontWeight={200}
                   color="neutral"
-                  fontWeight="md"
+                  sx={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 5,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    cursor: "pointer",
+                  }}
                 >
-                  • {insight}
+                  {lastPrediction.reasoning}
                 </Typography>
-              ))}
+              </Tooltip>
+              {lastPrediction.insights.length >= 1 && (
+                <PopupState variant="popover" popupId="demo-popup-popover">
+                  {(popupState) => (
+                    <div>
+                      <Button
+                        variant="plain"
+                        color="neutral"
+                        size="sm"
+                        startDecorator={<Info size={12} />}
+                        sx={{ minHeight: "auto", width: "fit-content" }}
+                        {...bindTrigger(popupState)}
+                      >
+                        Show insights
+                      </Button>
+                      <MuiPopover
+                        {...bindPopover(popupState)}
+                        anchorOrigin={{
+                          vertical: "bottom",
+                          horizontal: "left",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 2,
+                            width: 400,
+                            maxHeight: 400,
+                            overflow: "auto",
+                          }}
+                        >
+                          <Stack spacing={1}>
+                            {lastPrediction.insights.map((insight) => (
+                              <Typography
+                                key={insight.insight}
+                                level="body-sm"
+                                fontWeight={300}
+                                sx={{
+                                  color: "var(--joy-palette-text-secondary)",
+                                }}
+                              >
+                                • {insight.insight}
+                              </Typography>
+                            ))}
+                          </Stack>
+                        </Box>
+                      </MuiPopover>
+                    </div>
+                  )}
+                </PopupState>
+              )}
             </Stack>
           </>
         ) : null}

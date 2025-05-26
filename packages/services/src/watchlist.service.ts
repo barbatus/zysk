@@ -6,10 +6,10 @@ import { groupBy } from "lodash";
 import { appDBSymbol } from "./db";
 
 @injectable()
-export class SubscriptionsService {
+export class WatchlistService {
   constructor(@inject(appDBSymbol) private readonly db: Kysely<Database>) {}
 
-  async getSubscriptions(userId: string) {
+  async getWatchlist(userId: string) {
     const query = this.db
       .selectFrom("subscriptions as s")
       .leftJoin(
@@ -43,10 +43,9 @@ export class SubscriptionsService {
       const isNegative =
         prediction.prediction === PredictionEnum.WillFall ||
         prediction.prediction === PredictionEnum.LikelyFall;
-      const insights = prediction
-        .responseJson!.insights.filter(
-          (i) => i.impact === (isNegative ? "negative" : "positive"),
-        )
+      const responseJson = prediction.responseJson!;
+      const insights = responseJson.insights
+        .filter((i) => i.impact === (isNegative ? "negative" : "positive"))
         .sort((a, b) => b.confidence - a.confidence);
 
       return {
@@ -55,6 +54,7 @@ export class SubscriptionsService {
         confidence: Number(prediction.confidence),
         createdAt: prediction.createdAt!,
         insights,
+        reasoning: responseJson.reasoning,
       };
     };
 

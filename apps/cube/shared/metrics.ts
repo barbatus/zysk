@@ -6,6 +6,8 @@ import {
   METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH,
   METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY,
   METRIC_NAME_USER_PORTFOLIO_SEGMENTS,
+  METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE,
+  DIMENSION_NAME_QUOTE,
 } from "./constants";
 import { type Metric } from "./types";
 
@@ -30,6 +32,11 @@ export const METRIC_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS = {
 export const METRIC_USER_PORTFOLIO_SEGMENTS = {
   name: METRIC_NAME_USER_PORTFOLIO_SEGMENTS,
   title: "Portfolio segments",
+};
+
+export const METRIC_TICKER_LAST_WEEK_PERFORMANCE = {
+  name: METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE,
+  title: "Last week's performance",
 };
 
 class BasePortfolioView {
@@ -91,7 +98,20 @@ class UserPortfolioSegmentsView extends BasePortfolioView {
   }
 }
 
+class TickerMetricsView extends BasePortfolioView {
+  name = "TickerMetrics";
+
+  get dimensions(): string[] {
+    return [DIMENSION_NAME_TICKER, DIMENSION_NAME_QUOTE];
+  }
+
+  get metrics(): Metric[] {
+    return [METRIC_TICKER_LAST_WEEK_PERFORMANCE];
+  }
+}
+
 export const ALL_VIEWS = [
   new UserPortfolioView(),
   new UserPortfolioSegmentsView(),
+  new TickerMetricsView(),
 ];

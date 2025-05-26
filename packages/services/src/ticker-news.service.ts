@@ -17,6 +17,7 @@ import {
   RequestTimeoutError,
 } from "./utils/exceptions";
 import { type Logger, loggerSymbol } from "./utils/logger";
+import { Exact } from "./utils/types";
 
 @injectable()
 export class TickerNewsService {
@@ -147,7 +148,7 @@ export class TickerNewsService {
     return result;
   }
 
-  async saveNews(news: StockNewsUpdate[]) {
+  async saveNews<T extends StockNewsUpdate>(news: Exact<T, StockNewsUpdate>[]) {
     return this.db
       .insertInto("app_data.stock_news")
       .values(news)

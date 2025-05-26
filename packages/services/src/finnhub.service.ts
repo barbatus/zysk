@@ -10,12 +10,19 @@ const finnhubApiUrl = "https://finnhub.io/api/v1";
 export class FinnhubService {
   constructor(@inject(appConfigSymbol) private readonly appConfig: AppConfig) {}
 
-  async getUSSymbols(symbols: string[]) {
+  async getUSTickers(symbols: string[]) {
     const response = await axios.get<
       {
+        displaySymbol: string;
         symbol: string;
-        type: "Common Stock" | "ETP";
+        type: "Common Stock" | "ETP" | "REIT" | "ADR";
+        description: string;
         figi: string;
+        currency: string;
+        isin: string;
+        mic: string;
+        shareClassFIGI: string;
+        symbol2?: string;
       }[]
     >(`${finnhubApiUrl}/stock/symbol`, {
       params: {
@@ -23,7 +30,9 @@ export class FinnhubService {
         token: this.appConfig.finnhubApiKey,
       },
     });
-    return response.data.filter((d) => symbols.includes(d.symbol));
+    return response.data.filter((d) =>
+      symbols.length ? symbols.includes(d.symbol) : true,
+    );
   }
 
   async getTickerNews(params: {
@@ -50,5 +59,20 @@ export class FinnhubService {
       title: d.headline,
       newsDate: new Date(d.datetime * 1000),
     }));
+  }
+
+  async getQuote(symbol: string) {
+    const response = await axios.get<{
+      c: number;
+      d: number;
+      dp: number;
+      h: number;
+      l: number;
+      o: number;
+      pc: number;
+    }>(
+      `${finnhubApiUrl}/quote?symbol=${symbol}&token=${this.appConfig.finnhubApiKey}`,
+    );
+    return response.data;
   }
 }

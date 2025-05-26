@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../nextjs-starter-typescript"
 		}
 	],
 	"settings": {}

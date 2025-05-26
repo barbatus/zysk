@@ -45,7 +45,7 @@ export class TickerDataService {
   }
 
   async getCompanyProfileApi(symbol: string) {
-    const result = await this.alphaVantageService.getSymbolOverview(symbol);
+    const result = await this.alphaVantageService.getCompanyOverview(symbol);
     if (!result) {
       return undefined;
     }
@@ -57,6 +57,15 @@ export class TickerDataService {
       sector: result.Sector.toLowerCase(),
       beta: result.Beta,
     };
+  }
+
+  async getAndSaveCompanyOverview(symbol: string) {
+    const overview = await this.getCompanyProfileApi(symbol);
+    if (overview) {
+      await this.saveCompanyProfiles([overview]);
+      return true;
+    }
+    return false;
   }
 
   async saveTickerTimeSeries(

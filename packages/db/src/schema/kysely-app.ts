@@ -8,7 +8,7 @@ import {
 
 import { type CreateTableType, type Optional } from "../utils/custom-types";
 import { type predictionsTable } from "./predictions";
-import { type quotesTable } from "./quotes";
+import { type currentQuotesTable, type quotesTable } from "./quotes";
 import { type subscriptionsTable } from "./subscriptions";
 import { type tickersTable, type userTickersTable } from "./tickers";
 
@@ -19,17 +19,22 @@ export interface UsersTable {
   email: string;
 }
 
-export type TickerType = "stock" | "etp" | "reit" | "adr";
-
 type TickersTableBase = typeof tickersTable.$inferSelect;
 export type TickersTable = CreateTableType<
   TickersTableBase,
   {
     sectors: JSONColumnType<
-      {
-        name: string;
-        weight: number;
-      }[]
+      | {
+          name: string;
+          weight: number;
+        }[]
+      | null,
+      Optional<
+        {
+          name: string;
+          weight: number;
+        }[]
+      >
     >;
     foundedAt: ColumnType<Date | null, Optional<Date>>;
   }
@@ -73,6 +78,14 @@ export type PredictionsTable = CreateTableType<
   }
 >;
 
+type CurrentQuotesTableBase = typeof currentQuotesTable.$inferSelect;
+export type CurrentQuotesTable = CreateTableType<
+  CurrentQuotesTableBase,
+  {
+    price: ColumnType<number, string | number>;
+  }
+>;
+
 export interface Database {
   users: UsersTable;
   tickers: TickersTable;
@@ -80,6 +93,7 @@ export interface Database {
   tickerQuotes: TickerQuotesTable;
   subscriptions: SubscriptionsTable;
   predictions: PredictionsTable;
+  currentQuotes: CurrentQuotesTable;
 }
 
 export type User = Selectable<UsersTable>;

@@ -3,7 +3,8 @@
 import { initTsrReactQuery } from "@ts-rest/react-query/v5";
 import {
   type ALL_METRICS,
-  DIMENSION_NAME_POSITION_ID,
+  type DIMENSION_NAME_POSITION_ID,
+  type DIMENSION_NAME_QUOTE,
   DIMENSION_NAME_TICKER,
   type METRIC_NAME_USER_PORTFOLIO_SEGMENTS,
 } from "@zysk/cube";
@@ -29,9 +30,10 @@ export type MetricsRow = Record<
 > &
   Record<(typeof ALL_METRICS)[number], MetricValue> & {
     [METRIC_NAME_USER_PORTFOLIO_SEGMENTS]: MetricObject;
+    [DIMENSION_NAME_QUOTE]: string;
   };
 
-const getResultRows = (results: QueryResultSet[], index: number) => {
+export const getResultRows = (results: QueryResultSet[], index: number) => {
   const rColumns = results[index]?.columns ?? [];
   const rRows = results[index]?.rows ?? [];
   return rRows.map((row) => {
@@ -40,17 +42,16 @@ const getResultRows = (results: QueryResultSet[], index: number) => {
   });
 };
 
-export const useMetrics = (metrics: MetricsRequest["metrics"]) => {
+export const useMetrics = (
+  metrics: MetricsRequest["metrics"],
+  groupBys?: MetricsRequest["groupBys"],
+) => {
   const { data, ...result } = metricsApi.evalQuery.useQuery({
     queryKey: ["metrics"],
     queryData: {
       query: {
         metrics,
-        groupBys: [
-          [],
-          [DIMENSION_NAME_TICKER],
-          [DIMENSION_NAME_POSITION_ID, DIMENSION_NAME_TICKER],
-        ],
+        groupBys: groupBys ?? [],
         timezone: getUserTimezone(),
       },
     },

@@ -11,11 +11,11 @@ import { MetricsService } from "./metrics.service";
 import { PortfolioService } from "./portfolio.service";
 import { PredictionService } from "./prediction.service";
 import { StockNewsApiService } from "./stock-news-api.service";
-import { SubscriptionsService } from "./subscriptions.service";
 import { TickerService } from "./ticker.service";
 import { TickerDataService } from "./ticker-data.service";
 import { TickerNewsService } from "./ticker-news.service";
 import { createLogger, type Logger, loggerSymbol } from "./utils/logger";
+import { WatchlistService } from "./watchlist.service";
 
 export const container = new Container();
 
@@ -44,7 +44,7 @@ const services = [
   ExperimentService,
   PortfolioService,
   MetricsService,
-  SubscriptionsService,
+  WatchlistService,
   StockNewsApiService,
   TickerService,
   PredictionService,

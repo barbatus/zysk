@@ -1,12 +1,5 @@
-cube(`Quotes`, {
-  sql_table: `public.ticker_quotes`,
-
-  joins: {
-    CurrentQuotes: {
-      sql: `${CUBE.symbol} = ${CurrentQuotes.symbol}`,
-      relationship: `one_to_one`,
-    }
-  },
+cube(`TickerTimeSeries`, {
+  sql_table: `app_data.ticker_time_series`,
 
   dimensions: {
     symbol: {

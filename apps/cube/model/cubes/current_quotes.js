@@ -1,3 +1,5 @@
+import { DIMENSION_NAME_QUOTE } from "./shared/constants";
+
 cube(`CurrentQuotes`, {
   sql_table: `public.current_quotes`,
 
@@ -8,12 +10,12 @@ cube(`CurrentQuotes`, {
       primaryKey: true,
     },
 
-    updated_at: {
+    date: {
       type: `time`,
-      sql: `date`,
+      sql: `updated_at`,
     },
 
-    price: {
+    [DIMENSION_NAME_QUOTE]: {
       type: `number`,
       sql: `price`,
     },
