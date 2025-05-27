@@ -18,6 +18,7 @@
   "scripts": {
     "dev:web": "turbo watch dev --filter=@zysk/web",
     "dev:temporal": "turbo watch dev --filter=@zysk/temporal",
+    "clean": "npx turbo daemon clean",
     "dev": "turbo watch dev",
     "build": "turbo run build",
     "lint": "turbo run lint",

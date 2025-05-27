@@ -21,8 +21,9 @@ import { type SxProps } from "@mui/system";
 import {
   DIMENSION_NAME_QUOTE,
   METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE,
+  METRIC_NAME_TICKER_PREV_DAY_PERFORMANCE,
 } from "@zysk/cube";
-import { type Prediction } from "@zysk/ts-rest";
+import { type TickerPrediction } from "@zysk/ts-rest";
 import { format } from "date-fns";
 import { Info, TrendingDown, TrendingUp } from "lucide-react";
 import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
@@ -141,16 +142,16 @@ export function PredictionCardSkeleton() {
   );
 }
 
-export function TickerPredictionCard({
+export function TickerStateCard({
   symbol,
   title,
-  lastPrediction,
+  prediction,
   sx,
   currentQuote,
 }: {
   symbol: string;
   title?: string;
-  lastPrediction?: Prediction;
+  prediction?: TickerPrediction;
   sx?: SxProps;
   currentQuote?: MetricsRow;
 }) {
@@ -167,67 +168,91 @@ export function TickerPredictionCard({
           <Stack direction="row" spacing={1} alignItems="center">
             <Typography level="title-lg">{symbol}</Typography>
             {currentQuote ? (
-              <>
-                {currentQuote[DIMENSION_NAME_QUOTE] ? (
-                  <Typography level="title-md" fontWeight="lg">
-                    ${currentQuote[DIMENSION_NAME_QUOTE]}
-                  </Typography>
-                ) : null}
-                {currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE] ? (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      color:
-                        Number(
-                          currentQuote[
-                            METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE
-                          ],
-                        ) >= 0
-                          ? "success.500"
-                          : "danger.500",
-                    }}
-                  >
-                    {Number(
-                      currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE],
-                    ) >= 0 ? (
-                      <TrendingUp size={14} />
-                    ) : (
-                      <TrendingDown size={14} />
-                    )}
-                    <Typography
-                      level="body-sm"
-                      fontWeight="lg"
-                      sx={{
-                        color: "inherit",
-                      }}
-                    >
-                      {Number(
-                        currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE],
-                      ) >= 0
-                        ? "+"
-                        : ""}
-                      {Number(
-                        currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE],
-                      ).toFixed(1)}
-                      %
-                    </Typography>
-                  </Box>
-                ) : null}
-              </>
+              <Typography level="title-md" fontWeight="lg">
+                ${currentQuote[DIMENSION_NAME_QUOTE]}
+              </Typography>
             ) : null}
-
             {title ? (
               <Chip color="neutral" size="sm" variant="outlined">
                 {title}
               </Chip>
             ) : null}
           </Stack>
-          {lastPrediction ? (
-            <Typography level="body-sm" color="neutral">
-              Generated: {format(lastPrediction.createdAt, "MMM d, yyyy")}
-            </Typography>
+          {currentQuote ? (
+            <Stack direction="row" spacing={1} alignItems="center">
+              {currentQuote[METRIC_NAME_TICKER_PREV_DAY_PERFORMANCE] ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    color:
+                      Number(
+                        currentQuote[METRIC_NAME_TICKER_PREV_DAY_PERFORMANCE],
+                      ) >= 0
+                        ? "success.500"
+                        : "danger.500",
+                  }}
+                >
+                  {Number(
+                    currentQuote[METRIC_NAME_TICKER_PREV_DAY_PERFORMANCE],
+                  ) >= 0 ? (
+                    <TrendingUp size={14} />
+                  ) : (
+                    <TrendingDown size={14} />
+                  )}
+                  <Typography
+                    level="body-sm"
+                    fontWeight="lg"
+                    sx={{
+                      color: "inherit",
+                    }}
+                  >
+                    1D:
+                    {Number(
+                      currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE],
+                    ).toFixed(1)}
+                    %
+                  </Typography>
+                </Box>
+              ) : null}
+              {currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE] ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    color:
+                      Number(
+                        currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE],
+                      ) >= 0
+                        ? "success.500"
+                        : "danger.500",
+                  }}
+                >
+                  {Number(
+                    currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE],
+                  ) >= 0 ? (
+                    <TrendingUp size={14} />
+                  ) : (
+                    <TrendingDown size={14} />
+                  )}
+                  <Typography
+                    level="body-sm"
+                    fontWeight="lg"
+                    sx={{
+                      color: "inherit",
+                    }}
+                  >
+                    1W:
+                    {Number(
+                      currentQuote[METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE],
+                    ).toFixed(1)}
+                    %
+                  </Typography>
+                </Box>
+              ) : null}
+            </Stack>
           ) : null}
         </Stack>
         <IconButton variant="plain" color="neutral" size="sm">
@@ -235,15 +260,15 @@ export function TickerPredictionCard({
         </IconButton>
       </Box>
       <CardContent>
-        {lastPrediction ? (
+        {prediction ? (
           <>
             <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
               <Typography level="body-sm">Next week prediction:</Typography>
-              <PredictionBadge prediction={lastPrediction.prediction} />
+              <PredictionBadge prediction={prediction.prediction} />
             </Stack>
             <Stack spacing={0.5}>
               <Tooltip
-                title={lastPrediction.reasoning}
+                title={prediction.reasoning}
                 size="lg"
                 sx={{
                   maxWidth: 400,
@@ -266,58 +291,77 @@ export function TickerPredictionCard({
                     cursor: "pointer",
                   }}
                 >
-                  {lastPrediction.reasoning}
+                  {prediction.reasoning}
                 </Typography>
               </Tooltip>
-              {lastPrediction.insights.length >= 1 && (
-                <PopupState variant="popover" popupId="demo-popup-popover">
-                  {(popupState) => (
-                    <div>
-                      <Button
-                        variant="plain"
-                        color="neutral"
-                        size="sm"
-                        startDecorator={<Info size={12} />}
-                        sx={{ minHeight: "auto", width: "fit-content" }}
-                        {...bindTrigger(popupState)}
-                      >
-                        Show insights
-                      </Button>
-                      <MuiPopover
-                        {...bindPopover(popupState)}
-                        anchorOrigin={{
-                          vertical: "bottom",
-                          horizontal: "left",
-                        }}
-                      >
-                        <Box
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                {prediction.insights.length >= 1 && (
+                  <PopupState variant="popover" popupId="demo-popup-popover">
+                    {(popupState) => (
+                      <div>
+                        <Button
+                          variant="plain"
+                          color="neutral"
+                          size="sm"
+                          startDecorator={<Info size={12} />}
                           sx={{
-                            p: 2,
-                            width: 400,
-                            maxHeight: 400,
-                            overflow: "auto",
+                            minHeight: "auto",
+                            width: "fit-content",
+                          }}
+                          {...bindTrigger(popupState)}
+                        >
+                          Show insights
+                        </Button>
+                        <MuiPopover
+                          {...bindPopover(popupState)}
+                          anchorOrigin={{
+                            vertical: "bottom",
+                            horizontal: "left",
                           }}
                         >
-                          <Stack spacing={1}>
-                            {lastPrediction.insights.map((insight) => (
-                              <Typography
-                                key={insight.insight}
-                                level="body-sm"
-                                fontWeight={300}
-                                sx={{
-                                  color: "var(--joy-palette-text-secondary)",
-                                }}
-                              >
-                                • {insight.insight}
-                              </Typography>
-                            ))}
-                          </Stack>
-                        </Box>
-                      </MuiPopover>
-                    </div>
-                  )}
-                </PopupState>
-              )}
+                          <Box
+                            sx={{
+                              p: 2,
+                              width: 400,
+                              maxHeight: 400,
+                              overflow: "auto",
+                            }}
+                          >
+                            <Stack spacing={1}>
+                              {prediction.insights.map((insight) => (
+                                <Typography
+                                  key={insight.insight}
+                                  level="body-sm"
+                                  fontWeight={300}
+                                  sx={{
+                                    color: "var(--joy-palette-text-secondary)",
+                                  }}
+                                >
+                                  • {insight.insight}
+                                </Typography>
+                              ))}
+                            </Stack>
+                          </Box>
+                        </MuiPopover>
+                      </div>
+                    )}
+                  </PopupState>
+                )}
+                <Typography
+                  level="body-xs"
+                  sx={{
+                    color: "var(--joy-palette-neutral-400)",
+                    fontSize: "0.75rem",
+                  }}
+                >
+                  Generated: {format(prediction.createdAt, "MMM d, yyyy")}
+                </Typography>
+              </Stack>
             </Stack>
           </>
         ) : null}

@@ -5,7 +5,8 @@ import { fetchTickersTimeSeries } from "../ticker-data/workflows";
 import type * as activities from "./activities";
 
 const proxy = proxyActivities<typeof activities>({
-  startToCloseTimeout: "7 minutes",
+  startToCloseTimeout: "15 minutes",
+  heartbeatTimeout: "5 minutes",
   retry: {
     nonRetryableErrorTypes: ["NonRetryable"],
     maximumAttempts: 2,

@@ -7,7 +7,7 @@ import {
   type companyProfiles,
   type etfProfiles,
   type tickerTimeSeries,
-} from "./tickers-info";
+} from "./tickers-data";
 
 type CompanyProfilesTableBase = typeof companyProfiles.$inferSelect;
 export type CompanyProfilesTable = CreateTableType<

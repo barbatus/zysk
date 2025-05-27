@@ -1,7 +1,5 @@
 import { parseProgramArgsAndRun } from "./commander";
-import { syncTickerOverviews, syncTickerQuotes, syncTickers } from "./tickers";
-
-export const allScripts = [syncTickers, syncTickerQuotes, syncTickerOverviews];
+import { allScripts } from "./main";
 
 async function runScripts() {
   let error: Error | undefined;

@@ -1,7 +1,7 @@
 import { type BaseChatModel } from "@langchain/core/language_models/chat_models";
-import { type BaseLLM } from "@langchain/core/language_models/llms";
 import { type AIMessage } from "@langchain/core/messages";
 import { type RunnableConfig } from "@langchain/core/runnables";
+import { type Ratelimit } from "@upstash/ratelimit";
 import { getConfig, getLogger } from "@zysk/services";
 import dedent from "dedent";
 
@@ -29,7 +29,7 @@ import { type ExecutionResult } from "./schemas";
 const appConfig = getConfig();
 const logger = getLogger();
 
-export type AnyLLMModelType = BaseChatModel | BaseLLM;
+export type AnyLLMModelType = BaseChatModel;
 
 export class ModelIdentity {
   constructor(
@@ -175,11 +175,13 @@ export class SequentialModelContainer implements AbstractRunner {
   private modelKey: ModelKeyEnum;
   private onRetryHandlers: (() => Promise<void> | void)[] = [];
   private lastRateLimitTTL = 60;
+  private rateLimiter: Ratelimit | undefined;
 
   constructor(
     modelKey: ModelKeyEnum,
     containers: Iterable<ModelContainer>,
     maxInputTokens: number,
+    rateLimiter?: Ratelimit,
     charsPerToken = 3,
   ) {
     if (Array.from(containers).length === 0) {
@@ -192,6 +194,7 @@ export class SequentialModelContainer implements AbstractRunner {
     this.maxAttempts = Math.max(3, Math.floor(this.modelContainers.length / 2));
     this.modelKey = modelKey;
     this.currentContainer = this.modelContainers[0];
+    this.rateLimiter = rateLimiter;
   }
 
   private shuffle(array: ModelContainer[]): void {
@@ -299,7 +302,13 @@ export class SequentialModelContainer implements AbstractRunner {
           },
           `[SequentialModelContainer.arun]`,
         );
-        const response = await this.currentContainer.arun(inputPrompt, config);
+        const response = await this.currentContainer.arun(inputPrompt, {
+          ...config,
+          configurable: {
+            ...config?.configurable,
+            rateLimiter: this.rateLimiter,
+          },
+        });
         return response;
       } catch (error) {
         if (error instanceof ResponseTimeoutError) {

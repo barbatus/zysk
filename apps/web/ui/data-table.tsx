@@ -45,7 +45,6 @@ export function DataTable<
     <Sheet
       variant="outlined"
       sx={{
-        // maxWidth: 1400,
         mx: "auto",
         my: 4,
         p: 2,
@@ -59,6 +58,7 @@ export function DataTable<
         {...props}
         sx={{
           "--TableCell-footBackground": "transparent",
+          ...props.sx,
         }}
       >
         <thead>
@@ -87,7 +87,12 @@ export function DataTable<
           {table.getRowModel().rows.map((row) => (
             <tr key={row.id}>
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id}>
+                <td
+                  key={cell.id}
+                  style={{
+                    width: cell.column.getSize(),
+                  }}
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

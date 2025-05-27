@@ -32,7 +32,7 @@ export interface ScriptConfig<TArgs extends unknown[] = unknown[]>
 
 export const TASK_SYMBOL = Symbol.for("api:Script");
 
-export function getScript<TArgs extends unknown[] = unknown[]>(
+export function createScript<TArgs extends unknown[] = unknown[]>(
   options: ScriptOptions,
 ): (handler: ScriptHandler<TArgs>) => ScriptConfig<TArgs> {
   return (handler: ScriptHandler<TArgs>) => {

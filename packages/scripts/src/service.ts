@@ -1,12 +1,24 @@
 import { orderBy } from "lodash";
 
-import { syncTickers } from "./tickers";
+import {
+  syncSupportedTickers,
+  syncTickerOverviews,
+  syncTickerQuotes,
+  syncTickers,
+  syncTickerTimeSeries,
+} from "./tickers";
+
+export const allScripts = [
+  syncTickers,
+  syncTickerQuotes,
+  syncTickerOverviews,
+  syncTickerTimeSeries,
+  syncSupportedTickers,
+];
 
 export function getAllScripts() {
-  const scripts = [syncTickers];
-
   return orderBy(
-    scripts.map((script) => ({
+    allScripts.map((script) => ({
       name: script.name,
       description: script.description,
       arguments: script.arguments.map((a) => ({
@@ -24,4 +36,13 @@ export function getAllScripts() {
     (x) => x.name,
     "desc",
   );
+}
+
+export function getScript(name: string) {
+  const script = allScripts.find((x) => x.name === name);
+  if (!script) {
+    throw new Error(`Script ${name} not found`);
+  }
+
+  return script;
 }

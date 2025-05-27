@@ -1,12 +1,12 @@
 import { Database, TickerType } from "@zysk/db";
 import { inject, injectable } from "inversify";
 import { Kysely } from "kysely";
-import { chunk, omit } from "lodash";
+import { chunk, pick } from "lodash";
 
 import { appDBSymbol } from "./db";
 import { FinnhubService } from "./finnhub.service";
 
-const supportedTickers = ["AAPL"];
+const supportedTickers = ["AAPL", "TSLA", "NVDA"];
 
 @injectable()
 export class TickerService {
@@ -35,6 +35,7 @@ export class TickerService {
       .onConflict((b) =>
         b.columns(["symbol"]).doUpdateSet(() => ({
           price: (eb) => eb.ref("excluded.price"),
+          updatedAt: new Date(),
         })),
       )
       .execute();
@@ -50,16 +51,7 @@ export class TickerService {
           .insertInto("tickers")
           .values(
             c.map((r) => ({
-              ...omit(
-                r,
-                "description",
-                "type",
-                "displaySymbol",
-                "isin",
-                "mic",
-                "shareClassFIGI",
-                "symbol2",
-              ),
+              ...pick(r, "symbol", "figi", "currency"),
               type:
                 r.type === "Common Stock" ? TickerType.Stock : TickerType.ETP,
               about: r.description,
@@ -70,10 +62,19 @@ export class TickerService {
             b.columns(["symbol"]).doUpdateSet(() => ({
               about: (eb) => eb.ref("excluded.about"),
               supported: (eb) => eb.ref("excluded.supported"),
+              updatedAt: new Date(),
             })),
           )
           .execute();
       }),
     );
+  }
+
+  async updateSupportedTickers() {
+    await this.appDB
+      .updateTable("tickers")
+      .set({ supported: true })
+      .where("symbol", "in", supportedTickers)
+      .execute();
   }
 }

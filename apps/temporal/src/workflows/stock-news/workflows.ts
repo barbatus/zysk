@@ -1,6 +1,6 @@
 import { executeChild, proxyActivities } from "@temporalio/workflow";
 import { StockNewsStatus } from "@zysk/db";
-import { chunk, mapKeys, omit } from "lodash";
+import { chunk, mapKeys, omit, pick } from "lodash";
 
 import type * as activities from "./activities";
 
@@ -54,9 +54,8 @@ export async function scrapeSymbolNewsBatchAndSave(
       .map((n) =>
         n.markdown
           ? {
-              ...omit(n, "originalUrl"),
+              ...pick(n, "markdown", "url", "tokenSize"),
               symbol,
-              markdown: n.markdown,
               newsDate: newsDateMap[n.originalUrl].newsDate,
               status: StockNewsStatus.Scraped,
             }

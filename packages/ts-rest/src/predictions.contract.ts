@@ -15,7 +15,7 @@ const InsightSchema = z.object({
   url: z.string().url().optional(),
 });
 
-export const PredictionSchema = z.object({
+export const TickerPredictionSchema = z.object({
   id: z.string(),
   symbol: z.string(),
   prediction: z.nativeEnum(PredictionEnum),
@@ -25,4 +25,4 @@ export const PredictionSchema = z.object({
   insights: z.array(InsightSchema),
 });
 
-export type Prediction = z.infer<typeof PredictionSchema>;
+export type TickerPrediction = z.infer<typeof TickerPredictionSchema>;

@@ -1,5 +1,5 @@
 import { createNextHandler } from "@ts-rest/serverless/next";
-import { getAllScripts } from "@zysk/scripts";
+import { getAllScripts, getScript } from "@zysk/scripts";
 import { adminContract } from "@zysk/ts-rest";
 
 const handler = createNextHandler(
@@ -11,13 +11,22 @@ const handler = createNextHandler(
         body: getAllScripts(),
       };
     },
-    executeAdminScript: async () => {
-      return {
-        status: 200,
-        body: {
-          result: "OK",
-        },
-      };
+    executeAdminScript: async ({ body }) => {
+      const script = getScript(body.name);
+
+      try {
+        return {
+          status: 200,
+          body: {
+            result: await script.handler(body.arguments, body.options),
+          },
+        };
+      } catch (error) {
+        return {
+          status: 500,
+          body: { error: (error as Error).message },
+        };
+      }
     },
   },
   {

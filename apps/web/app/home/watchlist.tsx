@@ -11,8 +11,8 @@ import { Search } from "lucide-react";
 import { useWatchlist, useWatchlistMetrics } from "#/api/watchlist";
 import {
   PredictionCardSkeleton,
-  TickerPredictionCard,
-} from "#/ui/prediction-card";
+  TickerStateCard,
+} from "#/ui/ticker-state-card";
 
 export function Watchlist() {
   const { data: predictions, isLoading } = useWatchlist();
@@ -44,10 +44,11 @@ export function Watchlist() {
             ))
           : predictions!.map((p) => (
               <Grid key={p.symbol} xs={12} sm={6} lg={3}>
-                <TickerPredictionCard
+                <TickerStateCard
                   sx={{ height: "100%" }}
                   symbol={p.symbol}
-                  lastPrediction={p.lastPrediction}
+                  title={p.about ?? undefined}
+                  prediction={p.prediction}
                   currentQuote={rowsBySymbol[p.symbol]}
                 />
               </Grid>

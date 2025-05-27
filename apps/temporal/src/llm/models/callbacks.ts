@@ -1,3 +1,4 @@
+import { UpstashRatelimitError } from "@langchain/community/callbacks/handlers/upstash_ratelimit";
 import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
 import { type Serialized } from "@langchain/core/load/serializable";
 import { AIMessage } from "@langchain/core/messages";
@@ -202,16 +203,23 @@ export function wrapOpenAIError(error: APIError) {
       message: error.message,
     });
   }
+
+  if (error instanceof UpstashRatelimitError) {
+    return new RateLimitExceededError({
+      message: error.message,
+    });
+  }
+
   if (error.status === 429) {
-    const retryMatch = /in (?<seconds>\d+)s/i.exec(error.message);
+    const retryMatch = /in (?<seconds>[\d\\.]+)s/i.exec(error.message);
     const retryInSeconds = retryMatch
-      ? parseInt(retryMatch.groups?.seconds ?? "0", 10)
+      ? parseFloat(retryMatch.groups?.seconds ?? "0")
       : undefined;
 
     return new RateLimitExceededError({
       message: error.message,
       details: {
-        retryInSeconds,
+        retryInSeconds: retryInSeconds ? retryInSeconds + 1 : 0,
       },
     });
   }

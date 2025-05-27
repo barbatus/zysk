@@ -89,6 +89,7 @@ export class TickerDataService {
           high: (eb) => eb.ref("excluded.high"),
           low: (eb) => eb.ref("excluded.low"),
           volume: (eb) => eb.ref("excluded.volume"),
+          updatedAt: new Date(),
         }),
       )
       .execute();
@@ -136,14 +137,31 @@ export class TickerDataService {
     return result;
   }
 
-  async getTickerTimeSeriesApi(symbol: string, sinceDate: Date) {
+  async getTickerTimeSeriesApi(
+    symbol: string,
+    sinceDate: Date,
+    outputsize: "full" | "compact" = "compact",
+  ) {
     const result = await this.alphaVantageService.getTimeSeriesDaily(
       symbol,
-      "compact",
+      outputsize,
     );
     if (!result) {
       return [] as Exclude<typeof result, undefined>["quotes"];
     }
     return result.quotes.filter((q) => q.date >= sinceDate);
+  }
+
+  async getAndSaveTickerTimeSeries(
+    symbol: string,
+    sinceDate: Date,
+    outputsize: "full" | "compact" = "compact",
+  ) {
+    const result = await this.getTickerTimeSeriesApi(
+      symbol,
+      sinceDate,
+      outputsize,
+    );
+    await this.saveTickerTimeSeries(result);
   }
 }

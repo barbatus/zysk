@@ -1,10 +1,11 @@
 import { resolve, TickerDataService, TickerService } from "@zysk/services";
+import { subYears } from "date-fns";
 import { chunk } from "lodash";
 
-import { getScript } from "./utils";
+import { createScript } from "./utils";
 
-export const syncTickerQuotes = getScript({
-  name: "sync-quotes",
+export const syncTickerQuotes = createScript({
+  name: "sync-current-quote",
   description: "Load and save last quotes for supported tickers",
 })(async () => {
   const tickerService = resolve(TickerService);
@@ -14,9 +15,10 @@ export const syncTickerQuotes = getScript({
       symbolsChunk.map((s) => tickerService.getAndSaveQuote(s)),
     );
   }
+  return "OK";
 });
 
-export const syncTickerOverviews = getScript({
+export const syncTickerOverviews = createScript({
   name: "sync-ticker-overviews",
   description: "Load and save overviews for supported tickers",
 })(async () => {
@@ -28,13 +30,43 @@ export const syncTickerOverviews = getScript({
       symbolsChunk.map((s) => tickerDataService.getAndSaveCompanyOverview(s)),
     );
   }
+  return "OK";
 });
 
-export const syncTickers = getScript({
+export const syncTickers = createScript({
   name: "sync-tickers",
   description:
     "Load and save overviews for supported tickers (US only and for stocks and ETFs currently)",
 })(async () => {
   const tickerService = resolve(TickerService);
   await tickerService.getAndSaveUSTickers();
+  return "OK";
+});
+
+export const syncTickerTimeSeries = createScript({
+  name: "sync-ticker-time-series",
+  description:
+    "Load and save time series for supported tickers for last 5 years",
+})(async () => {
+  const tickerDataService = resolve(TickerDataService);
+  const tickerService = resolve(TickerService);
+  const symbols = await tickerService.getSupportedTickers();
+  const lastFiveYears = subYears(new Date(), 5);
+  for await (const symbolsChunk of chunk(symbols, 20)) {
+    await Promise.all(
+      symbolsChunk.map((s) =>
+        tickerDataService.getAndSaveTickerTimeSeries(s, lastFiveYears, "full"),
+      ),
+    );
+  }
+  return "OK";
+});
+
+export const syncSupportedTickers = createScript({
+  name: "sync-supported-tickers",
+  description: "Update supported tickers",
+})(async () => {
+  const tickerService = resolve(TickerService);
+  await tickerService.updateSupportedTickers();
+  return "OK";
 });

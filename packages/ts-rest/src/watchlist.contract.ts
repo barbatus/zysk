@@ -1,7 +1,7 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
 
-import { PredictionSchema } from "./predictions.contract";
+import { TickerPredictionSchema } from "./predictions.contract";
 
 const c = initContract();
 
@@ -9,7 +9,8 @@ export const WatchlistSchema = z.object({
   id: z.string(),
   symbol: z.string(),
   isActive: z.boolean(),
-  lastPrediction: PredictionSchema.optional(),
+  prediction: TickerPredictionSchema.optional(),
+  about: z.string().nullable(),
 });
 
 export const WatchlistResponseSchema = z.array(WatchlistSchema);

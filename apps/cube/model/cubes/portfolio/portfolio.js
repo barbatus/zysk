@@ -14,7 +14,7 @@ cube(`PortfolioCube`, {
   sql: `
     WITH pq AS (
       SELECT *, ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY date ASC) row
-      FROM ticker_quotes
+      FROM app_data.ticker_time_series
       WHERE ${FILTER_PARAMS.Portfolio.period.filter("date")}
     )
 
@@ -25,8 +25,8 @@ cube(`PortfolioCube`, {
       pq.date as start_date,
       pq.open_price as start_price
     FROM user_tickers ut
-    JOIN ticker_quotes q1 ON ut.symbol = q1.symbol AND ut.opened_at::date = q1.date
-    LEFT JOIN ticker_quotes q2 ON ut.symbol = q2.symbol AND ut.closed_at::date = q2.date
+    JOIN app_data.ticker_time_series q1 ON ut.symbol = q1.symbol AND ut.opened_at::date = q1.date
+    LEFT JOIN app_data.ticker_time_series q2 ON ut.symbol = q2.symbol AND ut.closed_at::date = q2.date
     JOIN pq ON pq.symbol = ut.symbol AND pq.row = 1
   `,
 

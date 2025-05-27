@@ -7,5 +7,5 @@ export * from "./quotes";
 export * from "./stock-news";
 export * from "./subscriptions";
 export * from "./tickers";
-export * from "./tickers-info";
+export * from "./tickers-data";
 export * from "./users";

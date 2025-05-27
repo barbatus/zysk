@@ -1,6 +1,8 @@
+import { UpstashRatelimitHandler } from "@langchain/community/callbacks/handlers/upstash_ratelimit";
 import { AIMessage } from "@langchain/core/messages";
 import { type RunnableConfig } from "@langchain/core/runnables";
 import { AzureChatOpenAI } from "@langchain/openai";
+import { type Ratelimit } from "@upstash/ratelimit";
 import {
   type AzureOpenAIDeploymentConfig,
   type AzureOpenAIServiceConfig,
@@ -32,14 +34,27 @@ interface AzureOpenAIModelConfig {
 export class OpenAIRunner extends BaseLLMRunner {
   async arun(
     message: string,
-    config?: RunnableConfig,
+    config?: RunnableConfig<{
+      rateLimiter?: Ratelimit;
+    }>,
   ): Promise<ExecutionResult> {
     try {
       const callback = new OpenAICallbackHandler();
+      const appConfig = getConfig();
+      const rateLimiterCallback = config?.configurable?.rateLimiter
+        ? new UpstashRatelimitHandler(
+            `${this.llm.getName()}:${appConfig.nodeEnv}`,
+            {
+              tokenRatelimit: config.configurable.rateLimiter,
+            },
+          )
+        : undefined;
       const start = performance.now();
       const result = await super.ainvoke(message, {
         ...config,
-        callbacks: [callback],
+        callbacks: rateLimiterCallback
+          ? [callback, rateLimiterCallback]
+          : [callback],
       });
       const end = performance.now();
       return {

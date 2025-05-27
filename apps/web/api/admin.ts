@@ -14,3 +14,7 @@ export const useAdminScripts = () => {
     select: (d) => d.body,
   });
 };
+
+export const useExecuteAdminScript = () => {
+  return adminApi.executeAdminScript.useMutation();
+};

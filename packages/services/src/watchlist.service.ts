@@ -1,7 +1,7 @@
 import { type Database, PredictionEnum } from "@zysk/db";
 import { inject, injectable } from "inversify";
 import { type Kysely } from "kysely";
-import { groupBy } from "lodash";
+import { groupBy, omit } from "lodash";
 
 import { appDBSymbol } from "./db";
 
@@ -12,6 +12,7 @@ export class WatchlistService {
   async getWatchlist(userId: string) {
     const query = this.db
       .selectFrom("subscriptions as s")
+      .innerJoin("tickers as t", "t.symbol", "s.symbol")
       .leftJoin(
         (eb) =>
           eb
@@ -21,12 +22,13 @@ export class WatchlistService {
             .orderBy("p.symbol")
             .orderBy("p.createdAt", "desc")
             .as("lp"),
-        (join) => join.onRef("lp.symbol", "=", "s.symbol"),
+        (join) => join.onRef("lp.symbol", "=", "t.symbol"),
       )
       .where("s.userId", "=", userId)
       .select([
         "s.id",
         "s.symbol",
+        "t.about",
         "s.isActive",
         "lp.id as pId",
         "lp.prediction",
@@ -44,12 +46,20 @@ export class WatchlistService {
         prediction.prediction === PredictionEnum.WillFall ||
         prediction.prediction === PredictionEnum.LikelyFall;
       const responseJson = prediction.responseJson!;
-      const insights = responseJson.insights
-        .filter((i) => i.impact === (isNegative ? "negative" : "positive"))
-        .sort((a, b) => b.confidence - a.confidence);
+      const insights = responseJson.insights.sort((a, b) => {
+        if (isNegative && a.impact !== b.impact) {
+          return a.impact === "positive" ? 1 : -1;
+        }
+
+        if (!isNegative && a.impact !== b.impact) {
+          return a.impact === "negative" ? 1 : -1;
+        }
+
+        return b.confidence - a.confidence;
+      });
 
       return {
-        ...prediction,
+        ...omit(prediction, "responseJson"),
         prediction: prediction.prediction!,
         confidence: Number(prediction.confidence),
         createdAt: prediction.createdAt!,
@@ -62,7 +72,7 @@ export class WatchlistService {
       const subscription = rows[0];
       return {
         ...subscription,
-        lastPrediction: subscription.pId
+        prediction: subscription.pId
           ? buildPrediction({
               ...subscription,
               id: subscription.pId,

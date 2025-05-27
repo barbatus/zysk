@@ -8,7 +8,7 @@ import {
 
 import { type CreateTableType, type Optional } from "../utils/custom-types";
 import { type predictionsTable } from "./predictions";
-import { type currentQuotesTable, type quotesTable } from "./quotes";
+import { type currentQuotesTable } from "./quotes";
 import { type subscriptionsTable } from "./subscriptions";
 import { type tickersTable, type userTickersTable } from "./tickers";
 
@@ -52,21 +52,6 @@ export type UserTickersTable = CreateTableType<
   }
 >;
 
-type TickerQuotesTableBase = typeof quotesTable.$inferSelect;
-export type TickerQuotesTable = CreateTableType<
-  TickerQuotesTableBase,
-  {
-    date: ColumnType<Date, string | Date>;
-    openPrice: ColumnType<number, string | number>;
-    closePrice: ColumnType<number, string | number>;
-    high: ColumnType<number, string | number>;
-    low: ColumnType<number, string | number>;
-    volume: ColumnType<number, string | number>;
-    splitCoeff: ColumnType<number, string | number | null>;
-    divident: ColumnType<number, string | number | null>;
-  }
->;
-
 type SubscriptionsTableBase = typeof subscriptionsTable.$inferSelect;
 export type SubscriptionsTable = CreateTableType<SubscriptionsTableBase>;
 
@@ -90,7 +75,6 @@ export interface Database {
   users: UsersTable;
   tickers: TickersTable;
   userTickers: UserTickersTable;
-  tickerQuotes: TickerQuotesTable;
   subscriptions: SubscriptionsTable;
   predictions: PredictionsTable;
   currentQuotes: CurrentQuotesTable;
@@ -99,7 +83,6 @@ export interface Database {
 export type User = Selectable<UsersTable>;
 export type Ticker = Selectable<TickersTable>;
 export type UserTicker = Selectable<UserTickersTable>;
-export type TickerQuote = Selectable<TickerQuotesTable>;
 export type Subscription = Selectable<SubscriptionsTable>;
 export type Prediction = Selectable<PredictionsTable>;
 export type PredictionModel = Insertable<PredictionsTable>;

@@ -1,3 +1,7 @@
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { getConfig } from "@zysk/services";
+
 import {
   SequentialModelContainer,
   SequentialModelContainerWithFallback,
@@ -32,12 +36,23 @@ function createSequentialModelContainer(
   modelKey: OpenAIModelKey,
   provider = ModelProviderEnum.OpenAI,
 ) {
+  const appConfig = getConfig();
+  const ratelimit = appConfig.upstash
+    ? new Ratelimit({
+        redis: new Redis({
+          url: appConfig.upstash.redisRestUrl,
+          token: appConfig.upstash.redisRestToken,
+        }),
+        limiter: Ratelimit.fixedWindow(200_000, "60 s"),
+      })
+    : undefined;
   return new SequentialModelContainer(
     modelKey,
     provider === ModelProviderEnum.Azure
       ? getAzureLLMContainers(modelKey)
       : getOpenAIModelContainers(modelKey),
     modelToMaxTokens[modelKey],
+    provider === ModelProviderEnum.OpenAI ? ratelimit : undefined,
   );
 }
 

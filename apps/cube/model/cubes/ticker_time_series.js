@@ -13,12 +13,12 @@ cube(`TickerTimeSeries`, {
     },
 
     openPrice: {
-      sql: `value`,
+      sql: `open_price`,
       type: `number`,
     },
 
     closePrice: {
-      sql: `value`,
+      sql: `close_price`,
       type: `number`,
     },
   },

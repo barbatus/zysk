@@ -5,6 +5,7 @@ import {
   DIMENSION_NAME_QUOTE,
   DIMENSION_NAME_TICKER,
   METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE,
+  METRIC_NAME_TICKER_PREV_DAY_PERFORMANCE,
 } from "@zysk/cube";
 import { watchlistContract } from "@zysk/ts-rest";
 
@@ -24,7 +25,10 @@ export const useWatchlist = () => {
 
 export const useWatchlistMetrics = () => {
   const { data: metrics } = useMetrics(
-    [METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE],
+    [
+      METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE,
+      METRIC_NAME_TICKER_PREV_DAY_PERFORMANCE,
+    ],
     [[DIMENSION_NAME_TICKER, DIMENSION_NAME_QUOTE]],
   );
 

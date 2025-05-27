@@ -2,7 +2,8 @@ export const METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_MONTH = "user_portfolio_g
 export const METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_TODAY = "user_portfolio_gain_loss_today";
 export const METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS = "user_portfolio_gain_loss_last_3_months";
 export const METRIC_NAME_USER_PORTFOLIO_SEGMENTS = "user_portfolio_segments";
-export const METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE = "ticker_last_week_performance1";
+export const METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE = "ticker_last_week_performance";
+export const METRIC_NAME_TICKER_PREV_DAY_PERFORMANCE = "ticker_prev_day_performance";
 export const DIMENSION_NAME_POSITION_ID = "position";
 export const DIMENSION_NAME_TICKER = "symbol";
 export const DIMENSION_NAME_PERIOD = "period";
@@ -19,4 +20,5 @@ export const ALL_METRICS = [
     METRIC_NAME_USER_PORTFOLIO_GAIN_LOSS_LAST_3_MONTHS,
     METRIC_NAME_USER_PORTFOLIO_SEGMENTS,
     METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE,
+    METRIC_NAME_TICKER_PREV_DAY_PERFORMANCE,
 ];

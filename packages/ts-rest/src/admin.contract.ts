@@ -21,6 +21,7 @@ export const AdminScriptSchema = z.object({
 export type AdminScript = z.infer<typeof AdminScriptSchema>;
 
 const ExecuteAdminScriptSettingsSchema = z.object({
+  name: z.string(),
   arguments: z.array(
     z.object({ name: z.string(), value: z.string().optional() }),
   ),
@@ -51,6 +52,9 @@ export const adminContract =
           200: z.object({
             result: z.unknown().optional(),
             error: z.unknown().optional(),
+          }),
+          500: z.object({
+            error: z.string(),
           }),
         },
       },

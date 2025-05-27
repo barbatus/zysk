@@ -86,6 +86,8 @@ export const AppConfigEnvVariablesSchema = z.object({
     .optional(),
   SENTRY_DSN: z.string().optional(),
   ...appPostgresEnvVars.zodSchema,
+  UPSTASH_REDIS_REST_URL: z.string().nonempty().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().nonempty().optional(),
   // REDIS_HOST: z.string().nonempty(),
   // REDIS_PORT: z.preprocess(Number, z.number().positive()).default(6379),
   // REDIS_PASSWORD: z.string().optional(),
@@ -141,6 +143,10 @@ export interface AppConfig {
   //   password?: string;
   //   tls: boolean;
   // };
+  upstash?: {
+    redisRestUrl: string;
+    redisRestToken: string;
+  };
   mailgun: {
     apiKey?: string;
     domain?: string;
@@ -197,6 +203,12 @@ export function validate(config: Record<string, unknown>) {
     postgres: {
       ...getPostgresConfig(appConfigValidated, appPostgresEnvVars),
     },
+    upstash: appConfigValidated.UPSTASH_REDIS_REST_URL
+      ? {
+          redisRestUrl: appConfigValidated.UPSTASH_REDIS_REST_URL,
+          redisRestToken: appConfigValidated.UPSTASH_REDIS_REST_TOKEN!,
+        }
+      : undefined,
     // redis: {
     //   host: appConfigValidated.REDIS_HOST,
     //   port: appConfigValidated.REDIS_PORT,
