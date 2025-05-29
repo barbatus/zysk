@@ -22,6 +22,20 @@
       "when": 1748366914447,
       "tag": "0002_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1748429347139,
+      "tag": "0003_extend_news",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1748462552545,
+      "tag": "0004_update_predictions",
+      "breakpoints": true
     }
   ]
 }

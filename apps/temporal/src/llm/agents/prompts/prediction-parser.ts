@@ -4,7 +4,7 @@ import { JsonOutputParser, ParserError } from "./parsers";
 
 const SignalSchema = z.object({
   description: z.string(),
-  prediction: z.enum(["grow", "fall", "same"]),
+  prediction: z.enum(["bullish", "bearish", "neutral"]),
   confidence: z.number(),
 });
 
@@ -19,7 +19,7 @@ const NewsInsightSchema = z.object({
 });
 
 const PredictionSchema = z.object({
-  prediction: z.enum(["grow", "fall", "same"]),
+  prediction: z.enum(["bullish", "bearish", "neutral"]),
   counterSignal: SignalSchema.optional().nullable(),
   reasoning: z.string(),
   confidence: z.number(),
@@ -45,13 +45,13 @@ export class PredictionParser extends JsonOutputParser<Prediction> {
 You must provide output as a single JSON object with the following structure:
 \`\`\`json
     {
-        "prediction": "prediction for the stock price: grow, fall, same",
+        "prediction": "sentiment for the stock price: bullish, bearish, neutral",
         "reasoning": "reasoning behind the prediction",
         "confidence": "confidence score (0-100)",
         "counterSignal": {
             "description": "description of the signal that stock price will grow despite unfavorable market conditions or some very negative news, or vice versa, stock price will fall despite favorable market conditions or some very positive news",
-            "prediction": "should be \`grow\` if overall prediction is \`fall\` and vice versa",
-            "confidence": "confidence score (0-100)"
+            "prediction": "should be \`bullish\` if overall prediction is \`bearish\` and vice versa",
+            "confidence": "strength of the signal (0-100), i.e. how strong it can counteract bullish sentiment prediction if it's bearish signal, and vice versa"
         },
         "newsInsights": [
             {
@@ -61,7 +61,7 @@ You must provide output as a single JSON object with the following structure:
                 "insight": "description of the insight",
                 "impact": "impact on the stock price: positive, negative, mixed",
                 "reasoning": "reasoning behind the impact",
-                "confidence": "confidence score (0-100)"
+                "confidence": "strength of the insight (0-100), i.e. how strong it can affect bullish sentiment if it's positive insight, and vice versa"
             },
             ...
         ]

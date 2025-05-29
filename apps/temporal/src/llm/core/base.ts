@@ -467,6 +467,7 @@ export class SequentialModelContainerWithFallback implements AbstractContainer {
         logger.error(
           {
             error: (error as Error).message,
+            errorType: (error as Error).constructor.name,
             container: container.toString(),
           },
           `[SequentialModelContainerWithFallback.arun] Container failed`,

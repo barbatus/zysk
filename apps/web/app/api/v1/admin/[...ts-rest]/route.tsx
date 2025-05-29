@@ -18,7 +18,10 @@ const handler = createNextHandler(
         return {
           status: 200,
           body: {
-            result: await script.handler(body.arguments, body.options),
+            result: await script.handler(
+              ...body.arguments.map((arg) => arg.value),
+              body.options,
+            ),
           },
         };
       } catch (error) {

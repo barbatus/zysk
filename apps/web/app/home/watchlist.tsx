@@ -9,10 +9,7 @@ import { keyBy } from "lodash";
 import { Search } from "lucide-react";
 
 import { useWatchlist, useWatchlistMetrics } from "#/api/watchlist";
-import {
-  PredictionCardSkeleton,
-  TickerStateCard,
-} from "#/ui/ticker-state-card";
+import { TickerCardSkeleton, TickerStateCard } from "#/ui/ticker-state-card";
 
 export function Watchlist() {
   const { data: predictions, isLoading } = useWatchlist();
@@ -39,7 +36,7 @@ export function Watchlist() {
         {isLoading
           ? Array.from({ length: 3 }).map((_, index) => (
               <Grid key={index} xs={12} sm={6} lg={3}>
-                <PredictionCardSkeleton />
+                <TickerCardSkeleton />
               </Grid>
             ))
           : predictions!.map((p) => (

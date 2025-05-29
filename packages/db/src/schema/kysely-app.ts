@@ -85,4 +85,4 @@ export type Ticker = Selectable<TickersTable>;
 export type UserTicker = Selectable<UserTickersTable>;
 export type Subscription = Selectable<SubscriptionsTable>;
 export type Prediction = Selectable<PredictionsTable>;
-export type PredictionModel = Insertable<PredictionsTable>;
+export type PredictionInsert = Insertable<PredictionsTable>;

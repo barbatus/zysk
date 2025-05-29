@@ -1,6 +1,6 @@
 import { executeChild, proxyActivities } from "@temporalio/workflow";
 
-import { scrapeAllNews } from "../stock-news/workflows";
+import { scrapeAllNewsDaily } from "../stock-news/workflows";
 import { fetchTickersTimeSeries } from "../ticker-data/workflows";
 import type * as activities from "./activities";
 
@@ -13,15 +13,15 @@ const proxy = proxyActivities<typeof activities>({
   },
 });
 
-export async function runTickerPredictionExperiment(symbol: string) {
+export async function runTickerSentimentPredictionExperiment(symbol: string) {
   const { newsBatchIds, timeSeries } =
-    await proxy.fetchSymbolNextWeekPredictionExperimentData({
+    await proxy.fetchSymbolNSentimentPredictionExperimentData({
       symbol,
     });
 
   const predictions = await Promise.all(
     newsBatchIds.map((newsBatchId) =>
-      proxy.runNextWeekTickerPredictionExperiment({
+      proxy.runTickerSentimentPredictionExperiment({
         symbol,
         newsIds: newsBatchId,
         timeSeries,
@@ -35,14 +35,14 @@ export async function runTickerPredictionExperiment(symbol: string) {
   });
 }
 
-export async function runMarketPredictionExperiment() {
+export async function runMarketSentimentPredictionExperiment() {
   const newsBatches = await proxy.fetchLastWeekNews({
     symbol: "GENERAL",
   });
 
   const predictions = await Promise.all(
     newsBatches.map((batch) =>
-      proxy.runNextWeekMarketPredictionExperiment({
+      proxy.runMarketSentimentPredictionExperiment({
         newsIds: batch,
       }),
     ),
@@ -54,13 +54,15 @@ export async function runMarketPredictionExperiment() {
   });
 }
 
-export async function runTickersPredictionExperiments(symbols: string[]) {
+export async function runTickersSentimentPredictionExperiments(
+  symbols: string[],
+) {
   await Promise.all(
-    symbols.map((symbol) => runTickerPredictionExperiment(symbol)),
+    symbols.map((symbol) => runTickerSentimentPredictionExperiment(symbol)),
   );
 }
 
-export async function runAllTogetherExperiment(onlyTickers = false) {
+export async function runAllTogetherExperiment(onlyTickers = true) {
   const symbols = await proxy.getSupportedTickers();
 
   if (!onlyTickers) {
@@ -68,12 +70,12 @@ export async function runAllTogetherExperiment(onlyTickers = false) {
       executeChild(fetchTickersTimeSeries, {
         args: [symbols],
       }),
-      executeChild(scrapeAllNews, {
+      executeChild(scrapeAllNewsDaily, {
         args: [symbols],
       }),
     ]);
-    await executeChild(runMarketPredictionExperiment);
+    await executeChild(runMarketSentimentPredictionExperiment);
   }
 
-  await runTickersPredictionExperiments(symbols);
+  await runTickersSentimentPredictionExperiments(symbols);
 }

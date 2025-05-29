@@ -11,6 +11,7 @@ import {
   InternalLLMError,
   InvalidPromptError,
   PromptTooLongError,
+  QuotaExceededError,
   RateLimitExceededError,
   ResponseTimeoutError,
 } from "../core/exceptions";
@@ -221,6 +222,12 @@ export function wrapOpenAIError(error: APIError) {
       details: {
         retryInSeconds: retryInSeconds ? retryInSeconds + 1 : 0,
       },
+    });
+  }
+
+  if (error.name === "InsufficientQuotaError") {
+    return new QuotaExceededError({
+      message: error.message,
     });
   }
 

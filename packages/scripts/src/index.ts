@@ -1,4 +1,4 @@
-import { parseProgramArgsAndRun } from "./commander";
+import { parseProgramArgsAndRun } from "./command";
 import { allScripts } from "./main";
 
 async function runScripts() {

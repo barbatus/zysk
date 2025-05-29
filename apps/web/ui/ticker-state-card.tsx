@@ -23,7 +23,7 @@ import {
   METRIC_NAME_TICKER_LAST_WEEK_PERFORMANCE,
   METRIC_NAME_TICKER_PREV_DAY_PERFORMANCE,
 } from "@zysk/cube";
-import { type TickerPrediction } from "@zysk/ts-rest";
+import { type TickerSentimentPrediction } from "@zysk/ts-rest";
 import { format } from "date-fns";
 import { Info, TrendingDown, TrendingUp } from "lucide-react";
 import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
@@ -31,7 +31,7 @@ import Link from "next/link";
 
 import { type MetricsRow } from "#/api/metrics";
 
-import { PredictionBadge } from "./prediction-badge";
+import { SentimentBadge } from "./sentiment-badge";
 
 const muiTheme = createMuiTheme({});
 
@@ -43,7 +43,7 @@ function MuiPopover(props: PopoverProps) {
   );
 }
 
-export function PredictionCardSkeleton() {
+export function TickerCardSkeleton() {
   return (
     <Card
       sx={{
@@ -151,12 +151,12 @@ export function TickerStateCard({
 }: {
   symbol: string;
   title?: string;
-  prediction?: TickerPrediction;
+  prediction?: TickerSentimentPrediction;
   sx?: SxProps;
   currentQuote?: MetricsRow;
 }) {
   return (
-    <Card sx={sx}>
+    <Card sx={{ gap: 0.5, ...sx }}>
       <Box
         sx={{
           display: "flex",
@@ -263,8 +263,10 @@ export function TickerStateCard({
         {prediction ? (
           <>
             <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-              <Typography level="body-sm">Next week prediction:</Typography>
-              <PredictionBadge prediction={prediction.prediction} />
+              <Typography level="body-sm" fontWeight="md">
+                Short-term outlook:
+              </Typography>
+              <SentimentBadge sentiment={prediction.sentiment} />
             </Stack>
             <Stack spacing={0.5}>
               <Tooltip
@@ -312,6 +314,7 @@ export function TickerStateCard({
                           sx={{
                             minHeight: "auto",
                             width: "fit-content",
+                            fontWeight: "md",
                           }}
                           {...bindTrigger(popupState)}
                         >
@@ -355,7 +358,8 @@ export function TickerStateCard({
                 <Typography
                   level="body-xs"
                   sx={{
-                    color: "var(--joy-palette-neutral-400)",
+                    color: "var(--joy-palette-neutral-500)",
+                    fontWeight: "sm",
                     fontSize: "0.75rem",
                   }}
                 >

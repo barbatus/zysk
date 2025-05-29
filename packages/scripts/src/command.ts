@@ -13,7 +13,7 @@ export function registerScript(program: Command, script: ScriptConfig) {
   const command = program
     .command(script.name)
     .description(script.description ?? script.name)
-    .action(async (...args: unknown[]) => {
+    .action(async (...args: string[]) => {
       try {
         const result = await script.handler(...args);
         if (result !== undefined) {

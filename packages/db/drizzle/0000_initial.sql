@@ -113,7 +113,9 @@ CREATE TABLE IF NOT EXISTS "app_data"."ticker_time_series" (
 	"high" numeric NOT NULL,
 	"low" numeric NOT NULL,
 	"volume" numeric NOT NULL,
-	"date" date NOT NULL
+	"date" date NOT NULL,
+	"created_at" timestamp with time zone DEFAULT current_timestamp NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT current_timestamp NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "users" (

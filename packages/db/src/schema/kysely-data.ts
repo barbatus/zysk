@@ -46,6 +46,8 @@ type StockNewsTable = CreateTableType<
   StockNewsTableBase,
   {
     newsDate: ColumnType<Date, string | Date>;
+    title: ColumnType<string, Optional<string>>;
+    description: ColumnType<string, Optional<string>>;
   }
 >;
 
@@ -67,4 +69,4 @@ export type Experiment = Selectable<ExperimentsTable>;
 
 export type StockNews = Selectable<StockNewsTable>;
 
-export type StockNewsUpdate = Insertable<StockNewsTable>;
+export type StockNewsInsert = Insertable<StockNewsTable>;

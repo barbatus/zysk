@@ -1,10 +1,16 @@
-import { resolve, TickerDataService, TickerService } from "@zysk/services";
+import {
+  resolve,
+  TickerDataService,
+  TickerNewsService,
+  TickerService,
+} from "@zysk/services";
+import { Argument } from "commander";
 import { subYears } from "date-fns";
 import { chunk } from "lodash";
 
 import { createScript } from "./utils";
 
-export const syncTickerQuotes = createScript({
+export const syncTickerQuotes = createScript<[]>({
   name: "sync-current-quote",
   description: "Load and save last quotes for supported tickers",
 })(async () => {
@@ -18,7 +24,7 @@ export const syncTickerQuotes = createScript({
   return "OK";
 });
 
-export const syncTickerOverviews = createScript({
+export const syncTickerOverviews = createScript<[]>({
   name: "sync-ticker-overviews",
   description: "Load and save overviews for supported tickers",
 })(async () => {
@@ -43,7 +49,7 @@ export const syncTickers = createScript({
   return "OK";
 });
 
-export const syncTickerTimeSeries = createScript({
+export const syncTickerTimeSeries = createScript<[]>({
   name: "sync-ticker-time-series",
   description:
     "Load and save time series for supported tickers for last 5 years",
@@ -62,11 +68,20 @@ export const syncTickerTimeSeries = createScript({
   return "OK";
 });
 
-export const syncSupportedTickers = createScript({
+export const syncSupportedTickers = createScript<[]>({
   name: "sync-supported-tickers",
   description: "Update supported tickers",
 })(async () => {
   const tickerService = resolve(TickerService);
   await tickerService.updateSupportedTickers();
   return "OK";
+});
+
+export const scrapeUrl = createScript<[string]>({
+  name: "scrape-url",
+  description: "Scrape URL",
+  arguments: [new Argument("url", "URL to scrape").argRequired()],
+})(async (url) => {
+  const tickerNewsService = resolve(TickerNewsService);
+  return await tickerNewsService.scrapeUrl({ url });
 });

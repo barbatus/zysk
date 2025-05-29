@@ -35,6 +35,14 @@ export class ExperimentService implements AgentStateService<Experiment> {
       .executeTakeFirstOrThrow();
   }
 
+  async getMany(ids: string[]): Promise<Experiment[]> {
+    return this.db
+      .selectFrom("app_data.experiments")
+      .selectAll()
+      .where("id", "in", ids)
+      .execute();
+  }
+
   async setStatus(
     id: string,
     status: ExperimentTaskStatus,

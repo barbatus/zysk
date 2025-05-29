@@ -2,17 +2,18 @@ import { jsonb, numeric, pgTable, uuid, varchar } from "drizzle-orm/pg-core";
 
 import { auditColumns } from "../utils/audit";
 import { validatedStringEnum } from "./columns";
+import { experimentsTable } from "./experiments";
 
-export enum PredictionEnum {
-  WillGrow = "will_grow",
-  LikelyGrow = "likely_grow",
-  StayTheSame = "stay_the_same",
-  LikelyFall = "likely_fall",
-  WillFall = "will_fall",
+export enum SentimentEnum {
+  Bullish = "bullish",
+  LikelyBullish = "likely_bullish",
+  Bearish = "bearish",
+  LikelyBearish = "likely_bearish",
+  Neutral = "neutral",
 }
 
 export interface PredictionResponse {
-  prediction: PredictionEnum;
+  prediction: SentimentEnum;
   confidence: number;
   reasoning: string;
   insights: {
@@ -28,8 +29,9 @@ export interface PredictionResponse {
 export const predictionsTable = pgTable("predictions", {
   id: uuid("id").defaultRandom().primaryKey(),
   symbol: varchar("symbol", { length: 255 }).notNull(),
-  prediction: validatedStringEnum("prediction", PredictionEnum).notNull(),
+  prediction: validatedStringEnum("prediction", SentimentEnum).notNull(),
   confidence: numeric("confidence").notNull(),
   responseJson: jsonb("response_json").$type<PredictionResponse>().notNull(),
+  experimentId: uuid("experiment_id").references(() => experimentsTable.id),
   ...auditColumns(),
 });

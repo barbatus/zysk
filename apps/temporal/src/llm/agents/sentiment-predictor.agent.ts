@@ -1,4 +1,4 @@
-import { type Experiment, type PredictionModel } from "@zysk/db";
+import { type Experiment } from "@zysk/db";
 import { ExperimentService, resolve } from "@zysk/services";
 import { format } from "date-fns";
 
@@ -6,11 +6,11 @@ import { type AbstractContainer } from "../core/base";
 import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
 import { type AgentPrompt, ExperimentAgent } from "./experiment.agent";
-import {
-  nextWeekGeneralMarketPredictionPrompt,
-  nextWeekTicketMarketPredictionPrompt,
-} from "./prompts/next-week-prediction.prompt";
 import { type Prediction } from "./prompts/prediction-parser";
+import {
+  GeneralMarketSentimentPredictionPrompt,
+  TickerSentimentPredictionPrompt,
+} from "./prompts/sentiment-prediction.prompt";
 
 const experimentService = resolve(ExperimentService);
 interface NewsBasedSymbolPredictorParams {
@@ -22,7 +22,7 @@ interface NewsBasedSymbolPredictorParams {
   onHeartbeat?: () => Promise<void>;
 }
 
-export class NewsBasedSymbolMarketPredictorAgent extends ExperimentAgent<
+export class NewsBasedSentimentPredictorAgent extends ExperimentAgent<
   Prediction,
   Prediction
 > {
@@ -59,7 +59,7 @@ export class NewsBasedSymbolMarketPredictorAgent extends ExperimentAgent<
     onHeartbeat?: () => Promise<void>;
   }) {
     const state = await experimentService.create();
-    return new NewsBasedSymbolMarketPredictorAgent({
+    return new NewsBasedSentimentPredictorAgent({
       state,
       ...params,
       prompt: params.prompt as AgentPrompt<Prediction>,
@@ -69,13 +69,13 @@ export class NewsBasedSymbolMarketPredictorAgent extends ExperimentAgent<
   }
 }
 
-export class NewsBasedTickerMarketPredictorAgent extends NewsBasedSymbolMarketPredictorAgent {
-  private readonly marketPrediction: PredictionModel["responseJson"];
+export class NewsBasedTickerSentimentPredictor extends NewsBasedSentimentPredictorAgent {
+  private readonly marketPrediction: Experiment["responseJson"];
   private readonly timeSeries: { date: Date; closePrice: number }[];
 
   constructor(
     params: NewsBasedSymbolPredictorParams & {
-      marketPrediction: PredictionModel["responseJson"];
+      marketPrediction: Experiment["responseJson"];
       timeSeries: { date: Date; closePrice: number }[];
     },
   ) {
@@ -95,28 +95,28 @@ export class NewsBasedTickerMarketPredictorAgent extends NewsBasedSymbolMarketPr
   }
 }
 
-export class NextWeekNewsBasedPredictorAgent extends ExperimentAgent<
+export class SentimentPredictor extends ExperimentAgent<
   Prediction,
   Prediction
 > {
   static override async create(params: {
     symbol: string;
     news: { markdown: string; url: string; date: Date }[];
-    marketPrediction: PredictionModel["responseJson"];
+    marketPrediction: Experiment["responseJson"];
     timeSeries: { date: Date; closePrice: number }[];
     onHeartbeat?: () => Promise<void>;
   }) {
     const state = await experimentService.create();
-    return new NewsBasedTickerMarketPredictorAgent({
+    return new NewsBasedTickerSentimentPredictor({
       state,
       ...params,
-      prompt: nextWeekTicketMarketPredictionPrompt,
+      prompt: TickerSentimentPredictionPrompt,
       model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
     });
   }
 }
 
-export class NextWeekMarketPredictionAgent extends ExperimentAgent<
+export class MarketSentimentPredictor extends ExperimentAgent<
   Prediction,
   Prediction
 > {
@@ -125,11 +125,11 @@ export class NextWeekMarketPredictionAgent extends ExperimentAgent<
     onHeartbeat?: () => Promise<void>;
   }) {
     const state = await experimentService.create();
-    return new NewsBasedSymbolMarketPredictorAgent({
+    return new NewsBasedSentimentPredictorAgent({
       state,
       ...params,
       symbol: "GENERAL",
-      prompt: nextWeekGeneralMarketPredictionPrompt,
+      prompt: GeneralMarketSentimentPredictionPrompt,
       model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
     });
   }

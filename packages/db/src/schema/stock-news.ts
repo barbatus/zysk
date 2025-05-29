@@ -27,6 +27,8 @@ export const stockNewsTable = mySchema.table(
     tokenSize: integer("token_size").notNull().default(0),
     markdown: text("markdown"),
     newsDate: timestamp("news_date", { withTimezone: true }).notNull(),
+    title: text("title"),
+    description: text("description"),
     ...auditColumns(),
   },
   (t) => ({

@@ -8,3 +8,5 @@ export class RateLimitExceededError extends Error {
 }
 
 export class RequestTimeoutError extends Error {}
+
+export class PaymentRequiredError extends Error {}

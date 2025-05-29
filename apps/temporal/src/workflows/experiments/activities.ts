@@ -1,5 +1,6 @@
 import { heartbeat } from "@temporalio/activity";
 import {
+  ExperimentService,
   PredictionService,
   resolve,
   TickerDataService,
@@ -8,19 +9,19 @@ import {
 } from "@zysk/services";
 import { startOfDay, subDays } from "date-fns";
 
-import {
-  NextWeekMarketPredictionAgent,
-  NextWeekNewsBasedPredictorAgent,
-} from "#/llm/agents/news-based-predictor.agent";
 import { PredictorAgent } from "#/llm/agents/predictor.agent";
 import { type Prediction } from "#/llm/agents/prompts/prediction-parser";
+import {
+  MarketSentimentPredictor,
+  SentimentPredictor,
+} from "#/llm/agents/sentiment-predictor.agent";
 
 export async function fetchLastWeekNews(params: {
   symbol: string;
   tokesLimit?: number;
   overlapLimit?: number;
 }) {
-  const { symbol, tokesLimit = 150000, overlapLimit = 20000 } = params;
+  const { symbol, tokesLimit = 150000, overlapLimit = 10000 } = params;
 
   const tickerNewsService = resolve(TickerNewsService);
   const news = await tickerNewsService.getNewsBySymbol(
@@ -70,7 +71,7 @@ export async function fetchSymbolTimeSeries(
   return tickerDataService.getSymbolTimeSeries(symbol, sinceDate);
 }
 
-export async function fetchSymbolNextWeekPredictionExperimentData(params: {
+export async function fetchSymbolNSentimentPredictionExperimentData(params: {
   symbol: string;
   tokesLimit?: number;
   overlapLimit?: number;
@@ -85,7 +86,7 @@ export async function fetchSymbolNextWeekPredictionExperimentData(params: {
   return { newsBatchIds, timeSeries };
 }
 
-export async function runNextWeekTickerPredictionExperiment(params: {
+export async function runTickerSentimentPredictionExperiment(params: {
   symbol: string;
   newsIds: string[];
   timeSeries: { date: Date; closePrice: number }[];
@@ -95,43 +96,39 @@ export async function runNextWeekTickerPredictionExperiment(params: {
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
 
   const predictionService = resolve(PredictionService);
-  const marketPrediction =
+  const experimentJson =
     await predictionService.getLastGeneralMarketPrediction();
 
-  if (!marketPrediction) {
-    throw new Error("No market prediction found");
-  }
-
-  const agent = await NextWeekNewsBasedPredictorAgent.create({
+  const agent = await SentimentPredictor.create({
     symbol,
     news: news.map((n) => ({
       ...n,
       date: n.newsDate,
     })),
     timeSeries,
-    marketPrediction: marketPrediction.responseJson,
+    marketPrediction: experimentJson,
     onHeartbeat: async () => {
-      heartbeat("NextWeekNewsBasedPredictorAgent");
+      heartbeat("SentimentPredictor");
     },
   });
 
   return await agent.run();
 }
 
-export async function runNextWeekMarketPredictionExperiment(params: {
+export async function runMarketSentimentPredictionExperiment(params: {
   newsIds: string[];
 }) {
   const { newsIds } = params;
   const tickerNewsService = resolve(TickerNewsService);
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
 
-  const agent = await NextWeekMarketPredictionAgent.create({
+  const agent = await MarketSentimentPredictor.create({
     news: news.map((n) => ({
       ...n,
       date: n.newsDate,
     })),
     onHeartbeat: async () => {
-      heartbeat("NextWeekMarketPredictionAgent");
+      heartbeat("MarketSentimentPredictor");
     },
   });
   return await agent.run();
@@ -147,6 +144,11 @@ export async function makePredictions(params: {
     predictions,
   });
   return await agent.run();
+}
+
+export async function getExperiments(experimentIds: string[]) {
+  const experimentService = resolve(ExperimentService);
+  return experimentService.getMany(experimentIds);
 }
 
 export async function getSupportedTickers() {

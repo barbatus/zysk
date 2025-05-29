@@ -34,6 +34,7 @@
     "@zysk/scripts": "workspace:*",
     "@zysk/services": "workspace:*",
     "@zysk/ts-rest": "workspace:*",
+    "commander": "^14.0.0",
     "date-fns": "^4.1.0",
     "glob": "^11.0.0",
     "jsonwebtoken": "^9.0.2",

@@ -1,12 +1,14 @@
 import { orderBy } from "lodash";
 
 import {
+  scrapeUrl,
   syncSupportedTickers,
   syncTickerOverviews,
   syncTickerQuotes,
   syncTickers,
   syncTickerTimeSeries,
 } from "./tickers";
+import { type ScriptConfig } from "./utils";
 
 export const allScripts = [
   syncTickers,
@@ -14,7 +16,8 @@ export const allScripts = [
   syncTickerOverviews,
   syncTickerTimeSeries,
   syncSupportedTickers,
-];
+  scrapeUrl,
+] as ScriptConfig[];
 
 export function getAllScripts() {
   return orderBy(

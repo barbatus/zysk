@@ -1,16 +1,20 @@
-import { type Database, PredictionModel } from "@zysk/db";
+import { type Database, DataDatabase, PredictionInsert } from "@zysk/db";
 import { inject, injectable } from "inversify";
 import { type Kysely } from "kysely";
 
-import { dataDBSymbol } from "./db";
+import { appDBSymbol, dataDBSymbol } from "./db";
+import { Exact } from "./utils/types";
 
 @injectable()
 export class PredictionService {
-  constructor(@inject(dataDBSymbol) private readonly db: Kysely<Database>) {}
+  constructor(
+    @inject(dataDBSymbol) private readonly dataDb: Kysely<DataDatabase>,
+    @inject(appDBSymbol) private readonly db: Kysely<Database>,
+  ) {}
 
-  async saveSymbolPrediction(
+  async saveSymbolPrediction<T extends PredictionInsert>(
     symbol: string,
-    prediction: Omit<PredictionModel, "symbol">,
+    prediction: Omit<Exact<T, PredictionInsert>, "symbol">,
   ) {
     await this.db
       .insertInto("predictions")
@@ -19,12 +23,20 @@ export class PredictionService {
   }
 
   async getLastGeneralMarketPrediction() {
-    return this.db
+    const prediction = await this.db
       .selectFrom("predictions")
       .selectAll()
       .where("symbol", "=", "GENERAL")
       .orderBy("createdAt", "desc")
       .limit(1)
-      .executeTakeFirst();
+      .executeTakeFirstOrThrow();
+
+    const experiment = await this.dataDb
+      .selectFrom("app_data.experiments")
+      .selectAll()
+      .where("id", "=", prediction.experimentId)
+      .executeTakeFirstOrThrow();
+
+    return experiment.responseJson;
   }
 }

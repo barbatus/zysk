@@ -34,6 +34,7 @@ export class ResponseTimeoutError extends LLMError {}
 export class NetworkError extends LLMError {}
 export class InvalidPromptError extends LLMError {}
 export class ContentFilterError extends LLMError {}
+export class QuotaExceededError extends LLMError {}
 
 export class FatalTimeoutError extends Error {
   constructor(message: string) {

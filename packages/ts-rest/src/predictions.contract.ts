@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-export enum PredictionEnum {
-  WillGrow = "will_grow",
-  LikelyGrow = "likely_grow",
-  StayTheSame = "stay_the_same",
-  LikelyFall = "likely_fall",
-  WillFall = "will_fall",
+export enum SentimentEnum {
+  Bullish = "bullish",
+  LikelyBullish = "likely_bullish",
+  Bearish = "bearish",
+  LikelyBearish = "likely_bearish",
+  Neutral = "neutral",
 }
 
 const InsightSchema = z.object({
@@ -15,14 +15,16 @@ const InsightSchema = z.object({
   url: z.string().url().optional(),
 });
 
-export const TickerPredictionSchema = z.object({
+export const TickerSentimentPredictionSchema = z.object({
   id: z.string(),
   symbol: z.string(),
-  prediction: z.nativeEnum(PredictionEnum),
+  sentiment: z.nativeEnum(SentimentEnum),
   reasoning: z.string(),
   confidence: z.number(),
   createdAt: z.coerce.date(),
   insights: z.array(InsightSchema),
 });
 
-export type TickerPrediction = z.infer<typeof TickerPredictionSchema>;
+export type TickerSentimentPrediction = z.infer<
+  typeof TickerSentimentPredictionSchema
+>;

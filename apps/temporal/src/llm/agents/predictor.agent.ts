@@ -1,8 +1,8 @@
 import {
   type EvaluationDetails,
   type Experiment,
-  PredictionEnum,
-  type PredictionModel,
+  type PredictionInsert,
+  SentimentEnum,
 } from "@zysk/db";
 import { ExperimentService, PredictionService, resolve } from "@zysk/services";
 import { omit } from "lodash";
@@ -13,14 +13,14 @@ import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
 import { ExperimentAgent } from "./experiment.agent";
 import { type Prediction } from "./prompts/prediction-parser";
-import { predictionsMergerPrompt } from "./prompts/predictions-merger.prompt";
+import { PredictionsMergerPrompt } from "./prompts/predictions-merger.prompt";
 
 const experimentService = resolve(ExperimentService);
 const predictionService = resolve(PredictionService);
 
 export class PredictorAgent extends ExperimentAgent<
   Prediction,
-  PredictionModel
+  PredictionInsert
 > {
   private readonly predictions: Prediction[];
   private readonly symbol: string;
@@ -32,7 +32,7 @@ export class PredictorAgent extends ExperimentAgent<
   }) {
     super(
       params.state,
-      predictionsMergerPrompt,
+      PredictionsMergerPrompt,
       modelsWithFallback[ModelKeyEnum.GptO3Mini],
     );
     this.predictions = params.predictions;
@@ -44,6 +44,7 @@ export class PredictorAgent extends ExperimentAgent<
       predictions: this.predictions
         .map((p) => `\`\`\`json\n${JSON.stringify(p, null, 2)}\`\`\``)
         .join("\n"),
+      symbol: this.symbol,
     };
   }
 
@@ -78,55 +79,115 @@ export class PredictorAgent extends ExperimentAgent<
       2,
     );
     const finalPrediction = this.evalPrediction(result.response);
-    await predictionService.saveSymbolPrediction(this.symbol, finalPrediction);
+    await predictionService.saveSymbolPrediction(this.symbol, {
+      ...finalPrediction,
+      experimentId: this.state.id,
+    });
     return finalPrediction;
   }
 
-  private estimatePrediction(experimentResponse: Prediction): PredictionEnum {
-    if (
-      experimentResponse.prediction === "fall" &&
-      experimentResponse.confidence >= 90
-    ) {
-      return PredictionEnum.WillFall;
+  private evalSentiment(
+    experimentResponse: Prediction,
+  ): [SentimentEnum, number] {
+    const getSentiment = (): [SentimentEnum, number] => {
+      if (
+        experimentResponse.prediction === "bearish" &&
+        experimentResponse.confidence >= 91
+      ) {
+        return [SentimentEnum.Bearish, experimentResponse.confidence];
+      }
+
+      if (
+        experimentResponse.prediction === "bullish" &&
+        experimentResponse.confidence >= 91
+      ) {
+        return [SentimentEnum.Bullish, experimentResponse.confidence];
+      }
+
+      if (
+        experimentResponse.prediction === "bullish" &&
+        experimentResponse.confidence >= 80
+      ) {
+        return [SentimentEnum.LikelyBullish, experimentResponse.confidence];
+      }
+
+      if (
+        experimentResponse.prediction === "bearish" &&
+        experimentResponse.confidence >= 80
+      ) {
+        return [SentimentEnum.LikelyBearish, experimentResponse.confidence];
+      }
+
+      return [SentimentEnum.Neutral, experimentResponse.confidence];
+    };
+
+    const [sentiment, confidence] = getSentiment();
+
+    if (experimentResponse.counterSignal) {
+      if (
+        sentiment === SentimentEnum.Bearish &&
+        experimentResponse.counterSignal.confidence >
+          experimentResponse.confidence
+      ) {
+        return [SentimentEnum.LikelyBearish, 90];
+      }
+
+      if (
+        sentiment === SentimentEnum.Bullish &&
+        experimentResponse.counterSignal.confidence >
+          experimentResponse.confidence
+      ) {
+        return [SentimentEnum.LikelyBullish, 90];
+      }
+
+      if (
+        sentiment === SentimentEnum.LikelyBearish &&
+        experimentResponse.counterSignal.confidence >
+          experimentResponse.confidence
+      ) {
+        return [SentimentEnum.Neutral, 80];
+      }
+
+      if (
+        sentiment === SentimentEnum.LikelyBullish &&
+        experimentResponse.counterSignal.confidence >
+          experimentResponse.confidence
+      ) {
+        return [SentimentEnum.Neutral, 80];
+      }
     }
 
-    if (
-      experimentResponse.prediction === "grow" &&
-      experimentResponse.confidence >= 90
-    ) {
-      return PredictionEnum.WillGrow;
-    }
-
-    if (
-      experimentResponse.prediction === "grow" &&
-      experimentResponse.confidence >= 80
-    ) {
-      return PredictionEnum.LikelyGrow;
-    }
-
-    if (
-      experimentResponse.prediction === "fall" &&
-      experimentResponse.confidence >= 80
-    ) {
-      return PredictionEnum.LikelyFall;
-    }
-
-    return PredictionEnum.StayTheSame;
+    return [sentiment, confidence];
   }
 
   private evalPrediction(prediction: Prediction) {
-    const predictionEnum = this.estimatePrediction(prediction);
+    const [sentiment, confidence] = this.evalSentiment(prediction);
+    const isNegative =
+      sentiment === SentimentEnum.Bearish ||
+      sentiment === SentimentEnum.LikelyBearish;
+    const insights = prediction.newsInsights.toSorted((a, b) => {
+      if (isNegative && a.impact !== b.impact) {
+        return a.impact === "positive" ? 1 : -1;
+      }
+
+      if (!isNegative && a.impact !== b.impact) {
+        return a.impact === "negative" ? 1 : -1;
+      }
+
+      return b.confidence - a.confidence;
+    });
     const predictionResponse = {
       ...omit(prediction, "newsInsights"),
-      prediction: predictionEnum,
-      insights: prediction.newsInsights,
+      prediction: sentiment,
+      confidence,
+      insights,
     };
 
     return {
       symbol: this.symbol,
-      confidence: prediction.confidence,
+      confidence,
       responseJson: predictionResponse,
-      prediction: predictionEnum,
+      prediction: sentiment,
     };
   }
 }

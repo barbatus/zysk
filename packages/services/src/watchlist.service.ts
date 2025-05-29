@@ -1,4 +1,4 @@
-import { type Database, PredictionEnum } from "@zysk/db";
+import { type Database, SentimentEnum } from "@zysk/db";
 import { inject, injectable } from "inversify";
 import { type Kysely } from "kysely";
 import { groupBy, omit } from "lodash";
@@ -41,29 +41,41 @@ export class WatchlistService {
 
     const groupedPredictions = groupBy(result, "id");
 
-    const buildPrediction = (prediction: (typeof result)[number]) => {
-      const isNegative =
-        prediction.prediction === PredictionEnum.WillFall ||
-        prediction.prediction === PredictionEnum.LikelyFall;
+    const normalizeConfidence = (
+      sentiment: SentimentEnum,
+      confidence: number,
+    ) => {
+      if (
+        sentiment === SentimentEnum.Bullish ||
+        sentiment === SentimentEnum.Bearish
+      ) {
+        return 100 - confidence + 1;
+      }
+
+      if (
+        sentiment === SentimentEnum.LikelyBullish ||
+        sentiment === SentimentEnum.LikelyBearish
+      ) {
+        return 90 - confidence + 1;
+      }
+
+      return confidence / 80;
+    };
+
+    const buildSentimentPrediction = (prediction: (typeof result)[number]) => {
       const responseJson = prediction.responseJson!;
-      const insights = responseJson.insights.sort((a, b) => {
-        if (isNegative && a.impact !== b.impact) {
-          return a.impact === "positive" ? 1 : -1;
-        }
-
-        if (!isNegative && a.impact !== b.impact) {
-          return a.impact === "negative" ? 1 : -1;
-        }
-
-        return b.confidence - a.confidence;
-      });
-
       return {
         ...omit(prediction, "responseJson"),
-        prediction: prediction.prediction!,
+        sentiment: prediction.prediction!,
         confidence: Number(prediction.confidence),
         createdAt: prediction.createdAt!,
-        insights,
+        insights: responseJson.insights.map((insight) => ({
+          ...insight,
+          confidence: normalizeConfidence(
+            prediction.prediction!,
+            Number(insight.confidence),
+          ),
+        })),
         reasoning: responseJson.reasoning,
       };
     };
@@ -73,7 +85,7 @@ export class WatchlistService {
       return {
         ...subscription,
         prediction: subscription.pId
-          ? buildPrediction({
+          ? buildSentimentPrediction({
               ...subscription,
               id: subscription.pId,
             })
