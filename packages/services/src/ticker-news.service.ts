@@ -126,15 +126,17 @@ export class TickerNewsService {
 
   async getTickerNews(
     symbol: string,
-    sinceDate: Date,
+    startDate: Date,
+    endDate?: Date,
   ): Promise<{ url: string; title: string; newsDate: Date }[]> {
-    return this.finnhubService.getTickerNews({ symbol, sinceDate });
+    return this.finnhubService.getTickerNews({ symbol, startDate, endDate });
   }
 
-  async getGeneralNews(sinceDate: Date) {
+  async getGeneralNews(startDate: Date, endDate?: Date) {
     return this.finnhubService.getTickerNews({
       symbol: "general",
-      sinceDate,
+      startDate,
+      endDate,
     });
   }
 
@@ -230,13 +232,13 @@ export class TickerNewsService {
       .execute();
   }
 
-  async getNewsBySymbol(symbol: string, sinceDate: Date) {
+  async getNewsBySymbol(symbol: string, startDate: Date, endDate?: Date) {
     return this.db
       .selectFrom("app_data.stock_news")
       .selectAll()
-      .where((eb) =>
-        eb("symbol", "=", symbol).and(eb("newsDate", ">=", sinceDate)),
-      )
+      .where("symbol", "=", symbol)
+      .where("newsDate", ">=", startDate)
+      .$if(Boolean(endDate), (eb) => eb.where("newsDate", "<", endDate!))
       .where("status", "=", StockNewsStatus.Scraped)
       .orderBy("newsDate", "desc")
       .execute();

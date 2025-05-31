@@ -11,13 +11,23 @@ const proxy = proxyActivities<typeof activities>({
   },
 });
 
-export async function fetchTickersTimeSeries(symbols: string[]) {
-  const sinceDates = await proxy.fetchTickersForTimeSeries(symbols);
+export async function syncTickerQuotesDaily(symbols: string[]) {
+  const startDates = await proxy.fetchStartDatesForTimeSeries(symbols);
 
-  for (const chunk of makeChunks(sinceDates, 50)) {
+  for (const chunk of makeChunks(startDates, 50)) {
     await Promise.all(
       chunk.map((s) =>
-        proxy.fetchAndSaveTickerTimeSeries(s.symbol, s.sinceDate),
+        proxy.fetchAndSaveTickerQuotes(s.symbol, s.startDate),
+      ),
+    );
+  }
+}
+
+export async function syncTickerQuotesForPeriod(symbols: string[], startDate: Date, endDate: Date) {
+  for (const chunk of makeChunks(symbols, 50)) {
+    await Promise.all(
+      chunk.map((s) =>
+        proxy.fetchAndSaveTickerQuotes(s, startDate, endDate),
       ),
     );
   }

@@ -13,7 +13,7 @@ const proxy = proxyActivities<typeof activities>({
   },
 });
 
-export async function scrapeSymbolNewsUrls(
+export async function scrapeTickerNewsUrls(
   news: { newsDate: Date; url: string; symbol: string; title: string }[],
 ) {
   const callScrapeSymbolNews = async (item: {
@@ -22,7 +22,7 @@ export async function scrapeSymbolNewsUrls(
     symbol: string;
     title: string;
   }) => {
-    return proxy.scrapeSymbolNews(item.url).catch(async () => {
+    return proxy.scrapeNews(item.url).catch(async () => {
       return {
         ...item,
         originalUrl: item.url,
@@ -40,12 +40,12 @@ export async function scrapeSymbolNewsUrls(
   );
 }
 
-export async function scrapeSymbolNewsBatchAndSave(
+export async function scrapeTickerNewsBatchAndSave(
   symbol: string,
   batch: { newsDate: Date; url: string; title: string }[],
 ) {
   const newsDateMap = mapKeys(batch, "url");
-  const scrapedNews = await executeChild(scrapeSymbolNewsUrls, {
+  const scrapedNews = await executeChild(scrapeTickerNewsUrls, {
     args: [batch.map((b) => ({ ...b, symbol }))],
   });
 
@@ -61,14 +61,7 @@ export async function scrapeSymbolNewsBatchAndSave(
   await proxy.saveNews(uniqueNews);
 }
 
-export async function scrapeSymbolNewsSince(symbol: string, sinceDate: Date) {
-  const currentNews = await proxy.fetchSymbolNews(symbol, sinceDate);
-  for (let i = 0; i < currentNews.length; i += 80) {
-    await scrapeSymbolNews(symbol, currentNews.slice(i, i + 80));
-  }
-}
-
-export async function scrapeSymbolNews(
+export async function syncTickerNews(
   symbol: string,
   news: { url: string; title: string; newsDate: Date }[],
 ) {
@@ -77,7 +70,7 @@ export async function scrapeSymbolNews(
       // Scraping by 20 URLs to make to sure it does not exceed gRPC size limit
       // and all together 80 URLs in parralel to respect firecrawl rate limits.
       chunk(news.slice(i, i + 80), 20).map((batch) =>
-        executeChild(scrapeSymbolNewsBatchAndSave, {
+        executeChild(scrapeTickerNewsBatchAndSave, {
           args: [symbol, batch],
         }),
       ),
@@ -85,54 +78,74 @@ export async function scrapeSymbolNews(
   }
 }
 
-export async function scrapeGeneralNewsDaily() {
+export async function syncTickerNewsForPeriod(
+  symbol: string,
+  startDate: Date,
+  endDate?: Date,
+) {
+  const currentNews = await proxy.fetchTickerNews(symbol, startDate, endDate);
+  for (let i = 0; i < currentNews.length; i += 80) {
+    await syncTickerNews(symbol, currentNews.slice(i, i + 80));
+  }
+}
+
+export async function syncMarketNewsForPeriod(
+  startDate: Date,
+  endDate?: Date,
+) {
+  await syncTickerNewsForPeriod("GENERAL", startDate, endDate);
+}
+
+export async function syncGeneralNewsDaily() {
   const sinceDates = await proxy.getNewsToFetchDaily(["GENERAL"]);
 
-  await executeChild(scrapeSymbolNewsSince, {
-    args: ["GENERAL", sinceDates[0].sinceDate],
+  await executeChild(syncTickerNewsForPeriod, {
+    args: ["GENERAL", sinceDates[0].startDate],
   });
 }
 
-export async function scrapeSymbolNewsDaily(symbols: string[]) {
+export async function syncTickerNewsDaily(symbols: string[]) {
   const symbolsSince = await proxy.getNewsToFetchDaily(symbols);
 
-  for (const { symbol, sinceDate } of symbolsSince) {
-    await executeChild(scrapeSymbolNewsSince, {
-      args: [symbol, sinceDate],
+  for (const { symbol, startDate } of symbolsSince) {
+    await executeChild(syncTickerNewsForPeriod, {
+      args: [symbol, startDate],
     });
   }
 }
 
-export async function scrapeSymbolNewsWeekly(symbols: string[]) {
+export async function scrapeTickerNewsWeekly(symbols: string[]) {
   const symbolsSince = await proxy.getNewsToFetchWeekly(symbols);
 
   for (const { symbol, failedNews, sinceDate } of symbolsSince) {
     if (sinceDate) {
-      await executeChild(scrapeSymbolNewsSince, {
+      await executeChild(syncTickerNewsForPeriod, {
         args: [symbol, sinceDate],
       });
     } else {
-      await executeChild(scrapeSymbolNews, {
+      await executeChild(syncTickerNews, {
         args: [symbol, failedNews],
       });
     }
   }
 }
 
-export async function scrapeGeneralNewsWeekly() {
-  await scrapeSymbolNewsWeekly(["GENERAL"]);
+export async function syncGeneralNewsWeekly() {
+  await executeChild(scrapeTickerNewsWeekly, {
+    args: [["GENERAL"]],
+  });
 }
 
-export async function scrapeAllNewsDaily(symbols: string[]) {
-  await executeChild(scrapeGeneralNewsDaily);
-  await executeChild(scrapeSymbolNewsDaily, {
+export async function syncAllNewsDaily(symbols: string[]) {
+  // await executeChild(syncGeneralNewsDaily);
+  await executeChild(syncTickerNewsDaily, {
     args: [symbols],
   });
 }
 
-export async function scrapeAllNewsWeekly(symbols: string[]) {
-  await executeChild(scrapeGeneralNewsWeekly);
-  await executeChild(scrapeSymbolNewsWeekly, {
+export async function syncAllNewsWeekly(symbols: string[]) {
+  await executeChild(syncGeneralNewsWeekly);
+  await executeChild(scrapeTickerNewsWeekly, {
     args: [symbols],
   });
 }

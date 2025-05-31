@@ -45,6 +45,7 @@ export class ExperimentService implements AgentStateService<Experiment> {
 
   async setStatus(
     id: string,
+    modelName: string,
     status: ExperimentTaskStatus,
     response?: string | object,
     details?: EvaluationDetails,
@@ -54,6 +55,7 @@ export class ExperimentService implements AgentStateService<Experiment> {
       .updateTable("app_data.experiments")
       .set({
         status,
+        modelName,
         ...(typeof response === "string" && { responseText: response }),
         ...(typeof response === "object" && { responseJson: response }),
         ...(details && { details }),
@@ -65,12 +67,14 @@ export class ExperimentService implements AgentStateService<Experiment> {
 
   async setSuccess(
     id: string,
+    modelName: string,
     result: string | object,
     details: EvaluationDetails,
     version = 1,
   ): Promise<void> {
     await this.setStatus(
       id,
+      modelName,
       ExperimentTaskStatus.Completed,
       result,
       details,

@@ -1,22 +1,25 @@
 import { executeChild, proxyActivities } from "@temporalio/workflow";
 
-import { scrapeAllNewsDaily } from "../stock-news/workflows";
-import { fetchTickersTimeSeries } from "../ticker-data/workflows";
+import { syncAllNewsDaily } from "../stock-news/workflows";
+import { syncTickerQuotesDaily, syncTickerQuotesForPeriod } from "../ticker-data/workflows";
 import type * as activities from "./activities";
+import { startOfWeek, subDays, addDays, parse } from "date-fns";
+import { syncMarketNewsForPeriod, syncTickerNewsForPeriod } from "../stock-news/workflows";
 
 const proxy = proxyActivities<typeof activities>({
   startToCloseTimeout: "15 minutes",
-  heartbeatTimeout: "5 minutes",
+  heartbeatTimeout: "10 minutes",
   retry: {
     nonRetryableErrorTypes: ["NonRetryable"],
     maximumAttempts: 2,
   },
 });
 
-export async function runTickerSentimentPredictionExperiment(symbol: string) {
+export async function runTickerSentimentPredictionExperiment(symbol: string, startDate: Date) {
   const { newsBatchIds, timeSeries } =
-    await proxy.fetchSymbolNSentimentPredictionExperimentData({
+    await proxy.fetchSentimentPredictionExperimentData({
       symbol,
+      startDate,
     });
 
   const predictions = await Promise.all(
@@ -25,6 +28,7 @@ export async function runTickerSentimentPredictionExperiment(symbol: string) {
         symbol,
         newsIds: newsBatchId,
         timeSeries,
+        period: startDate,
       }),
     ),
   );
@@ -32,12 +36,15 @@ export async function runTickerSentimentPredictionExperiment(symbol: string) {
   return proxy.makePredictions({
     symbol,
     predictions,
+    period: startDate,
   });
 }
 
-export async function runMarketSentimentPredictionExperiment() {
-  const newsBatches = await proxy.fetchLastWeekNews({
+export async function runMarketSentimentPredictionExperiment(startDate: Date) {
+  const newsBatches = await proxy.fetchNewsForPeriod({
     symbol: "GENERAL",
+    startDate,
+    endDate: addDays(startDate, 7),
   });
 
   const predictions = await Promise.all(
@@ -51,31 +58,60 @@ export async function runMarketSentimentPredictionExperiment() {
   return proxy.makePredictions({
     symbol: "GENERAL",
     predictions,
+    period: startDate,
   });
 }
 
-export async function runTickersSentimentPredictionExperiments(
+export async function runTickerSentimentPredictionExperiments(
   symbols: string[],
+  startDate: Date,
 ) {
   await Promise.all(
-    symbols.map((symbol) => runTickerSentimentPredictionExperiment(symbol)),
+    symbols.map((symbol) => runTickerSentimentPredictionExperiment(symbol, startDate)),
   );
 }
 
-export async function runAllTogetherExperiment(onlyTickers = true) {
+export async function predictLatestSentiments(withMarketSentiment = false) {
   const symbols = await proxy.getSupportedTickers();
 
-  if (!onlyTickers) {
-    await Promise.all([
-      executeChild(fetchTickersTimeSeries, {
-        args: [symbols],
-      }),
-      executeChild(scrapeAllNewsDaily, {
-        args: [symbols],
-      }),
-    ]);
-    await executeChild(runMarketSentimentPredictionExperiment);
+  const startDate = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 1 });
+
+  await executeChild(syncTickerQuotesDaily, {
+    args: [symbols],
+  });
+
+  if (withMarketSentiment) {
+    await executeChild(syncAllNewsDaily, {
+      args: [symbols],
+    });
+    await executeChild(runMarketSentimentPredictionExperiment, {
+      args: [startDate],
+    });
   }
 
-  await runTickersSentimentPredictionExperiments(symbols);
+  await runTickerSentimentPredictionExperiments(symbols, startDate);
+}
+
+export async function predictTickerSentimentForPeriod(params: { symbol: string, startWeek: string }) {
+  const { symbol, startWeek } = params;
+
+  const startWeekDate = parse(startWeek, "yyyy-MM-dd", new Date());
+  const startDate = startOfWeek(subDays(startWeek, 7), { weekStartsOn: 1 });
+
+  await Promise.all([
+    executeChild(syncTickerQuotesForPeriod, {
+      args: [[symbol], subDays(startDate, 7), addDays(startDate, 14)],
+    }),
+    executeChild(syncMarketNewsForPeriod, {
+      args: [startDate, addDays(startDate, 7)],
+    }),
+    executeChild(syncTickerNewsForPeriod, {
+      args: [symbol, startDate, addDays(startDate, 7)],
+    }),
+  ]);
+  await executeChild(runMarketSentimentPredictionExperiment, {
+    args: [startWeekDate],
+  });
+
+  await runTickerSentimentPredictionExperiments([symbol], startWeekDate);
 }

@@ -130,6 +130,8 @@ export class ExperimentAgent<
   AResult = string,
   TResult = string,
 > extends StatefulAgent<Experiment, AResult, TResult> {
+  static readonly modelKey: ModelKeyEnum;
+
   static async create<TResult = string>(params: {
     prompt?: AgentPrompt<TResult>;
     model?: AbstractContainer;
@@ -153,12 +155,13 @@ export class ExperimentAgent<
   }
 
   async setStatus(status: ExperimentTaskStatus): Promise<void> {
-    await experimentService.setStatus(this.state.id, status);
+    await experimentService.setStatus(this.state.id, this.model.name, status);
   }
 
   async setSuccess(result: AgentExecutionResult<AResult>) {
     await experimentService.setSuccess(
       this.state.id,
+      this.model.id,
       result.response as string | object,
       result.evaluationDetails,
     );

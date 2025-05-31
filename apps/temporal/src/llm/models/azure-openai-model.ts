@@ -144,6 +144,9 @@ function getOpenaiContainers(config: AzureOpenAIModelConfig[]) {
 
 export function getAzureLLMContainers(modelKey: ModelKeyEnum) {
   const appConfig = getConfig();
+  if (!appConfig.azureOpenAI) {
+    throw new Error("Azure OpenAI config not found");
+  }
   const configs = buildAzureOpenAIModelConfigs(
     modelKey,
     appConfig.azureOpenAI.services,

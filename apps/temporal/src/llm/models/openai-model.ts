@@ -31,6 +31,10 @@ function getOpenaiContainer(apiKey: string, config: OpenAIModelConfig) {
 
 export function getOpenAIModelContainers(modelKey: ModelKeyEnum) {
   const appConfig = getConfig();
+  if (!appConfig.openAI) {
+    throw new Error("OpenAI config not found");
+  }
+
   const modelConfig = appConfig.openAI.modelConfigs.find(
     (config) => config.modelName === String(modelKey),
   );

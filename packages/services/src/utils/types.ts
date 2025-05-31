@@ -7,6 +7,7 @@ export interface AgentStateService<T> {
 
   setStatus: (
     id: string,
+    modelKey: string,
     status: ExperimentTaskStatus,
     response?: {
       text?: string;

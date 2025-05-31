@@ -1,0 +1,1 @@
+ALTER TABLE "app_data"."experiments" ADD COLUMN "url" varchar(1024);

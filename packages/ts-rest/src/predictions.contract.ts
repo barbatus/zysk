@@ -13,6 +13,7 @@ const InsightSchema = z.object({
   impact: z.enum(["positive", "negative", "mixed", "neutral"]),
   reasoning: z.string(),
   url: z.string().url().optional(),
+  confidence: z.number(),
 });
 
 export const TickerSentimentPredictionSchema = z.object({

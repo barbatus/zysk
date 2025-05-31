@@ -117,6 +117,7 @@ export abstract class BaseLLMRunner implements AbstractRunner {
  */
 export interface AbstractContainer extends AbstractRunner {
   readonly id: string;
+  readonly name: string;
 }
 
 /**
@@ -134,6 +135,10 @@ export class ModelContainer implements AbstractContainer {
 
   get id(): string {
     return this.identity.id;
+  }
+
+  get name(): string {
+    return this.identity.name;
   }
 
   toString(): string {
@@ -239,6 +244,10 @@ export class SequentialModelContainer implements AbstractRunner {
 
   get id(): string {
     return this.currentContainer.id;
+  }
+
+  get name(): string {
+    return this.currentContainer.name;
   }
 
   toString(): string {
@@ -412,6 +421,10 @@ export class SequentialModelContainerWithFallback implements AbstractContainer {
 
   get id(): string {
     return this.modelContainers[this.index].id;
+  }
+
+  get name(): string {
+    return this.modelContainers[this.index].name;
   }
 
   toString(): string {

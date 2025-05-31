@@ -82,17 +82,17 @@ You are an expert in analyzing stock market news and extracting insights that ca
 You have been given a set of recent news articles about stocket market from the **past 7 days**.
 Please review these articles to determine how each piece of news could influence market conditions this week (either negatively or positively).
 
-## Your Task
+# YOUR TASK
 1. Read the news articles about stocke market (provided below) and identify any insights that may have a meaningful impact on the market condition in short term.
 2. Produce your conclusions and insights as a structured JSON response, **strictly** following the format in the **Output Format** section.
 
-## Important Details
+# CRITICAL INSTRUCTIONS
 - **Confidence scores** must be integers between 0 and 100, with the following split:
     ${CONFIDENCE_SPLIT}
 - The overall market short term **sentiment** must be one of: \`bullish\`, \`bearish\`, or \`neutral\`.
 - The **impact** of each insight on the market condition must be either \`positive\` or \`negative\`.
 - Be sure to account for every article. Each article begins with \`# ARTICLE TITLE: <title>\` and they are separated by \`---\`.
-- CRITICAL Output should be in JSON format as specified in the OUTPUT FORMAT section.
+- Output should be in **JSON format** as specified in the **OUTPUT FORMAT** section.
 
 ---
 

@@ -60,6 +60,7 @@ export type PredictionsTable = CreateTableType<
   PredictionsTableBase,
   {
     confidence: ColumnType<number, string | number>;
+    period: ColumnType<Date, string | Date>;
   }
 >;
 

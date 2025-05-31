@@ -61,7 +61,7 @@ export const syncTickerTimeSeries = createScript<[]>({
   for await (const symbolsChunk of chunk(symbols, 20)) {
     await Promise.all(
       symbolsChunk.map((s) =>
-        tickerDataService.getAndSaveTickerTimeSeries(s, lastFiveYears, "full"),
+        tickerDataService.getAndSaveTickerTimeSeries(s, lastFiveYears, new Date(), "full"),
       ),
     );
   }

@@ -22,11 +22,13 @@ export class PredictionService {
       .execute();
   }
 
-  async getLastGeneralMarketPrediction() {
+  async getLastGeneralMarketPredictionForPeriod(period: Date) {
     const prediction = await this.db
       .selectFrom("predictions")
       .selectAll()
       .where("symbol", "=", "GENERAL")
+      .where("period", "<=", period)
+      .orderBy("period", "desc")
       .orderBy("createdAt", "desc")
       .limit(1)
       .executeTakeFirstOrThrow();

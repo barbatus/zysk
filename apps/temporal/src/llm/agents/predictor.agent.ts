@@ -24,11 +24,13 @@ export class PredictorAgent extends ExperimentAgent<
 > {
   private readonly predictions: Prediction[];
   private readonly symbol: string;
+  private readonly period: Date;
 
   constructor(params: {
     symbol: string;
     state: Experiment;
     predictions: Prediction[];
+    period: Date;
   }) {
     super(
       params.state,
@@ -37,6 +39,7 @@ export class PredictorAgent extends ExperimentAgent<
     );
     this.predictions = params.predictions;
     this.symbol = params.symbol;
+    this.period = params.period;
   }
 
   override async mapPromptValues(): Promise<Record<string, string>> {
@@ -60,9 +63,12 @@ export class PredictorAgent extends ExperimentAgent<
     return await super.arun(promptValues);
   }
 
+  static override readonly modelKey = ModelKeyEnum.GptO3Mini;
+
   static override async create(params: {
     symbol: string;
     predictions: Prediction[];
+    period: Date;
   }) {
     const state = await experimentService.create();
     return new PredictorAgent({
@@ -74,6 +80,7 @@ export class PredictorAgent extends ExperimentAgent<
   override async setSuccess(result: AgentExecutionResult<Prediction>) {
     await experimentService.setSuccess(
       this.state.id,
+      this.model.name,
       result.response as string | object,
       result.evaluationDetails,
       2,
@@ -82,6 +89,7 @@ export class PredictorAgent extends ExperimentAgent<
     await predictionService.saveSymbolPrediction(this.symbol, {
       ...finalPrediction,
       experimentId: this.state.id,
+      period: this.period,
     });
     return finalPrediction;
   }
@@ -188,6 +196,7 @@ export class PredictorAgent extends ExperimentAgent<
       confidence,
       responseJson: predictionResponse,
       prediction: sentiment,
+      period: this.period,
     };
   }
 }

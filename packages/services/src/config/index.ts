@@ -101,11 +101,11 @@ export const AppConfigEnvVariablesSchema = z.object({
   AZURE_OPENAI_DEPLOYMENTS: z.preprocess(
     (val) => JSON.parse(val as string),
     z.array(AzureOpenAIDeploymentConfigSchema),
-  ),
+  ).optional(),
   AZURE_OPENAI_SERVICES: z.preprocess(
     (val) => JSON.parse(val as string),
     z.array(AzureOpenAIServiceConfigSchema),
-  ),
+  ).optional(),
   STOCK_NEWS_API_KEY: z.string(),
   FIRECRAWL_API_KEY: z.string(),
   ALPHA_VANTAGE_API_KEY: z.string(),
@@ -113,7 +113,12 @@ export const AppConfigEnvVariablesSchema = z.object({
   OPENAI_MODEL_CONFIGS: z.preprocess(
     (val) => JSON.parse(val as string),
     z.array(OpenAIModelConfigSchema),
-  ),
+  ).optional(),
+  DEEPSEEK_API_KEY: z.string().optional(),
+  DEEPSEEK_MODEL_CONFIGS: z.preprocess(
+    (val) => JSON.parse(val as string),
+    z.array(z.object({ modelName: z.string(), temperature: z.number() })),
+  ).optional(),
 });
 
 export type AppConfigEnvVariables = z.infer<typeof AppConfigEnvVariablesSchema>;
@@ -160,13 +165,17 @@ export interface AppConfig {
   stockNewsApiKey: string;
   firecrawlApiKey: string;
   alphaVantageApiKey: string;
-  azureOpenAI: {
+  azureOpenAI?: {
     deployments: AzureOpenAIDeploymentConfig[];
     services: AzureOpenAIServiceConfig[];
   };
-  openAI: {
+  openAI?: {
     apiKey: string;
     modelConfigs: OpenAIModelConfig[];
+  };
+  deepSeek?: {
+    apiKey: string;
+    modelConfigs: { modelName: string; temperature: number }[];
   };
 }
 
@@ -193,6 +202,7 @@ function getPostgresConfig(
 
 export function validate(config: Record<string, unknown>) {
   const appConfigValidated = AppConfigEnvVariablesSchema.parse(config);
+
   const nodeEnv = appConfigValidated.NODE_ENV;
   const appConfig: AppConfig = {
     nodeEnv,
@@ -228,14 +238,24 @@ export function validate(config: Record<string, unknown>) {
     stockNewsApiKey: appConfigValidated.STOCK_NEWS_API_KEY,
     firecrawlApiKey: appConfigValidated.FIRECRAWL_API_KEY,
     alphaVantageApiKey: appConfigValidated.ALPHA_VANTAGE_API_KEY,
-    azureOpenAI: {
-      deployments: appConfigValidated.AZURE_OPENAI_DEPLOYMENTS,
-      services: appConfigValidated.AZURE_OPENAI_SERVICES,
-    },
-    openAI: {
-      apiKey: appConfigValidated.OPENAI_API_KEY,
-      modelConfigs: appConfigValidated.OPENAI_MODEL_CONFIGS,
-    },
+    azureOpenAI: appConfigValidated.AZURE_OPENAI_SERVICES
+      ? {
+          deployments: appConfigValidated.AZURE_OPENAI_DEPLOYMENTS!,
+          services: appConfigValidated.AZURE_OPENAI_SERVICES!,
+        }
+      : undefined,
+    openAI: appConfigValidated.OPENAI_API_KEY
+      ? {
+          apiKey: appConfigValidated.OPENAI_API_KEY!,
+          modelConfigs: appConfigValidated.OPENAI_MODEL_CONFIGS!,
+        }
+      : undefined,
+    deepSeek: appConfigValidated.DEEPSEEK_API_KEY
+      ? {
+          apiKey: appConfigValidated.DEEPSEEK_API_KEY,
+          modelConfigs: appConfigValidated.DEEPSEEK_MODEL_CONFIGS!,
+        }
+      : undefined,
   };
 
   return { config: appConfig };

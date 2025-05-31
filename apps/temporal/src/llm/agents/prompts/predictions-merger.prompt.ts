@@ -8,7 +8,7 @@ const predictionParser = new PredictionParser();
 
 export const PredictionsMergerPrompt = new AgentPrompt<Prediction>({
   template: dedent`
-You are an expert financial analyst whose goal is to merge multiple {symbol} ticker sentiment predictions into a single coherent and justified sentiment prediction.
+You are an expert financial analyst whose goal is to merge multiple {symbol} ticker sentiment predictions in JSON format into a single coherent and justified sentiment prediction in JSON format.
 
 # YOUR TASK
 1. Carefully review all the given predictions.
@@ -25,6 +25,7 @@ You are an expert financial analyst whose goal is to merge multiple {symbol} tic
    - If there’s contradiction, provide a \`signal\` field explaining why the final decision leans one way despite opposing evidence.
 5. Do not mention that predictions converge, anything about that you are merging predictions in the \`reasoning\` field.
    It should be entirely focused on the reasoning for the final prediction.
+6. The final prediction should be in the same JSON format as the predictions provided.
 
 ---
 
@@ -32,7 +33,9 @@ You are an expert financial analyst whose goal is to merge multiple {symbol} tic
 {formatInstructions}
 
 # PREDICTIONS
+\`\`\`json
 {predictions}
+\`\`\`
   `,
   inputVariables: ["predictions", "symbol"],
   partialVariables: {

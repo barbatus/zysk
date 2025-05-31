@@ -7,6 +7,7 @@ import { getLogger } from "@zysk/services";
 import dedent from "dedent";
 import { APIConnectionTimeoutError, type APIError } from "openai";
 
+import { ModelKeyEnum } from "../core/enums";
 import {
   InternalLLMError,
   InvalidPromptError,
@@ -42,6 +43,17 @@ interface ChatGeneration extends Generation {
     response_metadata?: ResponseMetadata;
   };
 }
+
+const openAIPricing1M = {
+  [ModelKeyEnum.GptO3Mini]: {
+    prompt: 1.1,
+    cachedPrompt: 0.55,
+    completion: 4.4,
+  },
+} as Record<
+  ModelKeyEnum,
+  { prompt: number; cachedPrompt: number; completion: number }
+>;
 
 export class OpenAICallbackHandler extends BaseCallbackHandler {
   readonly name = "OpenAICallbackHandler";
@@ -85,7 +97,7 @@ export class OpenAICallbackHandler extends BaseCallbackHandler {
           response.llmOutput?.model_name) as string | undefined;
         const modelName = modelName_
           ? this.standardizeModelName(modelName_)
-          : "";
+          : undefined;
 
         if (usageMetadata.input_token_details?.cache_read) {
           promptTokensCached = usageMetadata.input_token_details.cache_read;
@@ -102,11 +114,14 @@ export class OpenAICallbackHandler extends BaseCallbackHandler {
         this.reasoningTokens += reasoningTokens;
         this.successfulRequests++;
 
-        const cost = this.calculateCost(
-          modelName,
-          promptTokens,
-          completionTokens,
-        );
+        const cost = modelName
+          ? this.calculateCost({
+              modelName,
+              promptTokens,
+              completionTokens,
+              promptTokensCached,
+            })
+          : 0;
         this.totalCost += cost;
       } else if (response.llmOutput) {
         // Fallback to llmOutput if usageMetadata is not available
@@ -126,11 +141,12 @@ export class OpenAICallbackHandler extends BaseCallbackHandler {
         this.completionTokens += completionTokens;
         this.successfulRequests++;
 
-        const cost = this.calculateCost(
+        const cost = this.calculateCost({
           modelName,
           promptTokens,
           completionTokens,
-        );
+          promptTokensCached: 0,
+        });
         this.totalCost += cost;
       } else {
         this.successfulRequests++;
@@ -146,22 +162,45 @@ export class OpenAICallbackHandler extends BaseCallbackHandler {
     return "message" in generation && generation.message instanceof AIMessage;
   }
 
-  private standardizeModelName(modelName: string): string {
-    return modelName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+  private standardizeModelName(modelName: string): ModelKeyEnum {
+    return modelName
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/^gpt-/, "")
+      .replace(/-\d{4}-\d{2}-\d{2}$/, "") as ModelKeyEnum;
   }
 
-  private calculateCost(
-    _modelName: string,
-    promptTokens: number,
-    completionTokens: number,
-  ): number {
-    // Add your cost calculation logic here based on model and token counts
-    // This is a placeholder implementation
-    const promptCostPer1K = 0.01; // $0.01 per 1K tokens
-    const completionCostPer1K = 0.03; // $0.03 per 1K tokens
+  private calculateCost({
+    modelName,
+    promptTokens,
+    completionTokens,
+    promptTokensCached,
+  }: {
+    modelName: ModelKeyEnum;
+    promptTokens: number;
+    completionTokens: number;
+    promptTokensCached: number;
+  }): number {
+    const promptTokens_ = promptTokensCached
+      ? promptTokens - promptTokensCached
+      : promptTokensCached;
+    const promptCostPer1K =
+      modelName in openAIPricing1M
+        ? openAIPricing1M[modelName].prompt / 1000
+        : 0.0011; // $0.0011 per 1K tokens
+    const completionCostPer1K =
+      modelName in openAIPricing1M
+        ? openAIPricing1M[modelName].completion / 1000
+        : 0.0044; // $0.0044 per 1K tokens
+
+    const cachedPromptCostPer1K =
+      modelName in openAIPricing1M
+        ? openAIPricing1M[modelName].cachedPrompt / 1000
+        : 0;
 
     return (
-      (promptTokens / 1000) * promptCostPer1K +
+      (promptTokens_ / 1000) * promptCostPer1K +
+      (promptTokensCached / 1000) * cachedPromptCostPer1K +
       (completionTokens / 1000) * completionCostPer1K
     );
   }

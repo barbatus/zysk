@@ -126,12 +126,13 @@ export class TickerDataService {
     return keyBy(result, "symbol");
   }
 
-  async getSymbolTimeSeries(symbol: string, sinceDate: Date) {
+  async getTickerTimeSeries(symbol: string, startDate: Date, endDate?: Date) {
     const result = await this.db
       .selectFrom("app_data.ticker_time_series")
       .selectAll()
       .where("symbol", "=", symbol)
-      .where("date", ">=", sinceDate)
+      .where("date", ">=", startDate)
+      .$if(Boolean(endDate), (eb) => eb.where("date", "<", endDate!))
       .orderBy("date", "asc")
       .execute();
     return result;
@@ -139,7 +140,8 @@ export class TickerDataService {
 
   async getTickerTimeSeriesApi(
     symbol: string,
-    sinceDate: Date,
+    startDate: Date,
+    endDate: Date,
     outputsize: "full" | "compact" = "compact",
   ) {
     const result = await this.alphaVantageService.getTimeSeriesDaily(
@@ -149,17 +151,21 @@ export class TickerDataService {
     if (!result) {
       return [] as Exclude<typeof result, undefined>["quotes"];
     }
-    return result.quotes.filter((q) => q.date >= sinceDate);
+    return result.quotes.filter(
+      (q) => q.date >= startDate && q.date < endDate,
+    );
   }
 
   async getAndSaveTickerTimeSeries(
     symbol: string,
-    sinceDate: Date,
+    startDate: Date,
+    endDate: Date,
     outputsize: "full" | "compact" = "compact",
   ) {
     const result = await this.getTickerTimeSeriesApi(
       symbol,
-      sinceDate,
+      startDate,
+      endDate,
       outputsize,
     );
     await this.saveTickerTimeSeries(result);

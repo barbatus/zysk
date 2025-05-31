@@ -23,10 +23,10 @@ async function _fetchTickersToProcess(symbols: string[]) {
   const startOfDay_ = (date: Date) => startOfDay(date);
   const sinceDates = symbols.map((symbol) =>
     isNil(latestNewsDate[symbol])
-      ? { symbol, sinceDate: startOfDay_(weekAgo) }
+      ? { symbol, startDate: startOfDay_(weekAgo) }
       : {
           symbol,
-          sinceDate: startOfDay_(subDays(latestNewsDate[symbol].newsDate, 1)),
+          startDate: startOfDay_(subDays(latestNewsDate[symbol].newsDate, 1)),
         },
   );
   return sinceDates;
@@ -53,15 +53,15 @@ export async function getNewsToFetchWeekly(symbols: string[]) {
   return sinceDates;
 }
 
-export async function fetchSymbolNews(symbol: string, sinceDate: Date) {
+export async function fetchTickerNews(symbol: string, startDate: Date, endDate?: Date) {
   const tickerNewsService = resolve(TickerNewsService);
   if (symbol === "GENERAL") {
-    return tickerNewsService.getGeneralNews(sinceDate);
+    return tickerNewsService.getGeneralNews(startDate, endDate);
   }
-  return tickerNewsService.getTickerNews(symbol, sinceDate);
+  return tickerNewsService.getTickerNews(symbol, startDate, endDate);
 }
 
-export async function scrapeSymbolNews(url: string, maxTokens = 5000) {
+export async function scrapeNews(url: string, maxTokens = 5000) {
   const logger = getLogger();
   try {
     const tickerNewsService = resolve(TickerNewsService);

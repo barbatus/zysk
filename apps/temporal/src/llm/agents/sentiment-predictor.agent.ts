@@ -51,6 +51,8 @@ export class NewsBasedSentimentPredictorAgent extends ExperimentAgent<
     };
   }
 
+  static override readonly modelKey = ModelKeyEnum.DeepSeekReasoner;
+
   static override async create<TResult = Prediction>(params: {
     symbol: string;
     prompt: AgentPrompt<TResult>;
@@ -63,7 +65,7 @@ export class NewsBasedSentimentPredictorAgent extends ExperimentAgent<
       state,
       ...params,
       prompt: params.prompt as AgentPrompt<Prediction>,
-      model: params.model ?? modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
+      model: params.model ?? modelsWithFallback[ModelKeyEnum.DeepSeekReasoner]!,
       onHeartbeat: params.onHeartbeat,
     });
   }
@@ -99,6 +101,8 @@ export class SentimentPredictor extends ExperimentAgent<
   Prediction,
   Prediction
 > {
+  static override readonly modelKey = ModelKeyEnum.DeepSeekReasoner;
+
   static override async create(params: {
     symbol: string;
     news: { markdown: string; url: string; date: Date }[];
@@ -111,7 +115,7 @@ export class SentimentPredictor extends ExperimentAgent<
       state,
       ...params,
       prompt: TickerSentimentPredictionPrompt,
-      model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
+      model: modelsWithFallback[ModelKeyEnum.DeepSeekReasoner]!,
     });
   }
 }
@@ -120,6 +124,8 @@ export class MarketSentimentPredictor extends ExperimentAgent<
   Prediction,
   Prediction
 > {
+  static override readonly modelKey = ModelKeyEnum.GptO3Mini;
+
   static override async create(params: {
     news: { markdown: string; url: string; date: Date }[];
     onHeartbeat?: () => Promise<void>;

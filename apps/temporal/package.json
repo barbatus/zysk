@@ -23,6 +23,7 @@
   "dependencies": {
     "@langchain/community": "^0.3.44",
     "@langchain/core": "^0.3.49",
+    "@langchain/deepseek": "^0.0.1",
     "@langchain/openai": "^0.5.10",
     "@langchain/textsplitters": "^0.1.0",
     "@temporalio/activity": "^1.11.8",

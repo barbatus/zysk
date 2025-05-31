@@ -12,11 +12,6 @@ import Stack from "@mui/joy/Stack";
 import Switch from "@mui/joy/Switch";
 import Tooltip from "@mui/joy/Tooltip";
 import Typography from "@mui/joy/Typography";
-import Popover, { type PopoverProps } from "@mui/material/Popover";
-import {
-  createTheme as createMuiTheme,
-  ThemeProvider as MuiThemeProvider,
-} from "@mui/material/styles";
 import { type SxProps } from "@mui/system";
 import {
   DIMENSION_NAME_QUOTE,
@@ -25,23 +20,13 @@ import {
 } from "@zysk/cube";
 import { type TickerSentimentPrediction } from "@zysk/ts-rest";
 import { format } from "date-fns";
-import { Info, TrendingDown, TrendingUp } from "lucide-react";
-import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
+import { TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
 import { type MetricsRow } from "#/api/metrics";
 
-import { SentimentBadge } from "./sentiment-badge";
-
-const muiTheme = createMuiTheme({});
-
-function MuiPopover(props: PopoverProps) {
-  return (
-    <MuiThemeProvider theme={muiTheme}>
-      <Popover {...props} />
-    </MuiThemeProvider>
-  );
-}
+import { SentimentBadge } from "../sentiment-badge";
+import { InsightsList } from "./insights-list";
 
 export function TickerCardSkeleton() {
   return (
@@ -303,57 +288,7 @@ export function TickerStateCard({
                 justifyContent="space-between"
               >
                 {prediction.insights.length >= 1 && (
-                  <PopupState variant="popover" popupId="demo-popup-popover">
-                    {(popupState) => (
-                      <div>
-                        <Button
-                          variant="plain"
-                          color="neutral"
-                          size="sm"
-                          startDecorator={<Info size={12} />}
-                          sx={{
-                            minHeight: "auto",
-                            width: "fit-content",
-                            fontWeight: "md",
-                          }}
-                          {...bindTrigger(popupState)}
-                        >
-                          Show insights
-                        </Button>
-                        <MuiPopover
-                          {...bindPopover(popupState)}
-                          anchorOrigin={{
-                            vertical: "bottom",
-                            horizontal: "left",
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              p: 2,
-                              width: 400,
-                              maxHeight: 400,
-                              overflow: "auto",
-                            }}
-                          >
-                            <Stack spacing={1}>
-                              {prediction.insights.map((insight) => (
-                                <Typography
-                                  key={insight.insight}
-                                  level="body-sm"
-                                  fontWeight={300}
-                                  sx={{
-                                    color: "var(--joy-palette-text-secondary)",
-                                  }}
-                                >
-                                  • {insight.insight}
-                                </Typography>
-                              ))}
-                            </Stack>
-                          </Box>
-                        </MuiPopover>
-                      </div>
-                    )}
-                  </PopupState>
+                  <InsightsList insights={prediction.insights} />
                 )}
                 <Typography
                   level="body-xs"

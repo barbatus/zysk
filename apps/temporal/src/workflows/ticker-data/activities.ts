@@ -4,22 +4,34 @@ import {
   RateLimitExceededError,
   resolve,
   TickerDataService,
+  getLogger,
 } from "@zysk/services";
-import { startOfDay, subMonths } from "date-fns";
+import { startOfDay, endOfDay, subMonths } from "date-fns";
 import { isNil } from "lodash";
 
-const tickerInfoService = resolve(TickerDataService);
+const logger = getLogger();
 
-export async function fetchAndSaveTickerTimeSeries(
+const tickerDataService = resolve(TickerDataService);
+
+export async function fetchAndSaveTickerQuotes(
   symbol: string,
-  sinceDate: Date,
+  startDate: Date,
+  endDate?: Date,
 ) {
   try {
-    const data = await tickerInfoService.getTickerTimeSeriesApi(
+    const data = await tickerDataService.getTickerTimeSeriesApi(
       symbol,
-      startOfDay(sinceDate),
+      startOfDay(startDate),
+      endOfDay(endDate ?? new Date()),
+      endDate ? "full" : "compact",
     );
-    await tickerInfoService.saveTickerTimeSeries(data);
+    if (!data.length) {
+      logger.warn(
+        `[fetchAndSaveTickerQuotes] No data for ${symbol} from ${startDate} to ${endDate}`,
+      );
+      return;
+    }
+    await tickerDataService.saveTickerTimeSeries(data);
   } catch (error) {
     const attempt = activityInfo().attempt;
     if (error instanceof RateLimitExceededError) {
@@ -35,24 +47,19 @@ export async function fetchAndSaveTickerTimeSeries(
 }
 
 export async function fetchAndSaveStockDetails(symbol: string) {
-  const data = await tickerInfoService.getCompanyProfileApi(symbol);
+  const data = await tickerDataService.getCompanyProfileApi(symbol);
   if (data) {
-    await tickerInfoService.saveCompanyProfiles([data]);
+    await tickerDataService.saveCompanyProfiles([data]);
   }
 }
 
-async function _fetchTickersToProcess(symbols: string[]) {
+export async function fetchStartDatesForTimeSeries(symbols: string[]) {
   const latestQuoteDate =
-    await tickerInfoService.getLatestQuoteDatePerTicker(symbols);
-  const sinceDates = symbols.map((symbol) =>
+  await tickerDataService.getLatestQuoteDatePerTicker(symbols);
+  const startDates = symbols.map((symbol) =>
     isNil(latestQuoteDate[symbol])
-      ? { symbol, sinceDate: subMonths(new Date(), 2) }
-      : { symbol, sinceDate: latestQuoteDate[symbol].date },
+      ? { symbol, startDate: subMonths(new Date(), 2) }
+      : { symbol, startDate: latestQuoteDate[symbol].date },
   );
-  return sinceDates;
-}
-
-export async function fetchTickersForTimeSeries(symbols: string[]) {
-  const sinceDates = await _fetchTickersToProcess(symbols);
-  return sinceDates;
+  return startDates;
 }

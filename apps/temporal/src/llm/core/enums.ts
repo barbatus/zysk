@@ -9,6 +9,7 @@ export enum ModelVendorEnum {
   Google = "google",
   Mistral = "mistral",
   AI21Labs = "ai21labs",
+  DeepSeek = "deepseek",
 }
 
 export enum ModelProviderEnum {
@@ -17,6 +18,7 @@ export enum ModelProviderEnum {
   Anthropic = "anthropic",
   Azure = "azure",
   GCP = "gcp",
+  DeepSeek = "deepseek",
 }
 
 export enum ModelKeyEnum {
@@ -30,4 +32,5 @@ export enum ModelKeyEnum {
   Gemini15Pro = "gemini-15pro",
   Gemini15Flash = "gemini-15flash",
   Claude35Sonnet = "claude35-sonnet",
+  DeepSeekReasoner = "deepseek-reasoner",
 }

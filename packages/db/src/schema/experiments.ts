@@ -1,4 +1,4 @@
-import { integer, jsonb, pgSchema, text, uuid } from "drizzle-orm/pg-core";
+import { integer, jsonb, pgSchema, text, uuid, varchar } from "drizzle-orm/pg-core";
 
 import { auditColumns } from "../utils/audit";
 import { validatedStringEnum } from "./columns/validated-enum";
@@ -27,5 +27,6 @@ export const experimentsTable = mySchema.table("experiments", {
   details: jsonb("details").$type<EvaluationDetails>(),
   status: validatedStringEnum("status", ExperimentTaskStatus).notNull(),
   version: integer("version").default(1).notNull(),
+  modelName: varchar("model_name", { length: 1024 }),
   ...auditColumns(),
 });

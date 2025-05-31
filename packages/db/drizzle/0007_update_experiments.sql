@@ -1,0 +1,1 @@
+ALTER TABLE "app_data"."experiments" RENAME COLUMN "url" TO "model_name";

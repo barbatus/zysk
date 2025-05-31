@@ -19,6 +19,7 @@ const NewsInsightSchema = z.object({
 });
 
 const PredictionSchema = z.object({
+  symbol: z.string(),
   prediction: z.enum(["bullish", "bearish", "neutral"]),
   counterSignal: SignalSchema.optional().nullable(),
   reasoning: z.string(),
@@ -33,9 +34,9 @@ export class PredictionParser extends JsonOutputParser<Prediction> {
     try {
       return PredictionSchema.parse(await super.parse(response));
     } catch (error) {
-      const issue = (error as ZodError).issues[0];
+      const issue = (error as ZodError).issues?.[0];
       throw new ParserError(
-        `${issue.code}: ${String(issue.path)}: ${issue.message}`,
+        issue ? `${issue.code}: ${String(issue.path)}: ${issue.message}` : (error as Error).message,
       );
     }
   }
@@ -45,6 +46,7 @@ export class PredictionParser extends JsonOutputParser<Prediction> {
 You must provide output as a single JSON object with the following structure:
 \`\`\`json
     {
+        "symbol": "ticker symbol or general or sector name",
         "prediction": "sentiment for the stock price: bullish, bearish, neutral",
         "reasoning": "reasoning behind the prediction",
         "confidence": "confidence score (0-100)",

@@ -37,11 +37,12 @@ export class FinnhubService {
 
   async getTickerNews(params: {
     symbol: string;
-    sinceDate: Date;
+    startDate: Date;
+    endDate?: Date;
   }): Promise<{ url: string; title: string; newsDate: Date }[]> {
-    const { symbol, sinceDate } = params;
-    const from = format(sinceDate, "yyyy-MM-dd");
-    const to = format(new Date(), "yyyy-MM-dd");
+    const { symbol, startDate, endDate } = params;
+    const from = format(startDate, "yyyy-MM-dd");
+    const to = format(endDate ?? new Date(), "yyyy-MM-dd");
     const path = symbol === "general" ? "news" : "company-news";
     const response = await axios.get<
       {

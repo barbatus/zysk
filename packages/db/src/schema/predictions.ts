@@ -1,4 +1,4 @@
-import { jsonb, numeric, pgTable, uuid, varchar } from "drizzle-orm/pg-core";
+import { date, jsonb, numeric, pgTable, uuid, varchar } from "drizzle-orm/pg-core";
 
 import { auditColumns } from "../utils/audit";
 import { validatedStringEnum } from "./columns";
@@ -33,5 +33,6 @@ export const predictionsTable = pgTable("predictions", {
   confidence: numeric("confidence").notNull(),
   responseJson: jsonb("response_json").$type<PredictionResponse>().notNull(),
   experimentId: uuid("experiment_id").references(() => experimentsTable.id),
+  period: date("period"),
   ...auditColumns(),
 });

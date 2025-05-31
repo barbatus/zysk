@@ -9,7 +9,10 @@ import { keyBy } from "lodash";
 import { Search } from "lucide-react";
 
 import { useWatchlist, useWatchlistMetrics } from "#/api/watchlist";
-import { TickerCardSkeleton, TickerStateCard } from "#/ui/ticker-state-card";
+import {
+  TickerCardSkeleton,
+  TickerStateCard,
+} from "#/ui/ticker-card/ticker-sentiment-card";
 
 export function Watchlist() {
   const { data: predictions, isLoading } = useWatchlist();
