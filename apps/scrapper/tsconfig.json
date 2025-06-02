@@ -1,0 +1,18 @@
+{
+  "extends": "@zysk/typescript-config/nestjs.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    "inlineSources": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "#/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/*.tsx"],
+  "ts-node": {
+    "swc": true,
+  }
+}
