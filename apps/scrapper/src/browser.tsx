@@ -28,6 +28,8 @@ const AD_SERVING_DOMAINS = [
   "amazon-adsystem.com",
 ];
 
+const MEDIA_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "svg", "mp3", "mp4", "avi", "flac", "ogg", "wav", "webm"];
+
 const turndown = new TurndownService();
 turndown.addRule("removeLinks", {
   filter: ["a"],
@@ -124,7 +126,7 @@ export async function scrapeUrlCustom(params: {
   });
 
   const page = await context.newPage();
-  await page.goto(url, { timeout });
+  const response = await page.goto(url, { waitUntil: "commit", timeout });
 
   const recaptchas = await page.findRecaptchas();
   if (config.captchaToken && recaptchas.captchas.length > 0) {
@@ -136,7 +138,7 @@ export async function scrapeUrlCustom(params: {
   }
 
   const content = await page.content();
-  const finalUrl = page.url();
+  const finalUrl = response!.url();
   await context.close();
   await browser.close();
 
@@ -160,13 +162,25 @@ export async function scrapeViaBrowserApi(params: {
   });
 
   const page = await browser.newPage();
-  await page.goto(url, { timeout });
+  await page.setRequestInterception(true);
+  page.on("request", (request) => {
+    const url = request.url();
+    const isMedia = MEDIA_EXTENSIONS.some((ext) => url.endsWith(`.${ext}`));
+    const isAd = AD_SERVING_DOMAINS.some((domain) => url.includes(domain));
+    if (isMedia || isAd) {
+      request.abort();
+    } else {
+      request.continue();
+    }
+  });
+
+  const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout });
 
   // eslint-disable-next-line no-promise-executor-return
   await new Promise((resolve) => setTimeout(resolve, waitFor));
 
   const content = await page.content();
-  const finalUrl = page.url();
+  const finalUrl = response!.url();
 
   await page.close();
   await browser.close();
@@ -188,7 +202,7 @@ export async function scrapeUrl(params: {
 }) {
   const {
     url,
-    useBrowserApi = true,
+    useBrowserApi = false,
     convertToMd = true,
     waitFor = 2000,
     timeout = 180_000,

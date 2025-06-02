@@ -27,12 +27,14 @@ const redisOptions: ConnectionOptions = {
 
 const redis = new IORedis(redisOptions);
 
-export const scrapeQueue = new Queue<ScrapeJobData>("scrape-queue", {
+export const QUEUE_NAME = "scrape-queue";
+
+export const scrapeQueue = new Queue<ScrapeJobData>(QUEUE_NAME, {
   connection: redis,
 });
 
 const worker = new Worker<ScrapeJobData>(
-  "scrape-queue",
+  QUEUE_NAME,
   async (job) => {
     const { url, useBrowserApi, useProxy, convertToMd, waitFor, timeout } =
       job.data;
@@ -58,9 +60,10 @@ const worker = new Worker<ScrapeJobData>(
   },
   {
     connection: redis,
+    concurrency: 10,
     limiter: {
-      max: 5,
-      duration: 180_000,
+      max: 10,
+      duration: 90_000,
     },
   },
 );
