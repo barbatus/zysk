@@ -23,6 +23,7 @@ export const stockNewsTable = mySchema.table(
     id: uuid("id").primaryKey(),
     symbol: varchar("symbol", { length: 40 }).notNull(),
     url: varchar("url", { length: 2048 }).notNull(),
+    originalUrl: varchar("original_url", { length: 2048 }),
     status: validatedStringEnum("status", StockNewsStatus).notNull(),
     tokenSize: integer("token_size").notNull().default(0),
     markdown: text("markdown"),

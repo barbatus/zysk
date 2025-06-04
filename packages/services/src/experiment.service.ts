@@ -60,6 +60,7 @@ export class ExperimentService implements AgentStateService<Experiment> {
         ...(typeof response === "object" && { responseJson: response }),
         ...(details && { details }),
         ...(version && { version }),
+        updatedAt: new Date(),
       })
       .where("id", "=", id)
       .execute();

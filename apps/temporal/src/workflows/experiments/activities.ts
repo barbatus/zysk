@@ -15,7 +15,6 @@ import {
   MarketSentimentPredictor,
   SentimentPredictor,
 } from "#/llm/agents/sentiment-predictor.agent";
-import { addDays } from "date-fns";
 import { MODEL_TO_MAX_TOKENS } from "#/llm/models/registry";
 
 export async function fetchNewsForPeriod(params: {
@@ -25,8 +24,10 @@ export async function fetchNewsForPeriod(params: {
   tokesLimit?: number;
   overlapLimit?: number;
 }) {
-  let { symbol, startDate, endDate, tokesLimit, overlapLimit = 10_000 } = params;
-  tokesLimit = tokesLimit ?? Math.min(150_000, MODEL_TO_MAX_TOKENS[SentimentPredictor.modelKey]);
+  const { symbol, startDate, endDate, overlapLimit = 10_000 } = params;
+  const tokesLimit =
+    params.tokesLimit ??
+    Math.min(150_000, MODEL_TO_MAX_TOKENS[SentimentPredictor.modelKey]);
 
   const tickerNewsService = resolve(TickerNewsService);
   const news = await tickerNewsService.getNewsBySymbol(
@@ -81,11 +82,11 @@ export async function fetchTickerTimeSeries(
 export async function fetchSentimentPredictionExperimentData(params: {
   symbol: string;
   startDate: Date;
+  endDate: Date;
   tokesLimit?: number;
   overlapLimit?: number;
 }) {
-  const { symbol, startDate, tokesLimit, overlapLimit } = params;
-  const endDate = addDays(startDate, 7);
+  const { symbol, startDate, endDate, tokesLimit, overlapLimit } = params;
   const newsBatchIds = await fetchNewsForPeriod({
     symbol,
     startDate,
@@ -93,23 +94,25 @@ export async function fetchSentimentPredictionExperimentData(params: {
     tokesLimit,
     overlapLimit,
   });
-  const timeSeries = await fetchTickerTimeSeries(symbol, subDays(startDate, 7), endDate);
+  const timeSeries = await fetchTickerTimeSeries(symbol, startDate, endDate);
   return { newsBatchIds, timeSeries };
 }
 
 export async function runTickerSentimentPredictionExperiment(params: {
   symbol: string;
   newsIds: string[];
-  period: Date;
+  currentDate: Date;
   timeSeries: { date: Date; closePrice: number }[];
 }) {
-  const { symbol, newsIds, period, timeSeries } = params;
+  const { symbol, newsIds, currentDate, timeSeries } = params;
   const tickerNewsService = resolve(TickerNewsService);
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
 
   const predictionService = resolve(PredictionService);
   const experimentJson =
-    await predictionService.getLastGeneralMarketPredictionForPeriod(period);
+    await predictionService.getLastGeneralMarketPredictionForPeriod(
+      currentDate,
+    );
 
   const agent = await SentimentPredictor.create({
     symbol,
@@ -118,6 +121,7 @@ export async function runTickerSentimentPredictionExperiment(params: {
       date: n.newsDate,
     })),
     timeSeries,
+    currentDate,
     marketPrediction: experimentJson,
     onHeartbeat: async () => {
       heartbeat("SentimentPredictor");
@@ -129,8 +133,9 @@ export async function runTickerSentimentPredictionExperiment(params: {
 
 export async function runMarketSentimentPredictionExperiment(params: {
   newsIds: string[];
+  currentDate: Date;
 }) {
-  const { newsIds } = params;
+  const { newsIds, currentDate } = params;
   const tickerNewsService = resolve(TickerNewsService);
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
 
@@ -139,6 +144,7 @@ export async function runMarketSentimentPredictionExperiment(params: {
       ...n,
       date: n.newsDate,
     })),
+    currentDate,
     onHeartbeat: async () => {
       heartbeat("MarketSentimentPredictor");
     },
@@ -149,13 +155,13 @@ export async function runMarketSentimentPredictionExperiment(params: {
 export async function makePredictions(params: {
   symbol: string;
   predictions: Prediction[];
-  period: Date;
+  currentDate: Date;
 }) {
-  const { symbol, predictions, period } = params;
+  const { symbol, predictions, currentDate } = params;
   const agent = await PredictorAgent.create({
     symbol,
     predictions,
-    period,
+    currentDate,
   });
   return await agent.run();
 }

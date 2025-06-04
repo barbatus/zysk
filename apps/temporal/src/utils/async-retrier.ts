@@ -13,7 +13,7 @@ export function retryIfException(predicate: (error: Error) => boolean) {
   return (error: Error) => predicate(error);
 }
 
-export class AsyncRetrying<T> {
+export class AsyncRetrier<T> {
   constructor(
     private callback: (attempt: number) => Promise<T>,
     private shouldRetry: (error: Error) => boolean,
@@ -23,13 +23,12 @@ export class AsyncRetrying<T> {
     },
   ) {}
 
-  async *[Symbol.asyncIterator]() {
+  async try() {
     let attempt = 0;
     const state: RetryCallState<T> = {
       attemptNumber: attempt,
       response: undefined,
     };
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       attempt++;
       state.attemptNumber = attempt;
@@ -43,16 +42,13 @@ export class AsyncRetrying<T> {
         const res = await this.callback(attempt);
         state.success = true;
         state.response = res;
-        yield state;
-
-        break;
+        return res;
       } catch (error) {
         if (!this.shouldRetry(error as Error)) {
           throw error;
         }
         state.success = false;
         state.lastError = error as Error;
-        yield state;
       }
     }
   }

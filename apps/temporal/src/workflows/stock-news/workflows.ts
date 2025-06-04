@@ -1,6 +1,6 @@
 import { executeChild, proxyActivities } from "@temporalio/workflow";
 import { StockNewsStatus } from "@zysk/db";
-import { chunk, mapKeys, omit, uniqBy } from "lodash";
+import { chunk, mapKeys, uniqBy } from "lodash";
 
 import type * as activities from "./activities";
 
@@ -22,7 +22,7 @@ export async function scrapeTickerNewsUrls(
     symbol: string;
     title: string;
   }) => {
-    return proxy.scrapeNews(item.url).catch(async () => {
+    const result = await proxy.scrapeNews(item.url).catch(async () => {
       return {
         ...item,
         originalUrl: item.url,
@@ -31,6 +31,11 @@ export async function scrapeTickerNewsUrls(
         tokenSize: 0,
       };
     });
+
+    return {
+      ...item,
+      ...result,
+    };
   };
 
   return Promise.allSettled(news.map(callScrapeSymbolNews)).then((result) =>
@@ -52,7 +57,7 @@ export async function scrapeTickerNewsBatchAndSave(
   const uniqueNews = uniqBy(
     scrapedNews.flat().map((n) => ({
       status: StockNewsStatus.Scraped,
-      ...omit(n, "originalUrl"),
+      ...n,
       symbol,
       newsDate: newsDateMap[n.originalUrl].newsDate,
     })),
@@ -89,10 +94,7 @@ export async function syncTickerNewsForPeriod(
   }
 }
 
-export async function syncMarketNewsForPeriod(
-  startDate: Date,
-  endDate?: Date,
-) {
+export async function syncMarketNewsForPeriod(startDate: Date, endDate?: Date) {
   await syncTickerNewsForPeriod("GENERAL", startDate, endDate);
 }
 
@@ -137,7 +139,7 @@ export async function syncGeneralNewsWeekly() {
 }
 
 export async function syncAllNewsDaily(symbols: string[]) {
-  // await executeChild(syncGeneralNewsDaily);
+  await executeChild(syncGeneralNewsDaily);
   await executeChild(syncTickerNewsDaily, {
     args: [symbols],
   });

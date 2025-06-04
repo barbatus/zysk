@@ -24,13 +24,13 @@ export class PredictorAgent extends ExperimentAgent<
 > {
   private readonly predictions: Prediction[];
   private readonly symbol: string;
-  private readonly period: Date;
+  private readonly currentDate: Date;
 
   constructor(params: {
     symbol: string;
     state: Experiment;
     predictions: Prediction[];
-    period: Date;
+    currentDate: Date;
   }) {
     super(
       params.state,
@@ -39,7 +39,7 @@ export class PredictorAgent extends ExperimentAgent<
     );
     this.predictions = params.predictions;
     this.symbol = params.symbol;
-    this.period = params.period;
+    this.currentDate = params.currentDate;
   }
 
   override async mapPromptValues(): Promise<Record<string, string>> {
@@ -68,7 +68,7 @@ export class PredictorAgent extends ExperimentAgent<
   static override async create(params: {
     symbol: string;
     predictions: Prediction[];
-    period: Date;
+    currentDate: Date;
   }) {
     const state = await experimentService.create();
     return new PredictorAgent({
@@ -89,7 +89,7 @@ export class PredictorAgent extends ExperimentAgent<
     await predictionService.saveSymbolPrediction(this.symbol, {
       ...finalPrediction,
       experimentId: this.state.id,
-      period: this.period,
+      period: this.currentDate,
     });
     return finalPrediction;
   }
@@ -196,7 +196,7 @@ export class PredictorAgent extends ExperimentAgent<
       confidence,
       responseJson: predictionResponse,
       prediction: sentiment,
-      period: this.period,
+      period: this.currentDate,
     };
   }
 }

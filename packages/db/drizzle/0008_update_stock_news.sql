@@ -1,0 +1,1 @@
+ALTER TABLE "app_data"."stock_news" ADD COLUMN "original_url" varchar(2048);

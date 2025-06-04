@@ -34,9 +34,14 @@ export class PredictionParser extends JsonOutputParser<Prediction> {
     try {
       return PredictionSchema.parse(await super.parse(response));
     } catch (error) {
-      const issue = (error as ZodError).issues?.[0];
+      const issue =
+        (error as ZodError).issues.length > 0
+          ? (error as ZodError).issues[0]
+          : null;
       throw new ParserError(
-        issue ? `${issue.code}: ${String(issue.path)}: ${issue.message}` : (error as Error).message,
+        issue
+          ? `${issue.code}: ${String(issue.path)}: ${issue.message}`
+          : (error as Error).message,
       );
     }
   }

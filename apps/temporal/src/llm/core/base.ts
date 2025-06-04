@@ -6,11 +6,11 @@ import { getConfig, getLogger } from "@zysk/services";
 import dedent from "dedent";
 
 import {
-  AsyncRetrying,
+  AsyncRetrier,
   type RetryCallState,
   retryIfException,
   stopAfterAttempt,
-} from "#/utils/async-retrying";
+} from "#/utils/async-retrier";
 import { PromptTrimmer } from "#/utils/trimmer";
 
 import {
@@ -78,12 +78,11 @@ export abstract class BaseLLMRunner implements AbstractRunner {
 
       const result = await Promise.race<AIMessage | string>([
         this.llm.invoke(message, config),
-        new Promise((_, reject) =>
-          // eslint-disable-next-line no-promise-executor-return
+        new Promise((_, reject) => {
           setTimeout(() => {
             reject(new Error("Timeout"));
-          }, timeout * 1000),
-        ),
+          }, timeout * 1000);
+        }),
       ]);
 
       const executionTime = (Date.now() - startTime) / 1000;
@@ -334,15 +333,12 @@ export class SequentialModelContainer implements AbstractRunner {
       }
     };
     try {
-      for await (const state of new AsyncRetrying(
+      const retrier = new AsyncRetrier(
         callModel,
         retryIfException(shouldRetryException),
         { before: onBeforeRetry, stop: stopAfterAttempt(this.maxAttempts) },
-      )) {
-        if (state.success) {
-          return state.response!;
-        }
-      }
+      );
+      return await retrier.try();
     } catch (error) {
       logger.error(
         {
@@ -354,8 +350,6 @@ export class SequentialModelContainer implements AbstractRunner {
       );
       throw error;
     }
-
-    throw new Error("No response received");
   }
 
   private markRateLimited(

@@ -72,5 +72,8 @@ module.exports = {
       },
     ],
     "template-tag-spacing": ["error", "never"],
+
+    "no-constant-condition": ["error", { "checkLoops": "allExceptWhileTrue" }],
+    "@typescript-eslint/no-unnecessary-condition": ["error", { "allowConstantLoopConditions": "only-allowed-literals" }]
   },
 };

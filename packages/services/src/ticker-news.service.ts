@@ -4,12 +4,13 @@ import {
   type StockNewsInsert,
   StockNewsStatus,
 } from "@zysk/db";
+import axios, { AxiosError } from "axios";
 import { startOfDay } from "date-fns";
 import { inject, injectable } from "inversify";
 import { type Kysely, NotNull } from "kysely";
 import { keyBy } from "lodash";
 
-import { type AppConfig, appConfigSymbol } from "./config";
+import { AppConfig, appConfigSymbol } from "./config";
 import { dataDBSymbol } from "./db";
 import { FinnhubService } from "./finnhub.service";
 import {
@@ -21,19 +22,20 @@ import { Exact } from "./utils/types";
 
 @injectable()
 export class TickerNewsService {
-  private readonly app: FirecrawlApp;
+  private readonly firecrawlApp: FirecrawlApp;
   constructor(
     @inject(appConfigSymbol) private readonly appConfig: AppConfig,
     @inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>,
     @inject(loggerSymbol) private readonly logger: Logger,
     private readonly finnhubService: FinnhubService,
   ) {
-    this.app = new FirecrawlApp({
+    this.firecrawlApp = new FirecrawlApp({
+      apiUrl: "http://localhost:3002",
       apiKey: this.appConfig.firecrawlApiKey,
     });
   }
 
-  async scrapeUrlApi(
+  async scrapeViaFirecrawl(
     url: string,
     timeoutSeconds = 60,
   ): Promise<{
@@ -42,10 +44,11 @@ export class TickerNewsService {
     title?: string;
     description?: string;
   }> {
-    return this.app
+    return this.firecrawlApp
       .scrapeUrl(url, {
         formats: ["markdown"],
         timeout: timeoutSeconds * 1000,
+        waitFor: 2000,
       })
       .then((r) => {
         if (!r.success || !r.metadata) {
@@ -105,13 +108,64 @@ export class TickerNewsService {
       });
   }
 
+  async scrapeUrlApi(
+    url: string,
+    _timeoutSeconds?: number,
+  ): Promise<{
+    url: string;
+    markdown: string;
+    title?: string;
+    description?: string;
+  }> {
+    const job = await axios.post<{
+      jobId: string;
+    }>("http://localhost:3002/v1/scrape", {
+      url,
+      useProxy: true,
+    });
+
+    try {
+      const result = await this.pollUntilCondition<{
+        status: "completed" | "failed" | "pending";
+        returnValue?: {
+          url: string;
+          content: string;
+        };
+      }>({
+        url: `http://localhost:3002/v1/job/${job.data.jobId}`,
+        condition: (response) =>
+          response.data.status === "completed" ||
+          response.data.status === "failed",
+      });
+
+      if (result.status === "failed") {
+        throw new Error("Failed to scrape URL");
+      }
+
+      return {
+        url: result.returnValue!.url,
+        markdown: result.returnValue!.content,
+      };
+    } catch (error) {
+      if (
+        error instanceof AxiosError &&
+        (error.response?.status === 401 ||
+          error.response?.status === 403 ||
+          error.response?.status === 408)
+      ) {
+        throw new RequestTimeoutError(`Error scraping URL: ${url}`);
+      }
+      throw error;
+    }
+  }
+
   async scrapeUrl(params: { url: string; timeoutSeconds?: number }): Promise<{
     url: string;
     markdown: string;
     title?: string;
     description?: string;
   }> {
-    const { url, timeoutSeconds = 60 } = params;
+    const { url, timeoutSeconds } = params;
     const article = await this.getArticle(url);
     if (article) {
       return {
@@ -258,8 +312,36 @@ export class TickerNewsService {
     return this.db
       .selectFrom("app_data.stock_news")
       .selectAll()
-      .where("url", "=", url)
+      .where((eb) => eb.or([eb("url", "=", url), eb("originalUrl", "=", url)]))
       .where("status", "=", StockNewsStatus.Scraped)
       .executeTakeFirst();
+  }
+
+  private async pollUntilCondition<T>({
+    url,
+    condition,
+    interval = 10000,
+    timeout = 600_000,
+  }: {
+    url: string;
+    condition: (response: { data: T }) => boolean;
+    interval?: number;
+    timeout?: number;
+  }): Promise<T> {
+    const startTime = Date.now();
+
+    while (true) {
+      const response = await axios.get<T>(url);
+
+      if (condition(response)) {
+        return response.data;
+      }
+
+      if (Date.now() - startTime > timeout) {
+        throw new Error(`Polling timed out after ${timeout}ms`);
+      }
+
+      await new Promise((resolve) => { setTimeout(resolve, interval) });
+    }
   }
 }

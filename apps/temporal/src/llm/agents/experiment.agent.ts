@@ -1,14 +1,14 @@
 import { PromptTemplate } from "@langchain/core/prompts";
-import { type Experiment, type ExperimentTaskStatus } from "@zysk/db";
+import { type Experiment, ExperimentTaskStatus } from "@zysk/db";
 import { ExperimentService, getLogger, resolve } from "@zysk/services";
 
 import { type AbstractContainer } from "#/llm/core/base";
 import { type AgentExecutionResult } from "#/llm/core/schemas";
 import {
-  AsyncRetrying,
+  AsyncRetrier,
   retryIfException,
   stopAfterAttempt,
-} from "#/utils/async-retrying";
+} from "#/utils/async-retrier";
 
 import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
@@ -75,7 +75,7 @@ export abstract class StatefulAgent<
     const promptValues = await this.mapPromptValues();
 
     try {
-      for await (const state of new AsyncRetrying<TResult>(
+      const retrier = new AsyncRetrier<TResult>(
         async () => {
           const response = await this.arun(promptValues);
           const result = await this.setSuccess(response);
@@ -99,11 +99,8 @@ export abstract class StatefulAgent<
             }
           },
         },
-      )) {
-        if (state.success) {
-          return state.response!;
-        }
-      }
+      );
+      return retrier.try();
     } catch (error) {
       logger.error(
         {
@@ -112,9 +109,9 @@ export abstract class StatefulAgent<
         },
         `Agent failed`,
       );
+      await this.setStatus(ExperimentTaskStatus.Failed);
       throw error;
     }
-    throw new Error("Failed to run agent");
   }
 
   protected abstract mapPromptValues(): Promise<Record<string, string>>;

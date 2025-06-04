@@ -203,8 +203,7 @@ export async function scrapeUrl(params: {
     throw error;
   }
 
-  // eslint-disable-next-line no-promise-executor-return
-  await new Promise((resolve) => setTimeout(resolve, waitFor));
+  await new Promise((resolve) => { setTimeout(resolve, waitFor) });
 
   const content = await page.content();
   if (response!.status() !== 200) {

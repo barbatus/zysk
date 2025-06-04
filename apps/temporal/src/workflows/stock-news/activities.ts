@@ -53,7 +53,11 @@ export async function getNewsToFetchWeekly(symbols: string[]) {
   return sinceDates;
 }
 
-export async function fetchTickerNews(symbol: string, startDate: Date, endDate?: Date) {
+export async function fetchTickerNews(
+  symbol: string,
+  startDate: Date,
+  endDate?: Date,
+) {
   const tickerNewsService = resolve(TickerNewsService);
   if (symbol === "GENERAL") {
     return tickerNewsService.getGeneralNews(startDate, endDate);

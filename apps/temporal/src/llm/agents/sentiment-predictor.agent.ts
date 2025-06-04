@@ -13,12 +13,13 @@ import {
 } from "./prompts/sentiment-prediction.prompt";
 
 const experimentService = resolve(ExperimentService);
-interface NewsBasedSymbolPredictorParams {
+interface NewsBasedSymbolPredictorParams<TResult = Prediction> {
   state: Experiment;
   symbol: string;
-  prompt: AgentPrompt<Prediction>;
+  prompt: AgentPrompt<TResult>;
   model: AbstractContainer;
   news: { markdown: string; url: string; date: Date }[];
+  currentDate: Date;
   onHeartbeat?: () => Promise<void>;
 }
 
@@ -32,11 +33,13 @@ export class NewsBasedSentimentPredictorAgent extends ExperimentAgent<
     date: Date;
     url: string;
   }[];
+  protected readonly currentDate: Date;
 
   constructor(params: NewsBasedSymbolPredictorParams) {
     super(params.state, params.prompt, params.model, params.onHeartbeat);
     this.symbol = params.symbol;
     this.news = params.news;
+    this.currentDate = params.currentDate;
   }
 
   override async mapPromptValues(): Promise<Record<string, string>> {
@@ -48,24 +51,21 @@ export class NewsBasedSentimentPredictorAgent extends ExperimentAgent<
             `# ARTICLE TITLE: ${n.date.toISOString()}, DATE: ${n.date.toISOString()}, URL: ${n.url}\n${n.markdown}`,
         )
         .join("\n---\n"),
+      currentDate: format(this.currentDate, "yyyy-MM-dd"),
     };
   }
 
-  static override readonly modelKey = ModelKeyEnum.DeepSeekReasoner;
+  static override readonly modelKey = ModelKeyEnum.GptO3Mini;
 
-  static override async create<TResult = Prediction>(params: {
-    symbol: string;
-    prompt: AgentPrompt<TResult>;
-    model?: AbstractContainer;
-    news: { markdown: string; url: string; date: Date }[];
-    onHeartbeat?: () => Promise<void>;
-  }) {
+  static override async create<TResult = Prediction>(
+    params: Omit<NewsBasedSymbolPredictorParams<TResult>, "state">,
+  ) {
     const state = await experimentService.create();
     return new NewsBasedSentimentPredictorAgent({
       state,
       ...params,
       prompt: params.prompt as AgentPrompt<Prediction>,
-      model: params.model ?? modelsWithFallback[ModelKeyEnum.DeepSeekReasoner]!,
+      model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
       onHeartbeat: params.onHeartbeat,
     });
   }
@@ -90,6 +90,7 @@ export class NewsBasedTickerSentimentPredictor extends NewsBasedSentimentPredict
     return {
       ...(await super.mapPromptValues()),
       marketPrediction: JSON.stringify(this.marketPrediction),
+      currentDate: format(this.currentDate, "yyyy-MM-dd"),
       quotes: this.timeSeries
         .map((t) => `${format(t.date, "yyyy-MM-dd")}: ${t.closePrice}`)
         .join("\n"),
@@ -101,13 +102,14 @@ export class SentimentPredictor extends ExperimentAgent<
   Prediction,
   Prediction
 > {
-  static override readonly modelKey = ModelKeyEnum.DeepSeekReasoner;
+  static override readonly modelKey = ModelKeyEnum.GptO3Mini;
 
   static override async create(params: {
     symbol: string;
     news: { markdown: string; url: string; date: Date }[];
     marketPrediction: Experiment["responseJson"];
     timeSeries: { date: Date; closePrice: number }[];
+    currentDate: Date;
     onHeartbeat?: () => Promise<void>;
   }) {
     const state = await experimentService.create();
@@ -115,7 +117,7 @@ export class SentimentPredictor extends ExperimentAgent<
       state,
       ...params,
       prompt: TickerSentimentPredictionPrompt,
-      model: modelsWithFallback[ModelKeyEnum.DeepSeekReasoner]!,
+      model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
     });
   }
 }
@@ -127,6 +129,7 @@ export class MarketSentimentPredictor extends ExperimentAgent<
   static override readonly modelKey = ModelKeyEnum.GptO3Mini;
 
   static override async create(params: {
+    currentDate: Date;
     news: { markdown: string; url: string; date: Date }[];
     onHeartbeat?: () => Promise<void>;
   }) {

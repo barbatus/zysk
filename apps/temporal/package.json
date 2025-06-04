@@ -14,11 +14,8 @@
     "dev:build": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
     "dev": "npm-run-all --parallel dev:build start:worker",
     "start:worker": "nodemon dist/worker",
-    "generate": "pnpm dlx dotenv-cli -e .env -- drizzle-kit generate --name",
-    "migrate": "pnpm dlx dotenv-cli -e .env -- drizzle-kit migrate",
     "lint": "eslint . --ext .ts --color",
-    "lint:fix": "pnpm lint --fix",
-    "test": "pnpm dlx dotenv-cli -e .env -- node dist/test"
+    "lint:fix": "pnpm lint --fix"
   },
   "dependencies": {
     "@langchain/community": "^0.3.44",
@@ -53,10 +50,8 @@
     "@zysk/typescript-config": "workspace:*",
     "concurrently": "^9.1.2",
     "dotenv-cli": "^7.4.2",
-    "drizzle-kit": "^0.24.2",
     "nodemon": "^3.1.7",
     "npm-run-all": "^4.1.5",
-    "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.16",
     "typescript": "5.6.2"
   }
