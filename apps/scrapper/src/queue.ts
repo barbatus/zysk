@@ -1,7 +1,7 @@
 import { type ConnectionOptions, Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 
-import { scrapeUrl } from "./browser";
+import { PageLoadError, scrapeUrl } from "./browser";
 import { getAppConfigStatic } from "./config";
 
 interface ScrapeJobData {
@@ -25,7 +25,15 @@ const redisOptions: ConnectionOptions = {
   tls: {},
 };
 
-const redis = new IORedis(redisOptions);
+const redis = new IORedis(
+  config.env === "development"
+    ? {
+        host: "localhost",
+        port: 6379,
+        maxRetriesPerRequest: null,
+      }
+    : redisOptions,
+);
 
 export const QUEUE_NAME = "scrape-queue";
 
@@ -54,17 +62,13 @@ const worker = new Worker<ScrapeJobData>(
       return {
         error:
           error instanceof Error ? error.message : "Unknown error occurred",
-        errorStatus: 500,
+        errorStatus: error instanceof PageLoadError ? error.status : 500,
       };
     }
   },
   {
     connection: redis,
-    concurrency: 10,
-    limiter: {
-      max: 10,
-      duration: 90_000,
-    },
+    concurrency: 30,
   },
 );
 

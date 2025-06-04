@@ -6,10 +6,12 @@ export const AppConfigEnvVariablesSchema = z.object({
   CAPTCHA_TOKEN: z.string().optional(),
   SCRAPPER_BROWSER_WS: z.string().optional(),
   PROXY_SERVER: z.string().optional(),
+  PROXY_PORT: z.string().optional(),
   PROXY_USERNAME: z.string().optional(),
   PROXY_PASSWORD: z.string().optional(),
   UPSTASH_REDIS_URL: z.string(),
   UPSTASH_REDIS_PASSWORD: z.string(),
+  ENV: z.string(),
 });
 
 export type AppConfigEnvVariables = z.infer<typeof AppConfigEnvVariablesSchema>;
@@ -18,10 +20,12 @@ export interface AppConfig {
   captchaToken?: string;
   scrapperBrowserWs?: string;
   proxyServer?: string;
+  proxyPort?: string;
   proxyUsername?: string;
   proxyPassword?: string;
   upstashRedisUrl: string;
   upstashRedisPassword: string;
+  env: string;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -31,10 +35,12 @@ export function validate(config: Record<string, unknown>) {
     captchaToken: appConfigValidated.CAPTCHA_TOKEN,
     scrapperBrowserWs: appConfigValidated.SCRAPPER_BROWSER_WS,
     proxyServer: appConfigValidated.PROXY_SERVER,
+    proxyPort: appConfigValidated.PROXY_PORT,
     proxyUsername: appConfigValidated.PROXY_USERNAME,
     proxyPassword: appConfigValidated.PROXY_PASSWORD,
     upstashRedisUrl: appConfigValidated.UPSTASH_REDIS_URL,
     upstashRedisPassword: appConfigValidated.UPSTASH_REDIS_PASSWORD,
+    env: appConfigValidated.ENV,
   };
 
   return { config: appConfig };

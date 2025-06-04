@@ -1,14 +1,12 @@
 import {
-  type BrowserContextOptions,
-  type Request as PlaywrightRequest,
-  type Route,
-} from "playwright";
-import { chromium } from "playwright-extra";
-import { connect } from "puppeteer-core";
+  type Browser,
+  type HTTPResponse,
+  type PuppeteerError,
+} from "puppeteer";
+import puppeteer from "puppeteer-extra";
 import RecaptchaPlugin from "puppeteer-extra-plugin-recaptcha";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import TurndownService from "turndown";
-import UserAgent from "user-agents";
 
 import { getAppConfigStatic } from "./config";
 
@@ -28,8 +26,32 @@ const AD_SERVING_DOMAINS = [
   "amazon-adsystem.com",
 ];
 
-const MEDIA_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "svg", "mp3", "mp4", "avi", "flac", "ogg", "wav", "webm"];
+const MEDIA_EXTENSIONS = [
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "svg",
+  "mp3",
+  "mp4",
+  "avi",
+  "flac",
+  "ogg",
+  "wav",
+  "webm",
+  "css",
+];
 
+export class PageLoadError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+const config = getAppConfigStatic();
 const turndown = new TurndownService();
 turndown.addRule("removeLinks", {
   filter: ["a"],
@@ -45,173 +67,156 @@ turndown.addRule("cleanup", {
   },
 });
 
-export async function scrapeUrlCustom(params: {
+let chrome: Browser | undefined;
+async function newBrowserContext(params: {
+  useBrowserApi: boolean;
+  useProxy?: boolean;
+}) {
+  const createContext = (browser: Browser) => {
+    return browser.createBrowserContext({
+      proxyServer:
+        useProxy && !useBrowserApi
+          ? `${config.proxyServer}:${config.proxyPort}`
+          : undefined,
+    });
+  };
+
+  const { useProxy = true, useBrowserApi = false } = params;
+  if (chrome) {
+    return createContext(chrome);
+  }
+
+  puppeteer.use(StealthPlugin());
+  puppeteer.use(
+    RecaptchaPlugin({
+      provider: {
+        id: "2captcha",
+        token: config.captchaToken,
+      },
+      visualFeedback: true,
+    }),
+  );
+  chrome = useBrowserApi
+    ? await puppeteer.connect({
+        browserWSEndpoint: config.scrapperBrowserWs,
+      })
+    : await puppeteer.launch({
+        headless: true,
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-accelerated-2d-canvas",
+          "--no-first-run",
+          "--no-zygote",
+          "--disable-gpu",
+          "--disable-software-rasterizer",
+          "--mute-audio",
+        ],
+      });
+  return createContext(chrome);
+}
+
+export async function newBrowserPage(params: {
+  useBrowserApi: boolean;
+  useProxy?: boolean;
+}) {
+  const { useProxy = true, useBrowserApi } = params;
+
+  const context = await newBrowserContext({
+    useBrowserApi,
+    useProxy,
+  });
+
+  const page = await context.newPage();
+
+  await page.setRequestInterception(true);
+  page.on("request", (request) => {
+    const requestUrl = request.url();
+    const isMedia = MEDIA_EXTENSIONS.some((ext) =>
+      requestUrl.endsWith(`.${ext}`),
+    );
+    const isAd = AD_SERVING_DOMAINS.some((domain) =>
+      requestUrl.includes(domain),
+    );
+    if (isMedia || isAd) {
+      void request.abort();
+    } else {
+      void request.continue();
+    }
+  });
+
+  if (!useBrowserApi) {
+    await page.authenticate({
+      username: config.proxyUsername!,
+      password: config.proxyPassword!,
+    });
+  }
+
+  const oldGoTo = page.goto.bind(page);
+  page.goto = async (url, options) => {
+    const result = await oldGoTo(url, options);
+    if (!useBrowserApi) {
+      await page.solveRecaptchas();
+    }
+    return result;
+  };
+
+  return { page, context };
+}
+
+export async function scrapeUrl(params: {
   url: string;
   waitFor?: number;
   timeout?: number;
   convertToMd?: boolean;
   useProxy?: boolean;
+  useBrowserApi?: boolean;
 }) {
-  const config = getAppConfigStatic();
-
   const {
     url,
-    waitFor,
-    timeout,
-    convertToMd = false,
-    useProxy = false,
+    waitFor = 2000,
+    timeout = 180_000,
+    convertToMd = true,
+    useProxy = true,
+    useBrowserApi = false,
   } = params;
-  chromium.use(StealthPlugin());
 
-  if (config.captchaToken) {
-    chromium.use(
-      RecaptchaPlugin({
-        provider: {
-          id: "2captcha",
-          token: config.captchaToken,
-        },
-        visualFeedback: true,
-      }),
-    );
-  }
-
-  const browser = await chromium.launch({
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--no-first-run",
-      "--no-zygote",
-      "--single-process",
-      "--disable-gpu",
-    ],
+  const { page, context } = await newBrowserPage({
+    useBrowserApi,
+    useProxy,
   });
 
-  const userAgent = new UserAgent().toString();
-  const viewport = { width: 1280, height: 800 };
-
-  const contextOptions: BrowserContextOptions = {
-    userAgent,
-    viewport,
-  };
-
-  if (useProxy && config.proxyServer) {
-    contextOptions.proxy = {
-      server: config.proxyServer,
-      username: config.proxyUsername,
-      password: config.proxyPassword,
-    };
-  }
-
-  const context = await browser.newContext(contextOptions);
-
-  await context.route(
-    "**/*.{png,jpg,jpeg,gif,svg,mp3,mp4,avi,flac,ogg,wav,webm}",
-    async (route: Route, _request: PlaywrightRequest) => {
-      await route.abort();
-    },
-  );
-
-  // Intercept all requests to avoid loading ads
-  await context.route("**/*", (route: Route, request: PlaywrightRequest) => {
-    const requestUrl = new URL(request.url());
-    const hostname = requestUrl.hostname;
-
-    if (AD_SERVING_DOMAINS.some((domain) => hostname.includes(domain))) {
-      return route.abort();
+  let response: HTTPResponse | null;
+  try {
+    response = await page.goto(url, {
+      waitUntil: "domcontentloaded",
+      timeout,
+    });
+  } catch (error) {
+    if (
+      (error as Error).message.includes("ERR_TIMED_OUT") ||
+      (error as PuppeteerError).name === "TimeoutError"
+    ) {
+      throw new PageLoadError(408, (error as Error).message);
     }
-    return route.continue();
-  });
-
-  const page = await context.newPage();
-  const response = await page.goto(url, { waitUntil: "commit", timeout });
-
-  const recaptchas = await page.findRecaptchas();
-  if (config.captchaToken && recaptchas.captchas.length > 0) {
-    await page.solveRecaptchas();
+    throw error;
   }
-
-  if (waitFor) {
-    await page.waitForTimeout(waitFor);
-  }
-
-  const content = await page.content();
-  const finalUrl = response!.url();
-  await context.close();
-  await browser.close();
-
-  if (convertToMd) {
-    return { content: turndown.turndown(content), url: finalUrl };
-  }
-
-  return { content, url: finalUrl };
-}
-
-export async function scrapeViaBrowserApi(params: {
-  url: string;
-  convertToMd?: boolean;
-  waitFor?: number;
-  timeout?: number;
-}) {
-  const config = getAppConfigStatic();
-  const { url, convertToMd = true, waitFor, timeout } = params;
-  const browser = await connect({
-    browserWSEndpoint: config.scrapperBrowserWs,
-  });
-
-  const page = await browser.newPage();
-  await page.setRequestInterception(true);
-  page.on("request", (request) => {
-    const url = request.url();
-    const isMedia = MEDIA_EXTENSIONS.some((ext) => url.endsWith(`.${ext}`));
-    const isAd = AD_SERVING_DOMAINS.some((domain) => url.includes(domain));
-    if (isMedia || isAd) {
-      request.abort();
-    } else {
-      request.continue();
-    }
-  });
-
-  const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout });
 
   // eslint-disable-next-line no-promise-executor-return
   await new Promise((resolve) => setTimeout(resolve, waitFor));
 
   const content = await page.content();
-  const finalUrl = response!.url();
+  if (response!.status() !== 200) {
+    throw new PageLoadError(response!.status(), content);
+  }
 
-  await page.close();
-  await browser.close();
+  const finalUrl = response!.url();
+  await context.close();
 
   if (convertToMd) {
     return { content: turndown.turndown(content), url: finalUrl };
   }
 
   return { content, url: finalUrl };
-}
-
-export async function scrapeUrl(params: {
-  url: string;
-  useBrowserApi?: boolean;
-  useProxy?: boolean;
-  convertToMd?: boolean;
-  waitFor?: number;
-  timeout?: number;
-}) {
-  const {
-    url,
-    useBrowserApi = false,
-    convertToMd = true,
-    waitFor = 2000,
-    timeout = 180_000,
-    useProxy,
-  } = params;
-
-  if (useBrowserApi) {
-    return scrapeViaBrowserApi({ url, convertToMd, waitFor, timeout });
-  }
-
-  return scrapeUrlCustom({ url, convertToMd, waitFor, timeout, useProxy });
 }

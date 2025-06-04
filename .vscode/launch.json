@@ -18,6 +18,12 @@
         "type": "node-terminal",
         "request": "launch",
         "command": "pnpm run dev:web"
+      },
+      {
+        "name": "Scrapper",
+        "type": "node-terminal",
+        "request": "launch",
+        "command": "pnpm run dev:scrapper"
       }
   ],
   "compounds": [

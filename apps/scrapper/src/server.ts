@@ -1,12 +1,9 @@
-import {
-  type FastifyReply,
-  type FastifyRequest,
-} from "fastify";
-import { z } from "zod";
 import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/BullMQAdapter";
 import { FastifyAdapter } from "@bull-board/fastify";
-import fastify from "fastify";
+import { type FastifyReply, type FastifyRequest } from "fastify";
+import fastifyServer from "fastify";
+import { z } from "zod";
 
 import { scrapeQueue } from "./queue";
 
@@ -40,8 +37,7 @@ type JobStatusResponse = z.infer<typeof jobStatusResponseSchema>;
 
 // Start the server
 const start = async () => {
-
-  const app = fastify({
+  const app = fastifyServer({
     logger: true,
   });
 
@@ -52,7 +48,6 @@ const start = async () => {
       reply: FastifyReply,
     ) => {
       try {
-
         const data = scrapeRequestSchema.parse(request.body);
         const job = await scrapeQueue.add("scrape", data);
 
@@ -132,7 +127,6 @@ const start = async () => {
     },
   );
 
-
   try {
     const serverAdapter = new FastifyAdapter();
     createBullBoard({
@@ -141,7 +135,9 @@ const start = async () => {
     });
 
     serverAdapter.setBasePath("/");
-    app.register(serverAdapter.registerPlugin(), { basePath: "/admin/queues" });
+    await app.register(serverAdapter.registerPlugin(), {
+      basePath: "/admin/queues",
+    });
 
     await app.listen({ port: 3002, host: "0.0.0.0" });
   } catch (err) {
