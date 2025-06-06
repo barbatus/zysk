@@ -1,4 +1,5 @@
 import { uniq } from "lodash";
+
 import { ALL_VIEWS } from "./metrics";
 
 export function resolveViews(metricNames: [string, ...string[]]) {

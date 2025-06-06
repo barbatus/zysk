@@ -4,21 +4,25 @@ import {
   type PredictionInsert,
   SentimentEnum,
 } from "@zysk/db";
-import { ExperimentService, PredictionService, resolve } from "@zysk/services";
+import {
+  ExperimentService,
+  ModelKeyEnum,
+  PredictionService,
+  resolve,
+} from "@zysk/services";
 import { omit } from "lodash";
 
 import { type AgentExecutionResult } from "#/llm/core/schemas";
 
-import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
-import { ExperimentAgent } from "./experiment.agent";
+import { ExperimentRunner } from "./experimenter";
 import { type Prediction } from "./prompts/prediction-parser";
 import { PredictionsMergerPrompt } from "./prompts/predictions-merger.prompt";
 
 const experimentService = resolve(ExperimentService);
 const predictionService = resolve(PredictionService);
 
-export class PredictorAgent extends ExperimentAgent<
+export class SentimentPredictor extends ExperimentRunner<
   Prediction,
   PredictionInsert
 > {
@@ -71,7 +75,7 @@ export class PredictorAgent extends ExperimentAgent<
     currentDate: Date;
   }) {
     const state = await experimentService.create();
-    return new PredictorAgent({
+    return new SentimentPredictor({
       state,
       ...params,
     });

@@ -16,19 +16,19 @@ export async function syncTickerQuotesDaily(symbols: string[]) {
 
   for (const chunk of makeChunks(startDates, 50)) {
     await Promise.all(
-      chunk.map((s) =>
-        proxy.fetchAndSaveTickerQuotes(s.symbol, s.startDate),
-      ),
+      chunk.map((s) => proxy.fetchAndSaveTickerQuotes(s.symbol, s.startDate)),
     );
   }
 }
 
-export async function syncTickerQuotesForPeriod(symbols: string[], startDate: Date, endDate: Date) {
+export async function syncTickerQuotesForPeriod(
+  symbols: string[],
+  startDate: Date,
+  endDate: Date,
+) {
   for (const chunk of makeChunks(symbols, 50)) {
     await Promise.all(
-      chunk.map((s) =>
-        proxy.fetchAndSaveTickerQuotes(s, startDate, endDate),
-      ),
+      chunk.map((s) => proxy.fetchAndSaveTickerQuotes(s, startDate, endDate)),
     );
   }
 }

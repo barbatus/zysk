@@ -2,7 +2,13 @@ import { type BaseChatModel } from "@langchain/core/language_models/chat_models"
 import { type AIMessage } from "@langchain/core/messages";
 import { type RunnableConfig } from "@langchain/core/runnables";
 import { type Ratelimit } from "@upstash/ratelimit";
-import { getConfig, getLogger } from "@zysk/services";
+import {
+  getConfig,
+  getLogger,
+  type ModelKeyEnum,
+  type ModelOwnerEnum,
+  type ModelProviderEnum,
+} from "@zysk/services";
 import dedent from "dedent";
 
 import {
@@ -13,11 +19,6 @@ import {
 } from "#/utils/async-retrier";
 import { PromptTrimmer } from "#/utils/trimmer";
 
-import {
-  type ModelKeyEnum,
-  type ModelProviderEnum,
-  type ModelVendorEnum,
-} from "./enums";
 import {
   FatalTimeoutError,
   RateLimitExceededError,
@@ -35,12 +36,12 @@ export class ModelIdentity {
   constructor(
     public id: string,
     public name: string,
-    public vendor: ModelVendorEnum,
     public provider: ModelProviderEnum,
+    public owner: ModelOwnerEnum,
   ) {}
 
   toString(): string {
-    return `ModelIdentity(name=${this.name}, vendor=${this.vendor}, provider=${this.provider})`;
+    return `ModelIdentity(name=${this.name}, provider=${this.provider}, owner=${this.owner})`;
   }
 }
 
@@ -107,7 +108,7 @@ export abstract class BaseLLMRunner implements AbstractRunner {
   ): Promise<ExecutionResult>;
 
   toString(): string {
-    return `BaseLLMRunner(llm=${this.llm.constructor.name})`;
+    return `${this.constructor.name}(llm=${this.llm.getName()})`;
   }
 }
 
@@ -141,7 +142,13 @@ export class ModelContainer implements AbstractContainer {
   }
 
   toString(): string {
-    return `ModelContainer(name=${this.identity.name}, runner=${this.runner.toString()})`;
+    return dedent`
+    ModelContainer(
+      name=${this.identity.name},
+      provider=${this.identity.provider},
+      owner=${this.identity.owner},
+      runner=${this.runner.toString()}
+    )`;
   }
 
   async arun(
@@ -361,7 +368,7 @@ export class SequentialModelContainer implements AbstractRunner {
   }
 
   private async getAvailable(
-    _onRetry: () => Promise<void>,
+    onRetry: () => Promise<void>,
     attempt: number,
   ): Promise<ModelContainer> {
     logger.info(
@@ -382,26 +389,9 @@ export class SequentialModelContainer implements AbstractRunner {
             Math.floor(Math.random() * this.modelContainers.length)
           ],
         );
+        void onRetry();
       }, waitTime);
     });
-
-    // for (const waitTime of [this.rateLimitTtl, 0]) {
-    //   for (const container of this.modelContainers) {
-    //     logger.info(
-    //       `[SequentialModelContainer(${this.modelKey})] getting available runner=${container.runner.toString()}`,
-    //     );
-    //     return container;
-    //   }
-
-    //   await new Promise((resolve) => setTimeout(resolve, waitTime * 1000));
-    //   if (onRetry) {
-    //     await onRetry();
-    //   }
-    // }
-
-    // throw new FatalTimeoutError(
-    //   `[SequentialModelContainer(${this.modelKey})] not available model containers`,
-    // );
   }
 }
 

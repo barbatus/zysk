@@ -41,7 +41,7 @@ export class TickerService {
       .execute();
   }
 
-  async getAndSaveUSTickers() {
+  async getUSTickersFromApiAndSave() {
     const response = (await this.finnhubService.getUSTickers([])).filter(
       (r) => r.type === "Common Stock" || r.type === "ETP",
     );

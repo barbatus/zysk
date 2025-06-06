@@ -15,7 +15,8 @@
     "dev": "npm-run-all --parallel dev:build start:worker",
     "start:worker": "nodemon dist/worker",
     "lint": "eslint . --ext .ts --color",
-    "lint:fix": "pnpm lint --fix"
+    "lint:fix": "pnpm lint --fix",
+    "test": "tsx src/test.ts"
   },
   "dependencies": {
     "@langchain/community": "^0.3.44",
@@ -53,6 +54,7 @@
     "nodemon": "^3.1.7",
     "npm-run-all": "^4.1.5",
     "tsc-alias": "^1.8.16",
+    "tsx": "^4.19.4",
     "typescript": "5.6.2"
   }
 }

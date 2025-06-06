@@ -1,4 +1,11 @@
-import { date, jsonb, numeric, pgTable, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+  date,
+  jsonb,
+  numeric,
+  pgTable,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 import { auditColumns } from "../utils/audit";
 import { validatedStringEnum } from "./columns";

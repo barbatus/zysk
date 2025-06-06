@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { ALL_DIMENSIONS, ALL_METRICS } from "./constants";
 
 const MetricSchema = z.object({

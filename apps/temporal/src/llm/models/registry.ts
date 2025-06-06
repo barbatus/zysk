@@ -1,16 +1,25 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { getConfig } from "@zysk/services";
+import {
+  DEEPSEEK_MODEL_KEYS,
+  getConfig,
+  META_MODEL_KEYS,
+  type MetaModelKey,
+  ModelKeyEnum,
+  ModelProviderEnum,
+  OPENAI_MODEL_KEYS,
+  type OpenAIModelKey,
+} from "@zysk/services";
+import { isObject } from "lodash";
 
 import {
+  type ModelContainer,
   SequentialModelContainer,
   SequentialModelContainerWithFallback,
 } from "../core/base";
-import { ModelKeyEnum, ModelProviderEnum } from "../core/enums";
-import { getAzureLLMContainers } from "./azure-openai-model";
-import { getOpenAIModelContainers } from "./openai-model";
-import { getDeepSeekModelContainers } from "./deepseek-model";
-import { ModelContainer } from "../core/base";
+import { getDeepSeekModelContainers } from "./deepseek-models";
+import { getMetaContainers } from "./meta-models";
+import { getOpenAIModelContainers } from "./openai-models";
 
 export class ModelNotFoundError extends Error {
   constructor(modelKey: ModelKeyEnum) {
@@ -25,29 +34,31 @@ export const MODEL_TO_MAX_TOKENS = {
   [ModelKeyEnum.GptO1Mini]: 128_000,
   [ModelKeyEnum.GptO1]: 200_000,
   [ModelKeyEnum.GptO3Mini]: 200_000,
-  [ModelKeyEnum.DeepSeekReasoner]: 65_000,
-};
+  [ModelKeyEnum.DeepSeekReasoner]: {
+    [ModelProviderEnum.DeepSeek]: 65_000,
+    [ModelProviderEnum.Nebius]: 160_000,
+  },
+  [ModelKeyEnum.Llama33]: 128_000,
+} as Record<ModelKeyEnum, number | Record<ModelProviderEnum, number>>;
 
-type OpenAIModelKey =
-  | ModelKeyEnum.Gpt4o
-  | ModelKeyEnum.Gpt4oMini
-  | ModelKeyEnum.GptO1Mini
-  | ModelKeyEnum.GptO1
-  | ModelKeyEnum.GptO3Mini;
-
-const openaiModelKeys = [
-  ModelKeyEnum.Gpt4o,
-  ModelKeyEnum.Gpt4oMini,
-  ModelKeyEnum.GptO1Mini,
-  ModelKeyEnum.GptO1,
-  ModelKeyEnum.GptO3Mini,
-];
+export function getMaxTokens(modelKey: ModelKeyEnum) {
+  const appConfig = getConfig();
+  const config = MODEL_TO_MAX_TOKENS[modelKey];
+  if (
+    isObject(config) &&
+    appConfig.modelProviders?.[modelKey] &&
+    config[appConfig.modelProviders[modelKey]]
+  ) {
+    return config[appConfig.modelProviders[modelKey]];
+  }
+  return config as number;
+}
 
 type DeepSeekModelKey = ModelKeyEnum.DeepSeekReasoner;
 
 function createSequentialModelContainer(
-  modelKey: OpenAIModelKey | DeepSeekModelKey,
-  openAIProvider = ModelProviderEnum.OpenAI,
+  modelKey: ModelKeyEnum,
+  providers?: Partial<Record<ModelKeyEnum, ModelProviderEnum>>,
 ) {
   const appConfig = getConfig();
   const ratelimit = appConfig.upstash
@@ -56,36 +67,46 @@ function createSequentialModelContainer(
           url: appConfig.upstash.redisRestUrl,
           token: appConfig.upstash.redisRestToken,
         }),
-        limiter: Ratelimit.fixedWindow(200_000, "60 s"),
+        limiter: Ratelimit.fixedWindow(200_000, "60s"),
       })
     : undefined;
 
   let containers: ModelContainer[] = [];
-  if (openaiModelKeys.includes(modelKey)) {
-    containers = openAIProvider === ModelProviderEnum.Azure
-      ? getAzureLLMContainers(modelKey)
-      : getOpenAIModelContainers(modelKey);
+  if (DEEPSEEK_MODEL_KEYS.includes(modelKey)) {
+    containers = getDeepSeekModelContainers(modelKey, providers?.[modelKey]);
   }
 
-  if (modelKey === ModelKeyEnum.DeepSeekReasoner) {
-    containers = getDeepSeekModelContainers(modelKey);
+  if (OPENAI_MODEL_KEYS.includes(modelKey)) {
+    containers = getOpenAIModelContainers(
+      modelKey as OpenAIModelKey,
+      ModelProviderEnum.OpenAI,
+    );
+  }
+
+  if (META_MODEL_KEYS.includes(modelKey)) {
+    containers = getMetaContainers(
+      modelKey as MetaModelKey,
+      ModelProviderEnum.Nebius,
+    );
   }
 
   return new SequentialModelContainer(
     modelKey,
     containers,
-    MODEL_TO_MAX_TOKENS[modelKey],
-    openAIProvider === ModelProviderEnum.OpenAI ? ratelimit : undefined,
+    getMaxTokens(modelKey),
+    providers?.[modelKey] === ModelProviderEnum.Azure ? ratelimit : undefined,
   );
 }
 
 const models = new Proxy(
-  {} as Record<OpenAIModelKey | DeepSeekModelKey, SequentialModelContainer | undefined>,
+  {} as Record<ModelKeyEnum, SequentialModelContainer | undefined>,
   {
     get: (target, prop: string) => {
+      const config = getConfig();
       const modelKey = prop as OpenAIModelKey | DeepSeekModelKey;
       const model =
-        target[modelKey] ?? createSequentialModelContainer(modelKey);
+        target[modelKey] ??
+        createSequentialModelContainer(modelKey, config.modelProviders);
       target[modelKey] = model;
       return model;
     },
@@ -127,6 +148,10 @@ export function createSequentialModelContainerWithFallback(
     case ModelKeyEnum.DeepSeekReasoner:
       return new SequentialModelContainerWithFallback([
         models[ModelKeyEnum.DeepSeekReasoner]!,
+      ]);
+    case ModelKeyEnum.Llama33:
+      return new SequentialModelContainerWithFallback([
+        models[ModelKeyEnum.Llama33]!,
       ]);
     default:
       throw new ModelNotFoundError(modelKey);

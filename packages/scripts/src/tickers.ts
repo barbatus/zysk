@@ -45,7 +45,7 @@ export const syncTickers = createScript({
     "Load and save overviews for supported tickers (US only and for stocks and ETFs currently)",
 })(async () => {
   const tickerService = resolve(TickerService);
-  await tickerService.getAndSaveUSTickers();
+  await tickerService.getUSTickersFromApiAndSave();
   return "OK";
 });
 
@@ -61,7 +61,12 @@ export const syncTickerTimeSeries = createScript<[]>({
   for await (const symbolsChunk of chunk(symbols, 20)) {
     await Promise.all(
       symbolsChunk.map((s) =>
-        tickerDataService.getAndSaveTickerTimeSeries(s, lastFiveYears, new Date(), "full"),
+        tickerDataService.getAndSaveTickerTimeSeries(
+          s,
+          lastFiveYears,
+          new Date(),
+          "full",
+        ),
       ),
     );
   }

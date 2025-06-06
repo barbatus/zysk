@@ -31,34 +31,33 @@ export type ExecuteAdminScriptSettings = z.infer<
   typeof ExecuteAdminScriptSettingsSchema
 >;
 
-export const adminContract =
-  c.router(
-    {
-      getAdminScripts: {
-        method: "GET",
-        path: "scripts",
-        responses: {
-          200: z.array(AdminScriptSchema),
-        },
-      },
-      executeAdminScript: {
-        method: "POST",
-        path: "scripts/:name",
-        pathParams: z.object({
-          name: z.string(),
-        }),
-        body: ExecuteAdminScriptSettingsSchema,
-        responses: {
-          200: z.object({
-            result: z.unknown().optional(),
-            error: z.unknown().optional(),
-          }),
-          500: z.object({
-            error: z.string(),
-          }),
-        },
+export const adminContract = c.router(
+  {
+    getAdminScripts: {
+      method: "GET",
+      path: "scripts",
+      responses: {
+        200: z.array(AdminScriptSchema),
       },
     },
+    executeAdminScript: {
+      method: "POST",
+      path: "scripts/:name",
+      pathParams: z.object({
+        name: z.string(),
+      }),
+      body: ExecuteAdminScriptSettingsSchema,
+      responses: {
+        200: z.object({
+          result: z.unknown().optional(),
+          error: z.unknown().optional(),
+        }),
+        500: z.object({
+          error: z.string(),
+        }),
+      },
+    },
+  },
   {
     pathPrefix: "/api/v1/admin/",
   },

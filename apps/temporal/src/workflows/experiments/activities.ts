@@ -9,66 +9,14 @@ import {
 } from "@zysk/services";
 import { startOfDay, subDays } from "date-fns";
 
-import { PredictorAgent } from "#/llm/agents/predictor.agent";
-import { type Prediction } from "#/llm/agents/prompts/prediction-parser";
 import {
   MarketSentimentPredictor,
-  SentimentPredictor,
-} from "#/llm/agents/sentiment-predictor.agent";
-import { MODEL_TO_MAX_TOKENS } from "#/llm/models/registry";
+  TickerSentimentPredictor,
+} from "#/llm/runners/news-based-sentiment-predictor";
+import { type Prediction } from "#/llm/runners/prompts/prediction-parser";
+import { SentimentPredictor } from "#/llm/runners/sentiment-predictor";
 
-export async function fetchNewsForPeriod(params: {
-  symbol: string;
-  startDate: Date;
-  endDate?: Date;
-  tokesLimit?: number;
-  overlapLimit?: number;
-}) {
-  const { symbol, startDate, endDate, overlapLimit = 10_000 } = params;
-  const tokesLimit =
-    params.tokesLimit ??
-    Math.min(150_000, MODEL_TO_MAX_TOKENS[SentimentPredictor.modelKey]);
-
-  const tickerNewsService = resolve(TickerNewsService);
-  const news = await tickerNewsService.getNewsBySymbol(
-    symbol,
-    startDate,
-    endDate,
-  );
-  let count = 0;
-  const newsBatches: (typeof news)[] = [];
-  const currentBatch: typeof news = [];
-
-  const addCurrentBatch = () => {
-    const prevBatch = newsBatches.length
-      ? newsBatches[newsBatches.length - 1]
-      : [];
-    const overlap: typeof news = [];
-    let _count = 0;
-    for (const _n of prevBatch) {
-      if (_count + _n.tokenSize > overlapLimit) {
-        break;
-      }
-      _count += _n.tokenSize;
-      overlap.push(_n);
-    }
-    newsBatches.push(overlap.concat(currentBatch));
-  };
-
-  for (const n of news) {
-    if (count + n.tokenSize > tokesLimit - overlapLimit) {
-      addCurrentBatch();
-      currentBatch.length = 0;
-      count = 0;
-    }
-    currentBatch.push(n);
-    count += n.tokenSize;
-  }
-  if (currentBatch.length > 0) {
-    addCurrentBatch();
-  }
-  return newsBatches.map((batch) => batch.map((n) => n.id));
-}
+import { fetchNewsForPeriod } from "../stock-news/activities";
 
 export async function fetchTickerTimeSeries(
   symbol: string,
@@ -114,12 +62,9 @@ export async function runTickerSentimentPredictionExperiment(params: {
       currentDate,
     );
 
-  const agent = await SentimentPredictor.create({
+  const agent = await TickerSentimentPredictor.create({
     symbol,
-    news: news.map((n) => ({
-      ...n,
-      date: n.newsDate,
-    })),
+    news,
     timeSeries,
     currentDate,
     marketPrediction: experimentJson,
@@ -140,10 +85,7 @@ export async function runMarketSentimentPredictionExperiment(params: {
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
 
   const agent = await MarketSentimentPredictor.create({
-    news: news.map((n) => ({
-      ...n,
-      date: n.newsDate,
-    })),
+    news,
     currentDate,
     onHeartbeat: async () => {
       heartbeat("MarketSentimentPredictor");
@@ -158,7 +100,7 @@ export async function makePredictions(params: {
   currentDate: Date;
 }) {
   const { symbol, predictions, currentDate } = params;
-  const agent = await PredictorAgent.create({
+  const agent = await SentimentPredictor.create({
     symbol,
     predictions,
     currentDate,

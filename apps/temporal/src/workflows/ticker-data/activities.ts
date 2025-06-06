@@ -1,12 +1,12 @@
 import { activityInfo } from "@temporalio/activity";
 import { ApplicationFailure } from "@temporalio/workflow";
 import {
+  getLogger,
   RateLimitExceededError,
   resolve,
   TickerDataService,
-  getLogger,
 } from "@zysk/services";
-import { startOfDay, endOfDay, subMonths } from "date-fns";
+import { endOfDay, format, startOfDay, subMonths } from "date-fns";
 import { isNil } from "lodash";
 
 const logger = getLogger();
@@ -19,7 +19,7 @@ export async function fetchAndSaveTickerQuotes(
   endDate?: Date,
 ) {
   try {
-    const data = await tickerDataService.getTickerTimeSeriesApi(
+    const data = await tickerDataService.getTickerTimeSeriesFromApi(
       symbol,
       startOfDay(startDate),
       endOfDay(endDate ?? new Date()),
@@ -27,7 +27,7 @@ export async function fetchAndSaveTickerQuotes(
     );
     if (!data.length) {
       logger.warn(
-        `[fetchAndSaveTickerQuotes] No data for ${symbol} from ${startDate} to ${endDate}`,
+        `[fetchAndSaveTickerQuotes] No data for ${symbol} from ${format(startDate, "yyyy-MM-dd")} to ${format(endDate ?? new Date(), "yyyy-MM-dd")}`,
       );
       return;
     }
@@ -55,7 +55,7 @@ export async function fetchAndSaveStockDetails(symbol: string) {
 
 export async function fetchStartDatesForTimeSeries(symbols: string[]) {
   const latestQuoteDate =
-  await tickerDataService.getLatestQuoteDatePerTicker(symbols);
+    await tickerDataService.getLatestQuoteDatePerTicker(symbols);
   const startDates = symbols.map((symbol) =>
     isNil(latestQuoteDate[symbol])
       ? { symbol, startDate: subMonths(new Date(), 2) }

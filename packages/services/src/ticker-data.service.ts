@@ -138,7 +138,7 @@ export class TickerDataService {
     return result;
   }
 
-  async getTickerTimeSeriesApi(
+  async getTickerTimeSeriesFromApi(
     symbol: string,
     startDate: Date,
     endDate: Date,
@@ -151,9 +151,7 @@ export class TickerDataService {
     if (!result) {
       return [] as Exclude<typeof result, undefined>["quotes"];
     }
-    return result.quotes.filter(
-      (q) => q.date >= startDate && q.date < endDate,
-    );
+    return result.quotes.filter((q) => q.date >= startDate && q.date < endDate);
   }
 
   async getAndSaveTickerTimeSeries(
@@ -162,7 +160,7 @@ export class TickerDataService {
     endDate: Date,
     outputsize: "full" | "compact" = "compact",
   ) {
-    const result = await this.getTickerTimeSeriesApi(
+    const result = await this.getTickerTimeSeriesFromApi(
       symbol,
       startDate,
       endDate,

@@ -1,6 +1,14 @@
 import { executeChild, proxyActivities } from "@temporalio/workflow";
-import { isMonday, parse, startOfDay, startOfWeek, subDays, addDays } from "date-fns";
+import {
+  addDays,
+  isMonday,
+  parse,
+  startOfDay,
+  startOfWeek,
+  subDays,
+} from "date-fns";
 
+import type * as newsActivities from "../stock-news/activities";
 import {
   syncAllNewsDaily,
   syncMarketNewsForPeriod,
@@ -12,7 +20,7 @@ import {
 } from "../ticker-data/workflows";
 import type * as activities from "./activities";
 
-const proxy = proxyActivities<typeof activities>({
+const proxy = proxyActivities<typeof activities & typeof newsActivities>({
   startToCloseTimeout: "15 minutes",
   heartbeatTimeout: "10 minutes",
   retry: {
@@ -153,9 +161,9 @@ export async function predictSentimentWeekly(params: {
   );
 }
 
-export async function testMeta() {
+export async function testTicker() {
   await predictSentimentWeekly({
-    symbol: "META",
-    startWeek: "2024-10-07",
+    symbol: "MRK",
+    startWeek: "2025-06-02",
   });
 }

@@ -2,6 +2,14 @@ import "dotenv/config";
 
 import { z } from "zod";
 
+import {
+  MODEL_KEYS,
+  MODEL_PROVIDERS,
+  ModelKeyEnum,
+  type ModelProviderEnum,
+  OPENAI_MODEL_KEYS,
+} from "./enums";
+
 export enum NodeEnvironment {
   TEST = "test",
   DEVELOPMENT = "development",
@@ -46,7 +54,7 @@ function getPostgresEnvVariables(prefix: string) {
 
 export const AzureOpenAIDeploymentConfigSchema = z.object({
   name: z.string(),
-  modelName: z.string(),
+  modelName: z.enum(OPENAI_MODEL_KEYS),
   tokensRateLimit: z.number(),
   requestsRateLimit: z.number(),
   services: z.array(z.string()),
@@ -69,7 +77,7 @@ export type AzureOpenAIServiceConfig = z.infer<
 >;
 
 export const OpenAIModelConfigSchema = z.object({
-  modelName: z.string(),
+  modelName: z.enum(OPENAI_MODEL_KEYS),
   temperature: z.number().optional(),
   reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
   apiVersion: z.string().optional(),
@@ -98,27 +106,61 @@ export const AppConfigEnvVariablesSchema = z.object({
   // DRIZZLE_LOG_SQL: z.preprocess((s) => Boolean(Number(s || "0")), z.boolean()),
   LLM_RESPONSE_TIMEOUT_SEC: z.number({ coerce: true }).default(300),
   FINNHUB_API_KEY: z.string(),
-  AZURE_OPENAI_DEPLOYMENTS: z.preprocess(
-    (val) => JSON.parse(val as string),
-    z.array(AzureOpenAIDeploymentConfigSchema),
-  ).optional(),
-  AZURE_OPENAI_SERVICES: z.preprocess(
-    (val) => JSON.parse(val as string),
-    z.array(AzureOpenAIServiceConfigSchema),
-  ).optional(),
+  AZURE_OPENAI_DEPLOYMENTS: z
+    .preprocess(
+      (val) => JSON.parse(val as string),
+      z.array(AzureOpenAIDeploymentConfigSchema),
+    )
+    .optional(),
+  AZURE_OPENAI_SERVICES: z
+    .preprocess(
+      (val) => JSON.parse(val as string),
+      z.array(AzureOpenAIServiceConfigSchema),
+    )
+    .optional(),
   STOCK_NEWS_API_KEY: z.string(),
   FIRECRAWL_API_KEY: z.string(),
   ALPHA_VANTAGE_API_KEY: z.string(),
   OPENAI_API_KEY: z.string(),
-  OPENAI_MODEL_CONFIGS: z.preprocess(
-    (val) => JSON.parse(val as string),
-    z.array(OpenAIModelConfigSchema),
-  ).optional(),
+  OPENAI_MODEL_CONFIGS: z
+    .preprocess(
+      (val) => JSON.parse(val as string),
+      z.array(OpenAIModelConfigSchema),
+    )
+    .optional(),
   DEEPSEEK_API_KEY: z.string().optional(),
-  DEEPSEEK_MODEL_CONFIGS: z.preprocess(
+  DEEPSEEK_MODEL_CONFIGS: z
+    .preprocess(
+      (val) => JSON.parse(val as string),
+      z.array(
+        z.object({
+          providerModelName: z.string().optional(),
+          modelName: z.enum([ModelKeyEnum.DeepSeekReasoner]),
+          temperature: z.number(),
+        }),
+      ),
+    )
+    .optional(),
+  NEBIUS_API_KEY: z.string().optional(),
+  NEBIUS_MODEL_CONFIGS: z
+    .preprocess(
+      (val) => JSON.parse(val as string),
+      z.array(
+        z.object({
+          providerModelName: z.string().optional(),
+          modelName: z.enum([
+            ModelKeyEnum.DeepSeekReasoner,
+            ModelKeyEnum.Llama33,
+          ]),
+          temperature: z.number(),
+        }),
+      ),
+    )
+    .optional(),
+  MODEL_PROVIDERS: z.preprocess(
     (val) => JSON.parse(val as string),
-    z.array(z.object({ modelName: z.string(), temperature: z.number() })),
-  ).optional(),
+    z.record(z.enum(MODEL_KEYS), z.enum(MODEL_PROVIDERS)),
+  ),
 });
 
 export type AppConfigEnvVariables = z.infer<typeof AppConfigEnvVariablesSchema>;
@@ -175,8 +217,21 @@ export interface AppConfig {
   };
   deepSeek?: {
     apiKey: string;
-    modelConfigs: { modelName: string; temperature: number }[];
+    modelConfigs: {
+      modelName: string;
+      temperature: number;
+      providerModelName?: string;
+    }[];
   };
+  nebius?: {
+    apiKey: string;
+    modelConfigs: {
+      modelName: string;
+      temperature: number;
+      providerModelName?: string;
+    }[];
+  };
+  modelProviders?: Partial<Record<ModelKeyEnum, ModelProviderEnum>>;
 }
 
 function getPostgresConfig(
@@ -241,12 +296,12 @@ export function validate(config: Record<string, unknown>) {
     azureOpenAI: appConfigValidated.AZURE_OPENAI_SERVICES
       ? {
           deployments: appConfigValidated.AZURE_OPENAI_DEPLOYMENTS!,
-          services: appConfigValidated.AZURE_OPENAI_SERVICES!,
+          services: appConfigValidated.AZURE_OPENAI_SERVICES,
         }
       : undefined,
     openAI: appConfigValidated.OPENAI_API_KEY
       ? {
-          apiKey: appConfigValidated.OPENAI_API_KEY!,
+          apiKey: appConfigValidated.OPENAI_API_KEY,
           modelConfigs: appConfigValidated.OPENAI_MODEL_CONFIGS!,
         }
       : undefined,
@@ -254,6 +309,13 @@ export function validate(config: Record<string, unknown>) {
       ? {
           apiKey: appConfigValidated.DEEPSEEK_API_KEY,
           modelConfigs: appConfigValidated.DEEPSEEK_MODEL_CONFIGS!,
+        }
+      : undefined,
+    modelProviders: appConfigValidated.MODEL_PROVIDERS,
+    nebius: appConfigValidated.NEBIUS_API_KEY
+      ? {
+          apiKey: appConfigValidated.NEBIUS_API_KEY,
+          modelConfigs: appConfigValidated.NEBIUS_MODEL_CONFIGS!,
         }
       : undefined,
   };

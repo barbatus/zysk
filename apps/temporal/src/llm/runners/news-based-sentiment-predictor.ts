@@ -1,41 +1,39 @@
 import { type Experiment } from "@zysk/db";
-import { ExperimentService, resolve } from "@zysk/services";
+import { ExperimentService, ModelKeyEnum, resolve } from "@zysk/services";
 import { format } from "date-fns";
 
 import { type AbstractContainer } from "../core/base";
-import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
-import { type AgentPrompt, ExperimentAgent } from "./experiment.agent";
+import { type ExperimentPrompt, ExperimentRunner } from "./experimenter";
 import { type Prediction } from "./prompts/prediction-parser";
 import {
   GeneralMarketSentimentPredictionPrompt,
   TickerSentimentPredictionPrompt,
 } from "./prompts/sentiment-prediction.prompt";
 
-const experimentService = resolve(ExperimentService);
-interface NewsBasedSymbolPredictorParams<TResult = Prediction> {
+export interface NewsBasedExperimentParams<TResult = Prediction> {
   state: Experiment;
   symbol: string;
-  prompt: AgentPrompt<TResult>;
+  prompt: ExperimentPrompt<TResult>;
   model: AbstractContainer;
-  news: { markdown: string; url: string; date: Date }[];
+  news: { id: string; markdown: string; url: string; newsDate: Date }[];
   currentDate: Date;
   onHeartbeat?: () => Promise<void>;
 }
 
-export class NewsBasedSentimentPredictorAgent extends ExperimentAgent<
+class NewsBasedSentimentPredictor extends ExperimentRunner<
   Prediction,
   Prediction
 > {
   private readonly symbol: string;
   private readonly news: {
     markdown: string;
-    date: Date;
+    newsDate: Date;
     url: string;
   }[];
-  protected readonly currentDate: Date;
+  private readonly currentDate: Date;
 
-  constructor(params: NewsBasedSymbolPredictorParams) {
+  constructor(params: NewsBasedExperimentParams) {
     super(params.state, params.prompt, params.model, params.onHeartbeat);
     this.symbol = params.symbol;
     this.news = params.news;
@@ -48,35 +46,21 @@ export class NewsBasedSentimentPredictorAgent extends ExperimentAgent<
       news: this.news
         .map(
           (n) =>
-            `# ARTICLE TITLE: ${n.date.toISOString()}, DATE: ${n.date.toISOString()}, URL: ${n.url}\n${n.markdown}`,
+            `# ARTICLE TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}\n${n.markdown}`,
         )
         .join("\n---\n"),
       currentDate: format(this.currentDate, "yyyy-MM-dd"),
     };
   }
-
-  static override readonly modelKey = ModelKeyEnum.GptO3Mini;
-
-  static override async create<TResult = Prediction>(
-    params: Omit<NewsBasedSymbolPredictorParams<TResult>, "state">,
-  ) {
-    const state = await experimentService.create();
-    return new NewsBasedSentimentPredictorAgent({
-      state,
-      ...params,
-      prompt: params.prompt as AgentPrompt<Prediction>,
-      model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
-      onHeartbeat: params.onHeartbeat,
-    });
-  }
 }
 
-export class NewsBasedTickerSentimentPredictor extends NewsBasedSentimentPredictorAgent {
+export class TickerSentimentPredictor extends NewsBasedSentimentPredictor {
   private readonly marketPrediction: Experiment["responseJson"];
   private readonly timeSeries: { date: Date; closePrice: number }[];
+  static override readonly modelKey = ModelKeyEnum.DeepSeekReasoner;
 
   constructor(
-    params: NewsBasedSymbolPredictorParams & {
+    params: NewsBasedExperimentParams & {
       marketPrediction: Experiment["responseJson"];
       timeSeries: { date: Date; closePrice: number }[];
     },
@@ -90,39 +74,32 @@ export class NewsBasedTickerSentimentPredictor extends NewsBasedSentimentPredict
     return {
       ...(await super.mapPromptValues()),
       marketPrediction: JSON.stringify(this.marketPrediction),
-      currentDate: format(this.currentDate, "yyyy-MM-dd"),
       quotes: this.timeSeries
         .map((t) => `${format(t.date, "yyyy-MM-dd")}: ${t.closePrice}`)
         .join("\n"),
     };
   }
-}
-
-export class SentimentPredictor extends ExperimentAgent<
-  Prediction,
-  Prediction
-> {
-  static override readonly modelKey = ModelKeyEnum.GptO3Mini;
 
   static override async create(params: {
     symbol: string;
-    news: { markdown: string; url: string; date: Date }[];
+    news: { id: string; markdown: string; url: string; newsDate: Date }[];
     marketPrediction: Experiment["responseJson"];
     timeSeries: { date: Date; closePrice: number }[];
     currentDate: Date;
     onHeartbeat?: () => Promise<void>;
   }) {
+    const experimentService = resolve(ExperimentService);
     const state = await experimentService.create();
-    return new NewsBasedTickerSentimentPredictor({
+    return new TickerSentimentPredictor({
       state,
       ...params,
       prompt: TickerSentimentPredictionPrompt,
-      model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
+      model: modelsWithFallback[ModelKeyEnum.DeepSeekReasoner]!,
     });
   }
 }
 
-export class MarketSentimentPredictor extends ExperimentAgent<
+export class MarketSentimentPredictor extends ExperimentRunner<
   Prediction,
   Prediction
 > {
@@ -130,11 +107,12 @@ export class MarketSentimentPredictor extends ExperimentAgent<
 
   static override async create(params: {
     currentDate: Date;
-    news: { markdown: string; url: string; date: Date }[];
+    news: { id: string; markdown: string; url: string; newsDate: Date }[];
     onHeartbeat?: () => Promise<void>;
   }) {
+    const experimentService = resolve(ExperimentService);
     const state = await experimentService.create();
-    return new NewsBasedSentimentPredictorAgent({
+    return new NewsBasedSentimentPredictor({
       state,
       ...params,
       symbol: "GENERAL",

@@ -108,7 +108,7 @@ export class TickerNewsService {
       });
   }
 
-  async scrapeUrlApi(
+  private async scrapeUrlViaApi(
     url: string,
     _timeoutSeconds?: number,
   ): Promise<{
@@ -175,7 +175,7 @@ export class TickerNewsService {
         description: article.description,
       };
     }
-    return this.scrapeUrlApi(url, timeoutSeconds);
+    return this.scrapeUrlViaApi(url, timeoutSeconds);
   }
 
   async getTickerNews(
@@ -341,7 +341,9 @@ export class TickerNewsService {
         throw new Error(`Polling timed out after ${timeout}ms`);
       }
 
-      await new Promise((resolve) => { setTimeout(resolve, interval) });
+      await new Promise((resolve) => {
+        setTimeout(resolve, interval);
+      });
     }
   }
 }

@@ -3,11 +3,10 @@ import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
 import { type Serialized } from "@langchain/core/load/serializable";
 import { AIMessage } from "@langchain/core/messages";
 import { type Generation, type LLMResult } from "@langchain/core/outputs";
-import { getLogger } from "@zysk/services";
+import { getLogger, ModelKeyEnum } from "@zysk/services";
 import dedent from "dedent";
 import { APIConnectionTimeoutError, type APIError } from "openai";
 
-import { ModelKeyEnum } from "../core/enums";
 import {
   InternalLLMError,
   InvalidPromptError,
@@ -55,7 +54,7 @@ const openAIPricing1M = {
   { prompt: number; cachedPrompt: number; completion: number }
 >;
 
-export class OpenAICallbackHandler extends BaseCallbackHandler {
+export class CostCallbackHandler extends BaseCallbackHandler {
   readonly name = "OpenAICallbackHandler";
   totalTokens = 0;
   promptTokens = 0;
@@ -216,7 +215,7 @@ export class OpenAICallbackHandler extends BaseCallbackHandler {
   }
 }
 
-export function wrapOpenAIError(error: APIError) {
+export function wrapLLMError(error: APIError) {
   if (error.status === 400) {
     if (
       error.type === "invalid_request_error" &&

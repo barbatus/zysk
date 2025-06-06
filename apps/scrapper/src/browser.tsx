@@ -61,7 +61,7 @@ turndown.addRule("removeLinks", {
 });
 
 turndown.addRule("cleanup", {
-  filter: ["link", "img", "script", "style"],
+  filter: ["link", "img", "script", "style", "ul"],
   replacement() {
     return "";
   },
@@ -203,7 +203,9 @@ export async function scrapeUrl(params: {
     throw error;
   }
 
-  await new Promise((resolve) => { setTimeout(resolve, waitFor) });
+  await new Promise((resolve) => {
+    setTimeout(resolve, waitFor);
+  });
 
   const content = await page.content();
   if (response!.status() !== 200) {

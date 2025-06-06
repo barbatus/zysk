@@ -1,6 +1,11 @@
 import { PromptTemplate } from "@langchain/core/prompts";
 import { type Experiment, ExperimentTaskStatus } from "@zysk/db";
-import { ExperimentService, getLogger, resolve } from "@zysk/services";
+import {
+  ExperimentService,
+  getLogger,
+  ModelKeyEnum,
+  resolve,
+} from "@zysk/services";
 
 import { type AbstractContainer } from "#/llm/core/base";
 import { type AgentExecutionResult } from "#/llm/core/schemas";
@@ -10,21 +15,13 @@ import {
   stopAfterAttempt,
 } from "#/utils/async-retrier";
 
-import { ModelKeyEnum } from "../core/enums";
 import { modelsWithFallback } from "../models/registry";
 import { ParserError } from "./prompts/parsers";
 
 const experimentService = resolve(ExperimentService);
 
 const logger = getLogger();
-
-export abstract class Agent<AResult> {
-  abstract arun(
-    promptValues: Record<string, string>,
-  ): Promise<AgentExecutionResult<AResult>>;
-}
-
-export class AgentPrompt<TResult = string> extends PromptTemplate {
+export class ExperimentPrompt<TResult = string> extends PromptTemplate {
   async parseResponse(response: string): Promise<TResult> {
     if (!this.outputParser) {
       return response as TResult;
@@ -33,30 +30,29 @@ export class AgentPrompt<TResult = string> extends PromptTemplate {
   }
 }
 
-export abstract class StatefulAgent<
+export abstract class StatefulModelRunner<
   TState extends Experiment,
   AResult = string,
   TResult = string,
-> extends Agent<AResult> {
+> {
   private readonly onHeartbeat?: () => Promise<void>;
   private readonly unsubscribeModel?: () => void;
 
   constructor(
     protected readonly state: TState,
-    protected readonly prompt: AgentPrompt<AResult>,
+    protected readonly prompt: ExperimentPrompt<AResult>,
     protected readonly model: AbstractContainer = modelsWithFallback[
       ModelKeyEnum.GptO1
     ]!,
     onHeartbeat?: () => Promise<void>,
   ) {
-    super();
     this.onHeartbeat = onHeartbeat;
     if (onHeartbeat) {
       this.unsubscribeModel = this.model.onRetry(onHeartbeat);
     }
   }
 
-  override async arun(
+  async arun(
     promptValues: Record<string, string>,
   ): Promise<AgentExecutionResult<AResult>> {
     const promptString = await this.prompt.format(promptValues);
@@ -123,14 +119,14 @@ export abstract class StatefulAgent<
   }
 }
 
-export class ExperimentAgent<
+export class ExperimentRunner<
   AResult = string,
   TResult = string,
-> extends StatefulAgent<Experiment, AResult, TResult> {
+> extends StatefulModelRunner<Experiment, AResult, TResult> {
   static readonly modelKey: ModelKeyEnum;
 
   static async create<TResult = string>(params: {
-    prompt?: AgentPrompt<TResult>;
+    prompt?: ExperimentPrompt<TResult>;
     model?: AbstractContainer;
     onHeartbeat?: () => Promise<void>;
     [key: string]: unknown;
@@ -139,7 +135,7 @@ export class ExperimentAgent<
     if (!params.prompt) {
       throw new Error("Prompt is required");
     }
-    return new ExperimentAgent(
+    return new ExperimentRunner(
       state,
       params.prompt,
       params.model,

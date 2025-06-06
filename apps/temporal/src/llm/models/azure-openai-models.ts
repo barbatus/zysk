@@ -1,23 +1,16 @@
-import { UpstashRatelimitHandler } from "@langchain/community/callbacks/handlers/upstash_ratelimit";
-import { AIMessage } from "@langchain/core/messages";
-import { type RunnableConfig } from "@langchain/core/runnables";
 import { AzureChatOpenAI } from "@langchain/openai";
-import { type Ratelimit } from "@upstash/ratelimit";
 import {
   type AzureOpenAIDeploymentConfig,
   type AzureOpenAIServiceConfig,
   getConfig,
-} from "@zysk/services";
-import { type APIError } from "openai";
-
-import { BaseLLMRunner, ModelContainer, ModelIdentity } from "../core/base";
-import {
   ModelKeyEnum,
+  ModelOwnerEnum,
   ModelProviderEnum,
-  ModelVendorEnum,
-} from "../core/enums";
-import { type ExecutionResult } from "../core/schemas";
-import { OpenAICallbackHandler, wrapOpenAIError } from "./callbacks";
+  type OpenAIModelKey,
+} from "@zysk/services";
+
+import { ModelContainer, ModelIdentity } from "../core/base";
+import { LLMRunner } from "./runners";
 
 type ReasoningEffort = "low" | "medium" | "high" | undefined;
 
@@ -25,67 +18,22 @@ interface AzureOpenAIModelConfig {
   endpointUrl: string;
   apiKey: string;
   azureDeployment: string;
-  llmModelName: string;
+  llmModelName: OpenAIModelKey;
   temperature: number | undefined;
   reasoningEffort: ReasoningEffort | undefined;
   apiVersion: string | undefined;
 }
 
-export class OpenAIRunner extends BaseLLMRunner {
-  async arun(
-    message: string,
-    config?: RunnableConfig<{
-      rateLimiter?: Ratelimit;
-    }>,
-  ): Promise<ExecutionResult> {
-    try {
-      const callback = new OpenAICallbackHandler();
-      const appConfig = getConfig();
-      const rateLimiterCallback = config?.configurable?.rateLimiter
-        ? new UpstashRatelimitHandler(
-            `${this.llm.getName()}:${appConfig.nodeEnv}`,
-            {
-              tokenRatelimit: config.configurable.rateLimiter,
-            },
-          )
-        : undefined;
-      const start = performance.now();
-      const result = await super.ainvoke(message, {
-        ...config,
-        callbacks: rateLimiterCallback
-          ? [callback, rateLimiterCallback]
-          : [callback],
-      });
-      const end = performance.now();
-      return {
-        response:
-          result instanceof AIMessage ? (result.content as string) : result,
-        evaluationDetails: {
-          promptTokens: callback.promptTokens,
-          completionTokens: callback.completionTokens,
-          successfulRequests: callback.successfulRequests,
-          totalCost: callback.totalCost,
-          responseTimeMs: Math.round(end - start),
-        },
-      };
-    } catch (error) {
-      throw wrapOpenAIError(error as APIError);
-    }
-  }
-}
-
 const apiVersion = "2024-02-01";
 
 function buildAzureOpenAIModelConfigs(
-  modelKey: ModelKeyEnum,
+  modelKey: OpenAIModelKey,
   services: AzureOpenAIServiceConfig[],
   deployments: AzureOpenAIDeploymentConfig[],
   reasoningEffort?: ReasoningEffort,
 ) {
   const res: AzureOpenAIModelConfig[] = [];
-  const modelDeployments = deployments.filter(
-    (d) => d.modelName === String(modelKey),
-  );
+  const modelDeployments = deployments.filter((d) => d.modelName === modelKey);
 
   for (const deployment of modelDeployments) {
     const service = services.find((s) => s.name === deployment.services[0]);
@@ -97,7 +45,7 @@ function buildAzureOpenAIModelConfigs(
 
     const endpointUrl = service.url
       ? service.url
-      : `https://${service.name}.api.cognitive.microsoft.com/openai/deployments/${deployment.name}/chat/completions?api-version=${deployment.apiVersion}`;
+      : `https://${service.name}.api.cognitive.microsoft.com/openai/deployments/${deployment.name}/chat/completions?api-version=${deployment.apiVersion ?? apiVersion}`;
 
     res.push({
       endpointUrl,
@@ -117,7 +65,7 @@ function getOpenaiContainers(config: AzureOpenAIModelConfig[]) {
   const res: ModelContainer[] = [];
   for (const conf of config) {
     const container = new ModelContainer(
-      new OpenAIRunner(
+      new LLMRunner(
         new AzureChatOpenAI({
           azureOpenAIEndpoint: conf.endpointUrl,
           azureOpenAIApiKey: conf.apiKey,
@@ -132,8 +80,8 @@ function getOpenaiContainers(config: AzureOpenAIModelConfig[]) {
       new ModelIdentity(
         conf.endpointUrl,
         conf.llmModelName,
-        ModelVendorEnum.OpenAI,
         ModelProviderEnum.Azure,
+        ModelOwnerEnum.OpenAI,
       ),
     );
     res.push(container);
@@ -142,7 +90,7 @@ function getOpenaiContainers(config: AzureOpenAIModelConfig[]) {
   return res;
 }
 
-export function getAzureLLMContainers(modelKey: ModelKeyEnum) {
+export function getAzureLLMContainers(modelKey: OpenAIModelKey) {
   const appConfig = getConfig();
   if (!appConfig.azureOpenAI) {
     throw new Error("Azure OpenAI config not found");
