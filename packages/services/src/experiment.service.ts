@@ -3,6 +3,7 @@ import {
   type EvaluationDetails,
   type Experiment,
   ExperimentTaskStatus,
+  sql,
 } from "@zysk/db";
 import { inject, injectable } from "inversify";
 import { type Kysely } from "kysely";
@@ -57,7 +58,7 @@ export class ExperimentService implements AgentStateService<Experiment> {
         status,
         modelName,
         ...(typeof response === "string" && { responseText: response }),
-        ...(typeof response === "object" && { responseJson: response }),
+        ...(typeof response === "object" && { responseJson: sql`(${JSON.stringify(response)}::jsonb)` }),
         ...(details && { details }),
         ...(version && { version }),
         updatedAt: new Date(),

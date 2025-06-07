@@ -12,13 +12,16 @@ export class NewsInsightsExtractor extends ExperimentRunner<
 > {
   private readonly news: {
     id: string;
+    symbol: string;
     markdown: string;
     newsDate: Date;
     url: string;
   }[];
 
   constructor(
-    params: Omit<NewsBasedExperimentParams<Insights>, "symbol" | "currentDate">,
+    params: Omit<NewsBasedExperimentParams<Insights>, "symbol" | "currentDate" | "news"> & {
+      news: { id: string; markdown: string; url: string; newsDate: Date; symbol: string }[]
+    },
   ) {
     super(params.state, params.prompt, params.model, params.onHeartbeat);
     this.news = params.news;
@@ -29,16 +32,16 @@ export class NewsInsightsExtractor extends ExperimentRunner<
       news: this.news
         .map(
           (n) =>
-            `# ARTICLE ID: ${n.id}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}\n${n.markdown}`,
+            `# ARTICLE FOR SYMBOL: ${n.symbol}, ID: ${n.id}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}\n${n.markdown}`,
         )
         .join("\n---\n"),
     };
   }
 
-  static override readonly modelKey = ModelKeyEnum.Llama33;
+  static override readonly modelKey = ModelKeyEnum.DeepSeekLlama;
 
   static override async create(params: {
-    news: { id: string; markdown: string; url: string; newsDate: Date }[];
+    news: { id: string; markdown: string; url: string; newsDate: Date; symbol: string }[];
     onHeartbeat?: () => Promise<void>;
   }) {
     const experimentService = resolve(ExperimentService);
@@ -47,7 +50,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
       state,
       ...params,
       prompt: NewsInsightsExtractorPrompt,
-      model: modelsWithFallback[ModelKeyEnum.Llama33]!,
+      model: modelsWithFallback[ModelKeyEnum.DeepSeekLlama]!,
       onHeartbeat: params.onHeartbeat,
     });
   }

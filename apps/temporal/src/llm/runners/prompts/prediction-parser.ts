@@ -1,4 +1,4 @@
-import { z, type ZodError } from "zod";
+import { z, ZodError } from "zod";
 
 import { JsonOutputParser, ParserError } from "./parsers";
 
@@ -34,10 +34,7 @@ export class PredictionParser extends JsonOutputParser<Prediction> {
     try {
       return PredictionSchema.parse(await super.parse(response));
     } catch (error) {
-      const issue =
-        (error as ZodError).issues.length > 0
-          ? (error as ZodError).issues[0]
-          : null;
+      const issue = error instanceof ZodError ? error.issues[0] : null;
       throw new ParserError(
         issue
           ? `${issue.code}: ${String(issue.path)}: ${issue.message}`

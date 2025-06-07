@@ -1,5 +1,6 @@
 import {
   integer,
+  jsonb,
   text,
   timestamp,
   uniqueIndex,
@@ -17,6 +18,16 @@ export enum StockNewsStatus {
   Failed = "failed",
 }
 
+export interface StockNewsInsight {
+  symbols: string[];
+  sectors: string[];
+  title: string;
+  date: string;
+  url: string;
+  insight: string;
+  impact: string; // "positive" | "negative" | "mixed" | "neutral";
+}
+
 export const stockNewsTable = mySchema.table(
   "stock_news",
   {
@@ -30,6 +41,8 @@ export const stockNewsTable = mySchema.table(
     newsDate: timestamp("news_date", { withTimezone: true }).notNull(),
     title: text("title"),
     description: text("description"),
+    insights: jsonb("insights").$type<StockNewsInsight[]>().default([]),
+    insightsTokenSize: integer("insights_token_size").default(0),
     ...auditColumns(),
   },
   (t) => ({

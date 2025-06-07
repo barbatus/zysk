@@ -32,6 +32,7 @@ export enum ModelKeyEnum {
   Claude35Sonnet = "claude35-sonnet",
   DeepSeekReasoner = "deepseek-reasoner",
   Llama33 = "llama33",
+  DeepSeekLlama = "deepseek-llama",
 }
 
 export type OpenAIModelKey =
@@ -60,7 +61,7 @@ export const MODEL_PROVIDERS = [
 
 export const DEEPSEEK_MODEL_KEYS = [ModelKeyEnum.DeepSeekReasoner] as const;
 
-export const META_MODEL_KEYS = [ModelKeyEnum.Llama33] as const;
+export const META_MODEL_KEYS = [ModelKeyEnum.Llama33, ModelKeyEnum.DeepSeekLlama] as const;
 
 export const MODEL_KEYS = [
   ...OPENAI_MODEL_KEYS,

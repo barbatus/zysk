@@ -2,12 +2,13 @@ import FirecrawlApp, { type FirecrawlError } from "@mendable/firecrawl-js";
 import {
   type DataDatabase,
   type StockNewsInsert,
+  StockNewsInsight,
   StockNewsStatus,
 } from "@zysk/db";
 import axios, { AxiosError } from "axios";
 import { startOfDay } from "date-fns";
 import { inject, injectable } from "inversify";
-import { type Kysely, NotNull } from "kysely";
+import { type Kysely, NotNull, sql } from "kysely";
 import { keyBy } from "lodash";
 
 import { AppConfig, appConfigSymbol } from "./config";
@@ -258,11 +259,66 @@ export class TickerNewsService {
           newsDate: eb.ref("excluded.newsDate"),
           title: eb.ref("excluded.title"),
           description: eb.ref("excluded.description"),
-          status: StockNewsStatus.Scraped,
+          status: eb.ref("excluded.status"),
           updatedAt: new Date(),
         })),
       )
       .execute();
+  }
+
+  async saveNewsInsights<
+    T extends {
+      id: string;
+      insightsTokenSize: number;
+      insights: StockNewsInsight[];
+    },
+  >(
+    newsInsights: Exact<
+      T,
+      {
+        id: string;
+        insightsTokenSize: number;
+        insights: StockNewsInsight[];
+      }
+    >[],
+  ) {
+    const query = this.db
+      .updateTable("app_data.stock_news")
+      .from(
+        newsInsights
+          .slice(1)
+          .reduce(
+            (qb, update) => {
+              return qb.union(
+                this.db.selectNoFrom([
+                  sql<string>`${update.id}::uuid`.as("id"),
+                  sql<StockNewsInsight[]>`(${JSON.stringify(update.insights)}::jsonb)`.as(
+                    "insights",
+                  ),
+                  sql<number>`${update.insightsTokenSize}::integer`.as(
+                    "insightsTokenSize",
+                  ),
+                ]),
+              );
+            },
+            this.db.selectNoFrom([
+              sql<string>`${newsInsights[0].id}::uuid`.as("id"),
+              sql<StockNewsInsight[]>`(${JSON.stringify(newsInsights[0].insights)}::jsonb)`.as(
+                "insights",
+              ),
+              sql<number>`${newsInsights[0].insightsTokenSize}::integer`.as(
+                "insightsTokenSize",
+              ),
+            ]),
+          )
+          .as("data_table"),
+      )
+      .set((eb) => ({
+        insights: sql`COALESCE(${eb.ref('app_data.stock_news.insights')}, '[]'::jsonb) || ${eb.ref("data_table.insights")}`,
+        insightsTokenSize: eb.ref("data_table.insightsTokenSize"),
+      }))
+      .whereRef("app_data.stock_news.id", "=", "data_table.id");
+    return query.execute();
   }
 
   async getLatestNewsDatePerTicker(symbols: string[]) {

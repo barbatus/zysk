@@ -151,6 +151,7 @@ export const AppConfigEnvVariablesSchema = z.object({
           modelName: z.enum([
             ModelKeyEnum.DeepSeekReasoner,
             ModelKeyEnum.Llama33,
+            ModelKeyEnum.DeepSeekLlama,
           ]),
           temperature: z.number(),
         }),

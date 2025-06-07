@@ -11,7 +11,7 @@ import {
   TickerNewsService,
 } from "@zysk/services";
 import { startOfDay, subDays } from "date-fns";
-import { isNil } from "lodash";
+import { groupBy, isNil, omit } from "lodash";
 // eslint-disable-next-line camelcase
 import { encoding_for_model } from "tiktoken";
 
@@ -35,7 +35,7 @@ async function _fetchTickersToProcess(symbols: string[]) {
   return sinceDates;
 }
 
-export async function batchNews(params: {
+async function batchNews(params: {
   news: {
     id: string;
     url: string;
@@ -131,13 +131,23 @@ export async function runNewsInsightsExtractorExperiment(params: {
   const tickerNewsService = resolve(TickerNewsService);
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
 
-  const agent = await NewsInsightsExtractor.create({
+  const runner = await NewsInsightsExtractor.create({
     news,
   });
+  const result = await runner.run();
 
-  const result = await agent.run();
+  const tokenizer = encoding_for_model("gpt-4o");
+  const groupedInsights = groupBy(result, "newsId");
+  const values = Object.entries(groupedInsights).map(([id, insights]) => {
+    return {
+      id,
+      insights,
+      insightsTokenSize: tokenizer.encode(JSON.stringify(insights)).length,
+    };
+  });
+  tokenizer.free();
 
-  // TODO: Save ingights per news.
+  await tickerNewsService.saveNewsInsights(values);
 
   return result;
 }
@@ -159,7 +169,6 @@ export async function getNewsToFetchWeekly(symbols: string[]) {
     failedNews: news.filter((n) => n.status === StockNewsStatus.Failed),
     sinceDate: news.length > 10 ? subDays(new Date(), 7) : undefined,
   }));
-
   return sinceDates;
 }
 
@@ -222,7 +231,7 @@ export async function scrapeNews(url: string, maxTokens = 5000) {
     if (ex instanceof RequestTimeoutError) {
       throw ApplicationFailure.create({
         type: "RequestTimeout",
-        nonRetryable: attempt >= 3,
+        nonRetryable: true,
         message: ex.message,
         nextRetryDelay: `${Math.pow(2, attempt - 1) * 60}s`,
       });

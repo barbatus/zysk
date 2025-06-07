@@ -39,6 +39,7 @@ export const MODEL_TO_MAX_TOKENS = {
     [ModelProviderEnum.Nebius]: 160_000,
   },
   [ModelKeyEnum.Llama33]: 128_000,
+  [ModelKeyEnum.DeepSeekLlama]: 128_000,
 } as Record<ModelKeyEnum, number | Record<ModelProviderEnum, number>>;
 
 export function getMaxTokens(modelKey: ModelKeyEnum) {
@@ -152,6 +153,10 @@ export function createSequentialModelContainerWithFallback(
     case ModelKeyEnum.Llama33:
       return new SequentialModelContainerWithFallback([
         models[ModelKeyEnum.Llama33]!,
+      ]);
+    case ModelKeyEnum.DeepSeekLlama:
+      return new SequentialModelContainerWithFallback([
+        models[ModelKeyEnum.DeepSeekLlama]!,
       ]);
     default:
       throw new ModelNotFoundError(modelKey);

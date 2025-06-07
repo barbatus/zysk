@@ -64,6 +64,13 @@
       "when": 1749035504255,
       "tag": "0008_update_stock_news",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1749304923552,
+      "tag": "0009_update_stock_news",
+      "breakpoints": true
     }
   ]
 }

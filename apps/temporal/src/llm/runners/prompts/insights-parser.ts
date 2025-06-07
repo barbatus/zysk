@@ -1,4 +1,4 @@
-import { z, type ZodError } from "zod";
+import { z, ZodError } from "zod";
 
 import { JsonOutputParser, ParserError } from "./parsers";
 
@@ -10,7 +10,7 @@ const NewsInsightSchema = z.object({
   date: z.string(),
   url: z.string(),
   insight: z.string(),
-  impact: z.enum(["positive", "negative", "mixed", "neutral"]),
+  impact: z.string(),
 });
 
 const InsightsSchema = z.array(NewsInsightSchema);
@@ -20,12 +20,11 @@ export type Insights = z.infer<typeof InsightsSchema>;
 export class InsightsParser extends JsonOutputParser<Insights> {
   override async parse(response: string): Promise<Insights> {
     try {
-      return InsightsSchema.parse(await super.parse(response));
+      const json = await super.parse(response.replace(/<think>.*?<\/think>/gs, ""));
+      const result = InsightsSchema.parse(json);
+      return result;
     } catch (error) {
-      const issue =
-        (error as ZodError).issues.length > 0
-          ? (error as ZodError).issues[0]
-          : null;
+      const issue = error instanceof ZodError ? error.issues[0] : null;
       throw new ParserError(
         issue
           ? `${issue.code}: ${String(issue.path)}: ${issue.message}`
@@ -36,7 +35,7 @@ export class InsightsParser extends JsonOutputParser<Insights> {
 
   override getFormatInstructions(): string {
     return `
-You must provide output as a single JSON object with the following structure:
+You must provide output as JSON array with the following structure:
 \`\`\`json
   [
     {
@@ -47,7 +46,7 @@ You must provide output as a single JSON object with the following structure:
         "date": "date of the article",
         "url": "url of the article",
         "insight": "description of the insight",
-        "impact": "impact on the stock price: positive, negative, mixed",
+        "impact": "impact on the stock price as lower case values from: positive, negative, mixed, neutral",
     },
     ...
   ]

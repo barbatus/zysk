@@ -1,5 +1,6 @@
 import { executeChild, proxyActivities } from "@temporalio/workflow";
 import { StockNewsStatus } from "@zysk/db";
+import { endOfDay, parse, startOfDay } from "date-fns";
 import { chunk, mapKeys, uniqBy } from "lodash";
 
 import type * as activities from "./activities";
@@ -63,24 +64,53 @@ export async function scrapeTickerNewsBatchAndSave(
     })),
     (n) => `${n.symbol}-${n.url}`,
   );
-  await proxy.saveNews(uniqueNews);
+  return (await proxy.saveNews(uniqueNews)).map((n) => ({
+    id: n.id,
+    status: n.status,
+  }));
 }
 
 export async function syncTickerNews(
   symbol: string,
   news: { url: string; title: string; newsDate: Date }[],
 ) {
-  for (let i = 0; i < news.length; i += 80) {
-    await Promise.allSettled(
-      // Scraping by 20 URLs to make to sure it does not exceed gRPC size limit
-      // and all together 80 URLs in parralel to respect firecrawl rate limits.
-      chunk(news.slice(i, i + 80), 20).map((batch) =>
-        executeChild(scrapeTickerNewsBatchAndSave, {
-          args: [symbol, batch],
-        }),
-      ),
+  const results: PromiseSettledResult<
+    { id: string; status: StockNewsStatus }[]
+  >[] = [];
+  for (let i = 0; i < news.length; i += 100) {
+    results.push(
+      ...(await Promise.allSettled(
+        chunk(news.slice(i, i + 100), 20).map((batch) =>
+          executeChild(scrapeTickerNewsBatchAndSave, {
+            args: [symbol, batch],
+          }),
+        ),
+      )),
     );
   }
+
+  return results.flatMap((r) => {
+    if (r.status === "fulfilled") {
+      return r.value;
+    }
+    return [];
+  });
+}
+
+export async function syncExtractNewsInsights(
+  symbol: string,
+  newsIds: string[],
+) {
+  const newsBatches = await proxy.runBatchNews({ newsIds });
+
+  await Promise.all(
+    newsBatches.map(async (newsBatch) => {
+      return proxy.runNewsInsightsExtractorExperiment({
+        symbol,
+        newsIds: newsBatch,
+      });
+    }),
+  );
 }
 
 export async function syncTickerNewsForPeriod(
@@ -89,9 +119,13 @@ export async function syncTickerNewsForPeriod(
   endDate?: Date,
 ) {
   const currentNews = await proxy.fetchTickerNews(symbol, startDate, endDate);
-  for (let i = 0; i < currentNews.length; i += 80) {
-    await syncTickerNews(symbol, currentNews.slice(i, i + 80));
-  }
+  const news = await syncTickerNews(symbol, currentNews);
+  await executeChild(syncExtractNewsInsights, {
+    args: [
+      symbol,
+      news.filter((n) => n.status === StockNewsStatus.Scraped).map((n) => n.id),
+    ],
+  });
 }
 
 export async function syncMarketNewsForPeriod(startDate: Date, endDate?: Date) {
@@ -150,4 +184,13 @@ export async function syncAllNewsWeekly(symbols: string[]) {
   await executeChild(scrapeTickerNewsWeekly, {
     args: [symbols],
   });
+}
+
+export async function testInsightsExtract() {
+  const startDate = parse("2025-06-06", "yyyy-MM-dd", new Date());
+  await syncTickerNewsForPeriod(
+    "META",
+    startOfDay(startDate),
+    endOfDay(startDate),
+  );
 }

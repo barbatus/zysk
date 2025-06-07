@@ -19,10 +19,13 @@ function getNebiusContainer(
   return new ModelContainer(
     new LLMRunner(
       new ChatOpenAI({
-        openAIApiKey: apiKey,
+        apiKey,
         model: config.providerModelName ?? config.modelName,
         temperature: 0,
         maxRetries: 0,
+        configuration: {
+          baseURL: "https://api.studio.nebius.ai/v1/",
+        },
       }),
     ),
     new ModelIdentity(
