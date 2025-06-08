@@ -15,9 +15,11 @@ import { omit } from "lodash";
 import { type AgentExecutionResult } from "#/llm/core/schemas";
 
 import { modelsWithFallback } from "../models/registry";
-import { ExperimentRunner } from "./experimenter";
+import { ExperimentPrompt, ExperimentRunner } from "./experimenter";
 import { type Prediction } from "./prompts/prediction-parser";
 import { PredictionsMergerPrompt } from "./prompts/predictions-merger.prompt";
+import { type AbstractContainer } from "../core/base";
+
 
 const experimentService = resolve(ExperimentService);
 const predictionService = resolve(PredictionService);
@@ -35,11 +37,13 @@ export class SentimentPredictor extends ExperimentRunner<
     state: Experiment;
     predictions: Prediction[];
     currentDate: Date;
+    model: AbstractContainer;
+    prompt: ExperimentPrompt<Prediction>;
   }) {
     super(
       params.state,
-      PredictionsMergerPrompt,
-      modelsWithFallback[ModelKeyEnum.GptO3Mini],
+      params.prompt,
+      params.model,
     );
     this.predictions = params.predictions;
     this.symbol = params.symbol;
@@ -78,6 +82,8 @@ export class SentimentPredictor extends ExperimentRunner<
     return new SentimentPredictor({
       state,
       ...params,
+      prompt: PredictionsMergerPrompt,
+      model: modelsWithFallback[this.modelKey]!,
     });
   }
 

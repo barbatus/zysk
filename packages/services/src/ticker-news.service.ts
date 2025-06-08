@@ -154,7 +154,7 @@ export class TickerNewsService {
           error.response?.status === 403 ||
           error.response?.status === 408)
       ) {
-        throw new RequestTimeoutError(`Error scraping URL: ${url}`);
+        throw new RequestTimeoutError(`Error scraping URL ${url}: ${error.message}`);
       }
       throw error;
     }
@@ -345,7 +345,7 @@ export class TickerNewsService {
   async getNewsBySymbol(symbol: string, startDate: Date, endDate?: Date) {
     return this.db
       .selectFrom("app_data.stock_news")
-      .selectAll()
+      .select(["id", "url", "newsDate", "status", "title", "tokenSize"])
       .where("symbol", "=", symbol)
       .where("newsDate", ">=", startDate)
       .$if(Boolean(endDate), (eb) => eb.where("newsDate", "<", endDate!))
@@ -355,13 +355,14 @@ export class TickerNewsService {
   }
 
   async getNewsByNewsIds(newsIds: string[]) {
-    return this.db
+    return newsIds.length > 0 ? this.db
       .selectFrom("app_data.stock_news")
       .selectAll()
       .where("id", "in", newsIds)
       .where("status", "=", StockNewsStatus.Scraped)
-      .$narrowType<{ markdown: NotNull }>()
-      .execute();
+        .$narrowType<{ markdown: NotNull }>()
+        .execute()
+      : Promise.resolve([]);
   }
 
   async getArticle(url: string) {

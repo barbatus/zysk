@@ -12,7 +12,7 @@ import type * as newsActivities from "../stock-news/activities";
 import {
   syncAllNewsDaily,
   syncMarketNewsForPeriod,
-  syncTickerNewsForPeriod,
+  scrapeTickerNewsForPeriod,
 } from "../stock-news/workflows";
 import {
   syncTickerQuotesDaily,
@@ -39,6 +39,7 @@ export async function runTickerSentimentPredictionExperiment(
       symbol,
       startDate,
       endDate,
+      taskName: "runTickerSentimentPredictionExperiment",
     });
 
   const predictions = await Promise.all(
@@ -67,6 +68,7 @@ export async function runMarketSentimentPredictionExperiment(
     symbol: "GENERAL",
     startDate,
     endDate,
+    taskName: "runMarketSentimentPredictionExperiment",
   });
 
   const predictions = await Promise.all(
@@ -146,7 +148,7 @@ export async function predictSentimentWeekly(params: {
     executeChild(syncMarketNewsForPeriod, {
       args: [prevWeekDate, currentWeekDate],
     }),
-    executeChild(syncTickerNewsForPeriod, {
+    executeChild(scrapeTickerNewsForPeriod, {
       args: [symbol, prevWeekDate, currentWeekDate],
     }),
   ]);

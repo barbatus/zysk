@@ -27,12 +27,11 @@ export enum ModelKeyEnum {
   GptO1 = "o1",
   GptO3Mini = "o3-mini",
   Gpt4oO1Mini = "4o-o1-mini",
-  Gemini15Pro = "gemini-15pro",
-  Gemini15Flash = "gemini-15flash",
   Claude35Sonnet = "claude35-sonnet",
   DeepSeekReasoner = "deepseek-reasoner",
   Llama33 = "llama33",
   DeepSeekLlama = "deepseek-llama",
+  GeminiFlash25 = "gemini-2.5-flash",
 }
 
 export type OpenAIModelKey =
@@ -43,6 +42,8 @@ export type OpenAIModelKey =
   | ModelKeyEnum.GptO3Mini;
 
 export type MetaModelKey = ModelKeyEnum.Llama33;
+
+export type GoogleModelKey = ModelKeyEnum.GeminiFlash25;
 
 export const OPENAI_MODEL_KEYS = [
   ModelKeyEnum.Gpt4o,
@@ -63,7 +64,11 @@ export const DEEPSEEK_MODEL_KEYS = [ModelKeyEnum.DeepSeekReasoner] as const;
 
 export const META_MODEL_KEYS = [ModelKeyEnum.Llama33, ModelKeyEnum.DeepSeekLlama] as const;
 
+export const GOOGLE_MODEL_KEYS = [ModelKeyEnum.GeminiFlash25] as const;
+
 export const MODEL_KEYS = [
   ...OPENAI_MODEL_KEYS,
   ...DEEPSEEK_MODEL_KEYS,
+  ...META_MODEL_KEYS,
+  ...GOOGLE_MODEL_KEYS,
 ] as const;

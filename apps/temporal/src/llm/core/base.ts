@@ -75,7 +75,7 @@ export abstract class BaseLLMRunner implements AbstractRunner {
       appConfig.llmResponseTimeoutSec;
     try {
       const startTime = Date.now();
-      logger.info(`[BaseLLMRunner] running ${this.toString()}`);
+      logger.info(`[${this.toString()}] Running...`);
 
       const result = await Promise.race<AIMessage | string>([
         this.llm.invoke(message, config),
@@ -88,14 +88,14 @@ export abstract class BaseLLMRunner implements AbstractRunner {
 
       const executionTime = (Date.now() - startTime) / 1000;
       logger.info(
-        `[BaseLLMRunner] ${this.toString()} execution time: ${executionTime.toFixed(2)}s`,
+        `[${this.toString()}] Execution time=${executionTime.toFixed(2)}s`,
       );
 
       return result;
     } catch (error) {
       if ((error as Error).message === "Timeout") {
         throw new Error(
-          `[BaseLLMRunner] ${this.toString()} API call timed out after ${timeout}s`,
+          `[${this.toString()}] API call timed out after ${timeout}s`,
         );
       }
       throw error;
@@ -193,7 +193,7 @@ export class SequentialModelContainer implements AbstractRunner {
     containers: Iterable<ModelContainer>,
     maxInputTokens: number,
     rateLimiter?: Ratelimit,
-    charsPerToken = 3,
+    charsPerToken = 4,
   ) {
     if (Array.from(containers).length === 0) {
       throw new Error(`Containers must be non-empty for ${modelKey}`);

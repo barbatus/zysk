@@ -8,6 +8,8 @@ import {
   TickerService,
 } from "@zysk/services";
 import { startOfDay, subDays } from "date-fns";
+import { getMaxTokens } from "#/llm/models/registry";
+
 
 import {
   MarketSentimentPredictor,
@@ -27,19 +29,24 @@ export async function fetchTickerTimeSeries(
   return tickerDataService.getTickerTimeSeries(symbol, startDate, endDate);
 }
 
+export const experimentTasksToTokens = {
+  "runTickerSentimentPredictionExperiment": getMaxTokens(TickerSentimentPredictor.modelKey),
+  "runMarketSentimentPredictionExperiment": getMaxTokens(MarketSentimentPredictor.modelKey),
+} as const;
+
 export async function fetchSentimentPredictionExperimentData(params: {
   symbol: string;
   startDate: Date;
   endDate: Date;
-  tokesLimit?: number;
+  taskName: keyof typeof experimentTasksToTokens;
   overlapLimit?: number;
 }) {
-  const { symbol, startDate, endDate, tokesLimit, overlapLimit } = params;
+  const { symbol, startDate, endDate, overlapLimit } = params;
   const newsBatchIds = await fetchNewsForPeriod({
     symbol,
     startDate,
     endDate,
-    tokesLimit,
+    taskName: params.taskName,
     overlapLimit,
   });
   const timeSeries = await fetchTickerTimeSeries(symbol, startDate, endDate);

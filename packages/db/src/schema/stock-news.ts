@@ -21,9 +21,6 @@ export enum StockNewsStatus {
 export interface StockNewsInsight {
   symbols: string[];
   sectors: string[];
-  title: string;
-  date: string;
-  url: string;
   insight: string;
   impact: string; // "positive" | "negative" | "mixed" | "neutral";
 }

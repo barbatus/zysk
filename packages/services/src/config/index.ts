@@ -85,6 +85,12 @@ export const OpenAIModelConfigSchema = z.object({
 
 export type OpenAIModelConfig = z.infer<typeof OpenAIModelConfigSchema>;
 
+export type BaseModelConfig = {
+  providerModelName?: string;
+  modelName: string;
+  temperature: number;
+}
+
 const appPostgresEnvVars = getPostgresEnvVariables("APP");
 
 export const AppConfigEnvVariablesSchema = z.object({
@@ -162,6 +168,17 @@ export const AppConfigEnvVariablesSchema = z.object({
     (val) => JSON.parse(val as string),
     z.record(z.enum(MODEL_KEYS), z.enum(MODEL_PROVIDERS)),
   ),
+  GOOGLE_API_KEY: z.string().optional(),
+  GOOGLE_MODEL_CONFIGS: z
+    .preprocess(
+      (val) => JSON.parse(val as string),
+      z.array(z.object({
+        providerModelName: z.string().optional(),
+        modelName: z.enum([ModelKeyEnum.GeminiFlash25]),
+        temperature: z.number(),
+      })),
+    )
+    .optional(),
 });
 
 export type AppConfigEnvVariables = z.infer<typeof AppConfigEnvVariablesSchema>;
@@ -218,19 +235,15 @@ export interface AppConfig {
   };
   deepSeek?: {
     apiKey: string;
-    modelConfigs: {
-      modelName: string;
-      temperature: number;
-      providerModelName?: string;
-    }[];
+    modelConfigs: BaseModelConfig[];
   };
   nebius?: {
     apiKey: string;
-    modelConfigs: {
-      modelName: string;
-      temperature: number;
-      providerModelName?: string;
-    }[];
+    modelConfigs: BaseModelConfig[];
+  };
+  google?: {
+    apiKey: string;
+    modelConfigs: BaseModelConfig[];
   };
   modelProviders?: Partial<Record<ModelKeyEnum, ModelProviderEnum>>;
 }
@@ -317,6 +330,12 @@ export function validate(config: Record<string, unknown>) {
       ? {
           apiKey: appConfigValidated.NEBIUS_API_KEY,
           modelConfigs: appConfigValidated.NEBIUS_MODEL_CONFIGS!,
+        }
+      : undefined,
+    google: appConfigValidated.GOOGLE_API_KEY
+      ? {
+          apiKey: appConfigValidated.GOOGLE_API_KEY,
+          modelConfigs: appConfigValidated.GOOGLE_MODEL_CONFIGS!,
         }
       : undefined,
   };

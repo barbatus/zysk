@@ -1,1 +1,0 @@
-ALTER TABLE "tickers" ADD COLUMN "supported" boolean DEFAULT false NOT NULL;

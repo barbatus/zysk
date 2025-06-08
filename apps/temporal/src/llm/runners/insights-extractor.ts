@@ -32,13 +32,13 @@ export class NewsInsightsExtractor extends ExperimentRunner<
       news: this.news
         .map(
           (n) =>
-            `# ARTICLE FOR SYMBOL: ${n.symbol}, ID: ${n.id}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}\n${n.markdown}`,
+            `# ARTICLE FOR SYMBOL: ${n.symbol}, ID: ${n.id}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: \`${n.url}\`\n${n.markdown}`,
         )
         .join("\n---\n"),
     };
   }
 
-  static override readonly modelKey = ModelKeyEnum.DeepSeekLlama;
+  static override readonly modelKey = ModelKeyEnum.GeminiFlash25;
 
   static override async create(params: {
     news: { id: string; markdown: string; url: string; newsDate: Date; symbol: string }[];
@@ -50,7 +50,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
       state,
       ...params,
       prompt: NewsInsightsExtractorPrompt,
-      model: modelsWithFallback[ModelKeyEnum.DeepSeekLlama]!,
+      model: modelsWithFallback[this.modelKey]!,
       onHeartbeat: params.onHeartbeat,
     });
   }

@@ -11,12 +11,13 @@ import {
   TickerNewsService,
 } from "@zysk/services";
 import { startOfDay, subDays } from "date-fns";
-import { groupBy, isNil, omit } from "lodash";
+import { isNil } from "lodash";
 // eslint-disable-next-line camelcase
 import { encoding_for_model } from "tiktoken";
 
 import { getMaxTokens } from "#/llm/models/registry";
 import { NewsInsightsExtractor } from "#/llm/runners/insights-extractor";
+import { experimentTasksToTokens } from "../experiments/activities";
 
 async function _fetchTickersToProcess(symbols: string[]) {
   const tickerNewsService = resolve(TickerNewsService);
@@ -39,17 +40,14 @@ async function batchNews(params: {
   news: {
     id: string;
     url: string;
-    markdown: string;
     newsDate: Date;
     tokenSize: number;
   }[];
-  tokesLimit?: number;
+  tokensLimit: number;
   overlapLimit?: number;
 }) {
   const { overlapLimit = 10_000, news } = params;
-  const tokesLimit =
-    params.tokesLimit ??
-    Math.min(150_000, getMaxTokens(NewsInsightsExtractor.modelKey));
+  const tokensLimit = params.tokensLimit;
 
   let count = 0;
   const newsBatches: (typeof news)[] = [];
@@ -72,7 +70,7 @@ async function batchNews(params: {
   };
 
   for (const n of news) {
-    if (count + n.tokenSize > tokesLimit - overlapLimit) {
+    if (count + n.tokenSize > tokensLimit - overlapLimit) {
       addCurrentBatch();
       currentBatch.length = 0;
       count = 0;
@@ -86,37 +84,39 @@ async function batchNews(params: {
   return newsBatches;
 }
 
+export const stockNewsTasksToTokens = {
+  "runNewsInsightsExtractorExperiment": Math.min(200_000,getMaxTokens(NewsInsightsExtractor.modelKey)),
+  ...experimentTasksToTokens,
+} as const;
+
 export async function fetchNewsForPeriod(params: {
   symbol: string;
   startDate: Date;
   endDate?: Date;
-  tokesLimit?: number;
+  taskName: keyof typeof stockNewsTasksToTokens;
   overlapLimit?: number;
 }) {
-  const { symbol, startDate, endDate } = params;
+  const { symbol, startDate, endDate, ...rest } = params;
 
   const tickerNewsService = resolve(TickerNewsService);
   const news = (
     await tickerNewsService.getNewsBySymbol(symbol, startDate, endDate)
-  ).map((n) => ({
-    ...n,
-    markdown: n.markdown!,
-  }));
+  );
 
-  return (await batchNews({ news, ...params })).map((batch) =>
+  return (await batchNews({ news, tokensLimit: stockNewsTasksToTokens[params.taskName], ...rest })).map((batch) =>
     batch.map((n) => n.id),
   );
 }
 
 export async function runBatchNews(params: {
   newsIds: string[];
-  tokesLimit?: number;
+  taskName: keyof typeof stockNewsTasksToTokens;
   overlapLimit?: number;
 }) {
   const { newsIds, ...rest } = params;
   const tickerNewsService = resolve(TickerNewsService);
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
-  return (await batchNews({ news, ...rest })).map((batch) =>
+  return (await batchNews({ news, tokensLimit: stockNewsTasksToTokens[params.taskName], ...rest })).map((batch) =>
     batch.map((n) => n.id),
   );
 }
@@ -124,8 +124,6 @@ export async function runBatchNews(params: {
 export async function runNewsInsightsExtractorExperiment(params: {
   symbol: string;
   newsIds: string[];
-  tokesLimit?: number;
-  overlapLimit?: number;
 }) {
   const { newsIds } = params;
   const tickerNewsService = resolve(TickerNewsService);
@@ -137,10 +135,9 @@ export async function runNewsInsightsExtractorExperiment(params: {
   const result = await runner.run();
 
   const tokenizer = encoding_for_model("gpt-4o");
-  const groupedInsights = groupBy(result, "newsId");
-  const values = Object.entries(groupedInsights).map(([id, insights]) => {
+  const values = result.map(({newsId, insights}) => {
     return {
-      id,
+      id: newsId,
       insights,
       insightsTokenSize: tokenizer.encode(JSON.stringify(insights)).length,
     };
@@ -231,7 +228,7 @@ export async function scrapeNews(url: string, maxTokens = 5000) {
     if (ex instanceof RequestTimeoutError) {
       throw ApplicationFailure.create({
         type: "RequestTimeout",
-        nonRetryable: true,
+        nonRetryable: attempt >= 3,
         message: ex.message,
         nextRetryDelay: `${Math.pow(2, attempt - 1) * 60}s`,
       });

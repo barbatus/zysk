@@ -7,39 +7,37 @@ const insightsParser = new InsightsParser();
 
 export const NewsInsightsExtractorPrompt = new ExperimentPrompt<Insights>({
   template: dedent`
-You are a financial news analysis expert specializing in extracting **actionable, structured insights** from stock market news articles.
-Each article is designed to provide comprehensive information useful for **sentiment analysis** and **market forecasting**,
-particularly focused on the specific ticker symbol provided.
+You are a financial news analysis expert specializing in extracting **comprehensive, actionable, and structured insights** from stock market news articles.
+Each article provides information essential for **detailed sentiment analysis and accurate market forecasting**, with priority given to insights about the specified ticker symbol.
 
-Each article begins with \`# ARTICLE FOR SYMBOL: <symbol>\` and articles are separated by \`---\`.
+Each article starts with \`# ARTICLE FOR SYMBOL: <symbol>\` and articles are separated by \`---\`.
 
 ---
 
 # TASK
-
-For **each news article**, first **extract and analyze sentiment and insights specifically related to the designated ticker symbol**.
-After thoroughly covering the primary symbol, include any other relevant insights that could influence:
+For **each news article**, meticulously **extract and thoroughly analyze all potential insights** related explicitly to the designated ticker symbol first.
+After fully covering these primary symbol insights, **also comprehensively extract additional insights** that could influence:
 
 - **Other individual stock tickers** (e.g., competitors, suppliers, partners)
 - **Industry sectors** (e.g., tech, healthcare, energy)
-- **General market sentiment** (e.g., macroeconomic indicators, geopolitical events)
-- **General market sentiment** (e.g., macroeconomic trends, geopolitical impacts)
+- **Broader market sentiment** (macroeconomic indicators, geopolitical events, regulatory developments)
 
 ---
 
 # GUIDELINES
-
-- Provide **detailed insights** clearly explaining how the news can influence short-term and/or long-term sentiment
-- **Prioritize** insights directly related to the designated ticker symbol.
-- Include additional insights about sectors or broader market sentiment only after comprehensively analyzing the primary symbol.
-- Use **bullet points** to separate multiple insights clearly.
-- Translate company names into ticker symbols whenever possible.
-- Infer ticker symbols if company names are mentioned without explicit tickers (e.g., "Apple" → "AAPL").
-- Ensure insights are descriptive, fact-based, and sufficiently detailed for robust sentiment analysis and forecasting.
+- **Extract every possible insight**, even minor ones, that could slightly impact short-term or long-term sentiment.
+- Clearly **prioritize** and deeply analyze insights directly associated with the primary ticker symbol.
+- After primary analysis, include **all relevant insights** about competitors, sectors, or overall market sentiment.
+- Clearly separate each insight as individual items in the \`insights\` array.
+- **Translate company names** into ticker symbols whenever possible.
+- Infer ticker symbols if only company names are provided (e.g., "Apple" → "AAPL").
+- Ensure each insight is detailed, descriptive, fact-based, and sufficient for robust sentiment analysis and forecasting.
 
 # CRITICAL INSTRUCTIONS
 - **Output should be in JSON format as specified in the **OUTPUT FORMAT** section without any additional text.**
-- If any insight is not related to the designated ticker symbol, do not include the ticker symbol to \`symbols\`.
+- Include the article ticker symbol in \`symbols\` only if the insight is directly related to the symbol.
+- Clearly list **all ticker symbols** affected by each insight (primary and others mentioned).
+- **Do not omit any relevant insights** that can affect stocks, sectors, or the market broadly.
 
 ---
 

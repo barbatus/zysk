@@ -4,11 +4,13 @@ import {
   DEEPSEEK_MODEL_KEYS,
   getConfig,
   META_MODEL_KEYS,
+  GOOGLE_MODEL_KEYS,
   type MetaModelKey,
   ModelKeyEnum,
   ModelProviderEnum,
   OPENAI_MODEL_KEYS,
   type OpenAIModelKey,
+  type GoogleModelKey,
 } from "@zysk/services";
 import { isObject } from "lodash";
 
@@ -20,6 +22,7 @@ import {
 import { getDeepSeekModelContainers } from "./deepseek-models";
 import { getMetaContainers } from "./meta-models";
 import { getOpenAIModelContainers } from "./openai-models";
+import { getGoogleContainers } from "./google-models";
 
 export class ModelNotFoundError extends Error {
   constructor(modelKey: ModelKeyEnum) {
@@ -40,6 +43,7 @@ export const MODEL_TO_MAX_TOKENS = {
   },
   [ModelKeyEnum.Llama33]: 128_000,
   [ModelKeyEnum.DeepSeekLlama]: 128_000,
+  [ModelKeyEnum.GeminiFlash25]: 1_000_000,
 } as Record<ModelKeyEnum, number | Record<ModelProviderEnum, number>>;
 
 export function getMaxTokens(modelKey: ModelKeyEnum) {
@@ -54,8 +58,6 @@ export function getMaxTokens(modelKey: ModelKeyEnum) {
   }
   return config as number;
 }
-
-type DeepSeekModelKey = ModelKeyEnum.DeepSeekReasoner;
 
 function createSequentialModelContainer(
   modelKey: ModelKeyEnum,
@@ -91,6 +93,13 @@ function createSequentialModelContainer(
     );
   }
 
+  if (GOOGLE_MODEL_KEYS.includes(modelKey)) {
+    containers = getGoogleContainers(
+      modelKey as GoogleModelKey,
+      ModelProviderEnum.Google,
+    );
+  }
+
   return new SequentialModelContainer(
     modelKey,
     containers,
@@ -104,7 +113,7 @@ const models = new Proxy(
   {
     get: (target, prop: string) => {
       const config = getConfig();
-      const modelKey = prop as OpenAIModelKey | DeepSeekModelKey;
+      const modelKey = prop as ModelKeyEnum;
       const model =
         target[modelKey] ??
         createSequentialModelContainer(modelKey, config.modelProviders);
@@ -155,8 +164,12 @@ export function createSequentialModelContainerWithFallback(
         models[ModelKeyEnum.Llama33]!,
       ]);
     case ModelKeyEnum.DeepSeekLlama:
+        return new SequentialModelContainerWithFallback([
+          models[ModelKeyEnum.Llama33]!,
+        ]);
+    case ModelKeyEnum.GeminiFlash25:
       return new SequentialModelContainerWithFallback([
-        models[ModelKeyEnum.DeepSeekLlama]!,
+        models[ModelKeyEnum.GeminiFlash25]!,
       ]);
     default:
       throw new ModelNotFoundError(modelKey);

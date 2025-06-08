@@ -1,6 +1,6 @@
-import { executeChild, proxyActivities } from "@temporalio/workflow";
+import { executeChild, proxyActivities, ApplicationFailure } from "@temporalio/workflow";
 import { StockNewsStatus } from "@zysk/db";
-import { endOfDay, parse, startOfDay } from "date-fns";
+import { endOfWeek, parse, startOfDay } from "date-fns";
 import { chunk, mapKeys, uniqBy } from "lodash";
 
 import type * as activities from "./activities";
@@ -70,7 +70,7 @@ export async function scrapeTickerNewsBatchAndSave(
   }));
 }
 
-export async function syncTickerNews(
+export async function runScrapeTickerNews(
   symbol: string,
   news: { url: string; title: string; newsDate: Date }[],
 ) {
@@ -89,19 +89,33 @@ export async function syncTickerNews(
     );
   }
 
-  return results.flatMap((r) => {
+  const attemptedNews = results.flatMap((r) => {
     if (r.status === "fulfilled") {
       return r.value;
     }
     return [];
   });
+
+  const scrapedNews = attemptedNews.filter(n => n.status === StockNewsStatus.Scraped);
+  const successRate = Math.round(scrapedNews.length / attemptedNews.length * 100);
+  if (successRate >= 0.8) {
+    return attemptedNews;
+  }
+  throw ApplicationFailure.create({
+    type: "ScrapeError",
+    message: `Success rate of news scraping is ${successRate}%`,
+    nonRetryable: true,
+  });
 }
 
-export async function syncExtractNewsInsights(
+export async function runExtractNewsInsights(
   symbol: string,
   newsIds: string[],
 ) {
-  const newsBatches = await proxy.runBatchNews({ newsIds });
+  const newsBatches = await proxy.runBatchNews({
+    newsIds,
+    taskName: "runNewsInsightsExtractorExperiment",
+  });
 
   await Promise.all(
     newsBatches.map(async (newsBatch) => {
@@ -113,14 +127,14 @@ export async function syncExtractNewsInsights(
   );
 }
 
-export async function syncTickerNewsForPeriod(
+export async function scrapeTickerNewsForPeriod(
   symbol: string,
   startDate: Date,
   endDate?: Date,
 ) {
   const currentNews = await proxy.fetchTickerNews(symbol, startDate, endDate);
-  const news = await syncTickerNews(symbol, currentNews);
-  await executeChild(syncExtractNewsInsights, {
+  const news = await runScrapeTickerNews(symbol, currentNews);
+  await executeChild(runExtractNewsInsights, {
     args: [
       symbol,
       news.filter((n) => n.status === StockNewsStatus.Scraped).map((n) => n.id),
@@ -129,13 +143,13 @@ export async function syncTickerNewsForPeriod(
 }
 
 export async function syncMarketNewsForPeriod(startDate: Date, endDate?: Date) {
-  await syncTickerNewsForPeriod("GENERAL", startDate, endDate);
+  await scrapeTickerNewsForPeriod("GENERAL", startDate, endDate);
 }
 
 export async function syncGeneralNewsDaily() {
   const sinceDates = await proxy.getNewsToFetchDaily(["GENERAL"]);
 
-  await executeChild(syncTickerNewsForPeriod, {
+  await executeChild(scrapeTickerNewsForPeriod, {
     args: ["GENERAL", sinceDates[0].startDate],
   });
 }
@@ -144,22 +158,22 @@ export async function syncTickerNewsDaily(symbols: string[]) {
   const symbolsSince = await proxy.getNewsToFetchDaily(symbols);
 
   for (const { symbol, startDate } of symbolsSince) {
-    await executeChild(syncTickerNewsForPeriod, {
+    await executeChild(scrapeTickerNewsForPeriod, {
       args: [symbol, startDate],
     });
   }
 }
 
-export async function scrapeTickerNewsWeekly(symbols: string[]) {
+export async function syncTickerNewsWeekly(symbols: string[]) {
   const symbolsSince = await proxy.getNewsToFetchWeekly(symbols);
 
   for (const { symbol, failedNews, sinceDate } of symbolsSince) {
     if (sinceDate) {
-      await executeChild(syncTickerNewsForPeriod, {
+      await executeChild(scrapeTickerNewsForPeriod, {
         args: [symbol, sinceDate],
       });
     } else {
-      await executeChild(syncTickerNews, {
+      await executeChild(runScrapeTickerNews, {
         args: [symbol, failedNews],
       });
     }
@@ -167,7 +181,7 @@ export async function scrapeTickerNewsWeekly(symbols: string[]) {
 }
 
 export async function syncGeneralNewsWeekly() {
-  await executeChild(scrapeTickerNewsWeekly, {
+  await executeChild(syncTickerNewsWeekly, {
     args: [["GENERAL"]],
   });
 }
@@ -181,16 +195,16 @@ export async function syncAllNewsDaily(symbols: string[]) {
 
 export async function syncAllNewsWeekly(symbols: string[]) {
   await executeChild(syncGeneralNewsWeekly);
-  await executeChild(scrapeTickerNewsWeekly, {
+  await executeChild(syncTickerNewsWeekly, {
     args: [symbols],
   });
 }
 
 export async function testInsightsExtract() {
-  const startDate = parse("2025-06-06", "yyyy-MM-dd", new Date());
-  await syncTickerNewsForPeriod(
-    "META",
+  const startDate = parse("2025-06-02", "yyyy-MM-dd", new Date());
+  await scrapeTickerNewsForPeriod(
+    "UBER",
     startOfDay(startDate),
-    endOfDay(startDate),
+    endOfWeek(startDate),
   );
 }

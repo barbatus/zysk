@@ -4,13 +4,12 @@ import { JsonOutputParser, ParserError } from "./parsers";
 
 const NewsInsightSchema = z.object({
   newsId: z.string(),
-  symbols: z.array(z.string()),
-  sectors: z.array(z.string()),
-  title: z.string(),
-  date: z.string(),
-  url: z.string(),
-  insight: z.string(),
-  impact: z.string(),
+  insights: z.array(z.object({
+    insight: z.string(),
+    impact: z.string(),
+    symbols: z.array(z.string()),
+    sectors: z.array(z.string()),
+  })),
 });
 
 const InsightsSchema = z.array(NewsInsightSchema);
@@ -35,18 +34,23 @@ export class InsightsParser extends JsonOutputParser<Insights> {
 
   override getFormatInstructions(): string {
     return `
-You must provide output as JSON array with the following structure:
+You must provide output as JSON array with the following structure,
+each array item is a news article with insights.
 \`\`\`json
   [
     {
         "newsId": "id of the news article",
-        "symbols": "list of ticker symbols this insight is about if any",
-        "sectors": "list of sectors this insight is about if any, if it's about general market use 'GENERAL' value",
         "title": "title of the article",
         "date": "date of the article",
         "url": "url of the article",
-        "insight": "description of the insight",
-        "impact": "impact on the stock price as lower case values from: positive, negative, mixed, neutral",
+        "insights": [
+          {
+            "insight": "description of the insight",
+            "impact": "impact on the stock price as lower case values from: positive, negative, mixed, neutral",
+            "symbols": "list of ticker symbols this insight is about if any",
+            "sectors": "list of sectors this insight is about if any, if it's about general market use 'GENERAL' value",
+          }
+        ]
     },
     ...
   ]

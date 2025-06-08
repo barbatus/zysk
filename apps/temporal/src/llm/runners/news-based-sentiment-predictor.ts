@@ -94,7 +94,7 @@ export class TickerSentimentPredictor extends NewsBasedSentimentPredictor {
       state,
       ...params,
       prompt: TickerSentimentPredictionPrompt,
-      model: modelsWithFallback[ModelKeyEnum.DeepSeekReasoner]!,
+      model: modelsWithFallback[this.modelKey]!,
     });
   }
 }
@@ -117,7 +117,7 @@ export class MarketSentimentPredictor extends ExperimentRunner<
       ...params,
       symbol: "GENERAL",
       prompt: GeneralMarketSentimentPredictionPrompt,
-      model: modelsWithFallback[ModelKeyEnum.GptO3Mini]!,
+      model: modelsWithFallback[this.modelKey]!,
     });
   }
 }
