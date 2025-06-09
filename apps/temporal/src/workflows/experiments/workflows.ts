@@ -163,7 +163,6 @@ export async function predictSentimentWeekly(params: {
     prevWeekDate,
     currentWeekDate,
   );
-
 }
 
 export async function testTicker() {

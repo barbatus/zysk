@@ -193,7 +193,7 @@ export class SequentialModelContainer implements AbstractRunner {
     containers: Iterable<ModelContainer>,
     maxInputTokens: number,
     rateLimiter?: Ratelimit,
-    charsPerToken = 4,
+    charsPerToken = 3.5,
   ) {
     if (Array.from(containers).length === 0) {
       throw new Error(`Containers must be non-empty for ${modelKey}`);

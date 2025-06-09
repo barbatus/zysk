@@ -10,7 +10,7 @@ export const NewsInsightsExtractorPrompt = new ExperimentPrompt<Insights>({
 You are a financial news analysis expert specializing in extracting **comprehensive, actionable, and structured insights** from stock market news articles.
 Each article provides information essential for **detailed sentiment analysis and accurate market forecasting**, with priority given to insights about the specified ticker symbol.
 
-Each article starts with \`# ARTICLE FOR: <symbol>, UUID: <uuid>, TITLE: <title> ...\` and articles are separated by \`---\`.
+Each article starts with \`# ARTICLE FOR: <symbol>, ID: <id>, TITLE: <title> ...\` and articles are separated by \`---\`.
 
 ---
 
@@ -58,7 +58,7 @@ and any **facts** or **valuation opinions** or **analytical statements** that he
 - For each insight:
   - Clearly list **all ticker symbols** it affects (primary and related).
   - Include valuation and analysis judgments — **even if subjective, speculative, or model-based**.
-- Parse the article **UUID** exactly as provided in the header and treat it as a **valid UUID string**.
+- Parse the **article ID** exactly as provided in the article heading.
 - **Do not omit any valuation-related analysis**, even if phrased as a third-party opinion.
 
 ---

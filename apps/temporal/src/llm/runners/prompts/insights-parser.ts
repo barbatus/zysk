@@ -3,7 +3,7 @@ import { z, ZodError } from "zod";
 import { JsonOutputParser, ParserError } from "./parsers";
 
 const NewsInsightSchema = z.object({
-  newsId: z.string(),
+  acticleId: z.string(),
   insights: z.array(z.object({
     insight: z.string(),
     impact: z.string().optional().default("neutral"),
@@ -39,7 +39,7 @@ each array item is a news article with insights.
 \`\`\`json
   [
     {
-        "newsId": "UUID of the news article from the article heading",
+        "acticleId": "ID of the news article from the article heading",
         "insights": [
           {
             "insight": "description of the insight",

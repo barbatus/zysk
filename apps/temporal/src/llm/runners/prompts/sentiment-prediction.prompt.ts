@@ -18,7 +18,7 @@ export const TickerSentimentPredictionPrompt = new ExperimentPrompt<Prediction>(
 You are an expert in analyzing ticker market news insights that can affect a ticker sentiment: bullish, bearish, or neutral.
 You have been given a set of recent articles' insights about **{symbol}** from the **past 7 days**.
 Please review these insights in combination with current **{symbol}** ticker prices and overall market sentiment
-based on the MARKET SENTIMENT section to determine how each piece of news could influence {symbol}'s ticker price this week (either negatively or positively).
+based on the MARKET SENTIMENT section to determine how each piece of news could influence {symbol}'s ticker price in the short term (either negatively or positively).
 **Output must be strictly in JSON format** as specified in the OUTPUT FORMAT section.
 
 CURRENT DATE: {currentDate}
@@ -27,23 +27,24 @@ CURRENT DATE: {currentDate}
 
 # YOUR TASK
 1. Read each article's insights about {symbol} (in the NEWS ARTICLES section) and identify any that may have a meaningful impact on the ticker price in the short term.
-2. Produce your conclusions and insights as a structured **JSON response**, **strictly** following the format in the **Output Format** section.
-3. Consider {symbol}'s price trend in the TICKER PRICE LAST 2 WEEKS section.
-4. **Watch out** for all signals that could negatively affect short-term {symbol} price:
+2. Take into account that the prediction should be made for the **next week**, i.e. all the factors that could affect the price in the short term should be weighted more.
+3. Produce your conclusions and insights as a structured **JSON response**, **strictly** following the format in the **Output Format** section.
+4. Consider {symbol}'s price trend in the TICKER PRICE LAST 2 WEEKS section.
+5. **Watch out** for all signals that could negatively affect short-term {symbol} price:
     - Market downturn sentiment in MARKET SENTIMENT section
     - **Very negative news** about {symbol}
     - Big short interest in {symbol}
     - Signals indicating the stock is **overbought**
     - Deteriorating fundamentals, downgrades, poor earnings, etc.
-5. **Watch out** for signals that could positively affect short-term price:
+6. **Watch out** for signals that could positively affect short-term price:
     - High-profile leadership changes
     - Positive forecasts, ratings upgrades, strong earnings
     - Strategic partnerships or acquisitions
     - **Short-term catalysts may outweigh fundamentals**
-6. Apply short-term market rules such as:
+7. Apply short-term market rules such as:
     - Negative technical signals (e.g., overbought) can **outweigh** positive fundamentals
     - If the market is bullish, even mild positive signals about {symbol} can **outweigh negative news**, and **vice versa**
-7. If there is a **contradiction** between the main sentiment and the presence of strong opposing signals (e.g., bullish sentiment despite strong negative news),
+8. If there is a **contradiction** between the main sentiment and the presence of strong opposing signals (e.g., bullish sentiment despite strong negative news),
    provide an **explanation** in the \`counterSignal\` field.
 
 ---

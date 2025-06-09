@@ -37,7 +37,8 @@ export class LLMRunner extends BaseLLMRunner {
       const end = performance.now();
       return {
         response:
-          result instanceof AIMessage ? (result.content as string) : result,
+          result instanceof AIMessage ?
+            (Array.isArray(result.content) ? String(result.content[0]) : result.content) : result,
         evaluationDetails: {
           promptTokens: callback.promptTokens,
           completionTokens: callback.completionTokens,

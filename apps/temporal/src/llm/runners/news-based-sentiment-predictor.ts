@@ -10,6 +10,7 @@ import {
   GeneralMarketSentimentPredictionPrompt,
   TickerSentimentPredictionPrompt,
 } from "./prompts/sentiment-prediction.prompt";
+import { dedent } from "ts-dedent";
 
 export interface NewsBasedExperimentParams<TResult = Prediction> {
   state: Experiment;
@@ -37,12 +38,22 @@ class NewsBasedSentimentPredictor extends ExperimentRunner<
   }
 
   override async mapPromptValues(): Promise<Record<string, string>> {
+    const insightsToMd = (insights: StockNewsInsight[]) => {
+      return insights.map((i, index) => dedent`
+        ### Insight ${index + 1}
+         - Insight description: ${i.insight}
+         - Impact: ${i.impact}
+         - Symbols: ${i.symbols.join(", ")}
+         - Sectors: ${i.sectors.join(", ")}
+      `).join("\n");
+    };
+
     return {
       symbol: this.symbol,
       news: this.newsInsights
         .map(
           (n) =>
-            `# ARTICLE TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}:\n\`\`\`json\n${JSON.stringify(n.insights, null, 2)}\n\`\`\``,
+            `# ARTICLE TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}:\n${insightsToMd(n.insights)}`,
         )
         .join("\n---\n"),
       currentDate: format(this.currentDate, "yyyy-MM-dd"),

@@ -5,6 +5,7 @@ import { ExperimentRunner } from "./experimenter";
 import { type NewsBasedExperimentParams } from "./news-based-sentiment-predictor";
 import { NewsInsightsExtractorPrompt } from "./prompts/insights-extractor.prompt";
 import { type Insights } from "./prompts/insights-parser";
+import { type AgentExecutionResult } from "#/llm/core/schemas";
 
 export class NewsInsightsExtractor extends ExperimentRunner<
   Insights,
@@ -17,6 +18,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
     newsDate: Date;
     url: string;
   }[];
+  private readonly indexToUuid: Map<number, string> = new Map();
 
   constructor(
     params: Omit<NewsBasedExperimentParams<Insights>, "symbol" | "currentDate" | "newsInsights"> & {
@@ -28,14 +30,29 @@ export class NewsInsightsExtractor extends ExperimentRunner<
   }
 
   override async mapPromptValues(): Promise<Record<string, string>> {
+    for (const [index, n] of this.news.entries()) {
+      this.indexToUuid.set(index, n.id);
+    }
     return {
       news: this.news
         .map(
-          (n) =>
-            `# ARTICLE FOR: ${n.symbol}, UUID: ${n.id}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: \`${n.url}\`:\n${n.markdown}`,
+          (n, index) =>
+            `# ARTICLE FOR: ${n.symbol}, ID: ${index}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: \`${n.url}\`:\n${n.markdown}`,
         )
         .join("\n---\n"),
     };
+  }
+
+  override async setSuccess(result: AgentExecutionResult<Insights>) {
+    const insights = result.response as Insights;
+    const values = insights.map((i, index) => ({
+      ...i,
+      acticleId: this.indexToUuid.get(index)!,
+    }));
+    return super.setSuccess({
+      ...result,
+      response: values,
+    });
   }
 
   static override readonly modelKey = ModelKeyEnum.GeminiFlash25;

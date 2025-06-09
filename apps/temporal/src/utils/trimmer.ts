@@ -1,4 +1,5 @@
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { encoding_for_model } from "tiktoken";
 
 export interface TrimResult {
   wasTrimmed: boolean;
@@ -18,10 +19,10 @@ export class PromptTrimmer {
   ) {}
 
   private estimateTokens(text: string): number {
-    const specialChars = (text.match(/\w+/g) ?? []).length;
-    const baseChars = text.length;
-    const weightedLength = baseChars + specialChars * 0.5;
-    return Math.ceil(weightedLength / this.charsPerToken);
+    const tokenizer = encoding_for_model("gpt-4o");
+    const tokens = tokenizer.encode(text);
+    tokenizer.free();
+    return tokens.length;
   }
 
   private shouldTrim(text: string) {

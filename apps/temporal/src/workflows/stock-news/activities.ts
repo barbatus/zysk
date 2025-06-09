@@ -90,16 +90,16 @@ async function batchNewsInsights(params: {
     insightsTokenSize: number;
   }[];
   tokensLimit: number;
+  safetyMargin?: number;
 }) {
-  const { insights } = params;
-  const tokensLimit = params.tokensLimit;
+  const { insights, tokensLimit, safetyMargin = 0 } = params;
 
   let count = 0;
   const newsBatches: (typeof insights)[] = [];
   const currentBatch: typeof insights = [];
 
   for (const n of insights) {
-    if (count + n.insightsTokenSize > tokensLimit) {
+    if (count + n.insightsTokenSize > tokensLimit - safetyMargin) {
       newsBatches.push(currentBatch);
       currentBatch.length = 0;
       count = 0;
@@ -115,15 +115,15 @@ async function batchNewsInsights(params: {
 
 
 export const stockNewsTasksToTokens = {
+  // Apparently, extracting insights is hard so making context smaller, otherwise most models run a few minutes.
   "runNewsInsightsExtractorExperiment": Math.min(32_000, getMaxTokens(NewsInsightsExtractor.modelKey)),
-  ...experimentTasksToTokens,
 } as const;
 
 export async function fetchNewsInsightsForPeriod(params: {
   symbol: string;
   startDate: Date;
   endDate?: Date;
-  taskName: keyof typeof stockNewsTasksToTokens;
+  taskName: keyof typeof stockNewsTasksToTokens | keyof typeof experimentTasksToTokens;
   overlapLimit?: number;
 }) {
   const { symbol, startDate, endDate, ...rest } = params;
@@ -137,7 +137,8 @@ export async function fetchNewsInsightsForPeriod(params: {
 
   return (await batchNewsInsights({
     insights: filteredInsights,
-    tokensLimit: stockNewsTasksToTokens[params.taskName],
+    safetyMargin: 1000,
+    tokensLimit: stockNewsTasksToTokens[params.taskName] ?? experimentTasksToTokens[params.taskName],
     ...rest,
   })).map((batch) => batch.map((n) => n.id));
 }
@@ -171,11 +172,11 @@ export async function runNewsInsightsExtractorExperiment(params: {
   const result = await runner.run();
 
   const tokenizer = encoding_for_model("gpt-4o");
-  const values = result.map(({newsId, insights}) => {
+  const values = result.map(({acticleId, insights}) => {
     return {
-      id: newsId,
+      id: acticleId,
       insights,
-      insightsTokenSize: tokenizer.encode(JSON.stringify(insights)).length,
+      insightsTokenSize: tokenizer.encode(JSON.stringify(insights, null, 2)).length,
     };
   });
   tokenizer.free();
