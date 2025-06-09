@@ -43,7 +43,7 @@ export class FinnhubService {
     const { symbol, startDate, endDate } = params;
     const from = format(startDate, "yyyy-MM-dd");
     const to = format(endDate ?? new Date(), "yyyy-MM-dd");
-    const path = symbol === "general" ? "news" : "company-news";
+    const path = symbol.toLowerCase() === "general" ? "news" : "company-news";
     const response = await axios.get<
       {
         id: number;

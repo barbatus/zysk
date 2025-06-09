@@ -11,7 +11,7 @@ import {
 import type * as newsActivities from "../stock-news/activities";
 import {
   syncAllNewsDaily,
-  syncMarketNewsForPeriod,
+  scrapeMarketNewsForPeriod,
   scrapeTickerNewsForPeriod,
 } from "../stock-news/workflows";
 import {
@@ -43,10 +43,10 @@ export async function runTickerSentimentPredictionExperiment(
     });
 
   const predictions = await Promise.all(
-    newsBatchIds.map((newsBatchId) =>
+    newsBatchIds.map((newsIds) =>
       proxy.runTickerSentimentPredictionExperiment({
         symbol,
-        newsIds: newsBatchId,
+        newsIds,
         timeSeries,
         currentDate: endDate,
       }),
@@ -64,7 +64,7 @@ export async function runMarketSentimentPredictionExperiment(
   startDate: Date,
   endDate: Date,
 ) {
-  const newsBatches = await proxy.fetchNewsForPeriod({
+  const newsBatches = await proxy.fetchNewsInsightsForPeriod({
     symbol: "GENERAL",
     startDate,
     endDate,
@@ -114,10 +114,10 @@ export async function predictSentimentsDaily() {
   await executeChild(syncTickerQuotesDaily, {
     args: [symbols],
   });
-
   await executeChild(syncAllNewsDaily, {
     args: [symbols],
   });
+
   await executeChild(runMarketSentimentPredictionExperiment, {
     args: [prevDate, currentDate],
   });
@@ -145,15 +145,17 @@ export async function predictSentimentWeekly(params: {
     executeChild(syncTickerQuotesForPeriod, {
       args: [[symbol], subDays(prevWeekDate, 7), addDays(currentWeekDate, 7)],
     }),
-    executeChild(syncMarketNewsForPeriod, {
+    executeChild(scrapeMarketNewsForPeriod, {
       args: [prevWeekDate, currentWeekDate],
     }),
-    executeChild(scrapeTickerNewsForPeriod, {
-      args: [symbol, prevWeekDate, currentWeekDate],
-    }),
   ]);
+
   await executeChild(runMarketSentimentPredictionExperiment, {
     args: [prevWeekDate, currentWeekDate],
+  });
+
+  await executeChild(scrapeTickerNewsForPeriod, {
+    args: [symbol, prevWeekDate, currentWeekDate],
   });
 
   await runTickerSentimentPredictionExperiments(
@@ -161,11 +163,12 @@ export async function predictSentimentWeekly(params: {
     prevWeekDate,
     currentWeekDate,
   );
+
 }
 
 export async function testTicker() {
   await predictSentimentWeekly({
-    symbol: "MRK",
+    symbol: "AVGO",
     startWeek: "2025-06-02",
   });
 }

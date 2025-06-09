@@ -96,7 +96,7 @@ export abstract class StatefulModelRunner<
           },
         },
       );
-      return retrier.try();
+      return await retrier.try();
     } catch (error) {
       logger.error(
         {

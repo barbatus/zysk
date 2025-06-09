@@ -1,4 +1,4 @@
-import { type Experiment } from "@zysk/db";
+import { type Experiment, StockNewsInsight } from "@zysk/db";
 import { ExperimentService, ModelKeyEnum, resolve } from "@zysk/services";
 import { format } from "date-fns";
 
@@ -16,7 +16,7 @@ export interface NewsBasedExperimentParams<TResult = Prediction> {
   symbol: string;
   prompt: ExperimentPrompt<TResult>;
   model: AbstractContainer;
-  news: { id: string; markdown: string; url: string; newsDate: Date }[];
+  newsInsights: { id: string; insights: StockNewsInsight[]; newsDate: Date; url: string }[];
   currentDate: Date;
   onHeartbeat?: () => Promise<void>;
 }
@@ -26,27 +26,23 @@ class NewsBasedSentimentPredictor extends ExperimentRunner<
   Prediction
 > {
   private readonly symbol: string;
-  private readonly news: {
-    markdown: string;
-    newsDate: Date;
-    url: string;
-  }[];
+  private readonly newsInsights: NewsBasedExperimentParams["newsInsights"];
   private readonly currentDate: Date;
 
   constructor(params: NewsBasedExperimentParams) {
     super(params.state, params.prompt, params.model, params.onHeartbeat);
     this.symbol = params.symbol;
-    this.news = params.news;
+    this.newsInsights = params.newsInsights;
     this.currentDate = params.currentDate;
   }
 
   override async mapPromptValues(): Promise<Record<string, string>> {
     return {
       symbol: this.symbol,
-      news: this.news
+      news: this.newsInsights
         .map(
           (n) =>
-            `# ARTICLE TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}\n${n.markdown}`,
+            `# ARTICLE TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}:\n\`\`\`json\n${JSON.stringify(n.insights, null, 2)}\n\`\`\``,
         )
         .join("\n---\n"),
       currentDate: format(this.currentDate, "yyyy-MM-dd"),
@@ -82,7 +78,7 @@ export class TickerSentimentPredictor extends NewsBasedSentimentPredictor {
 
   static override async create(params: {
     symbol: string;
-    news: { id: string; markdown: string; url: string; newsDate: Date }[];
+    newsInsights: NewsBasedExperimentParams["newsInsights"];
     marketPrediction: Experiment["responseJson"];
     timeSeries: { date: Date; closePrice: number }[];
     currentDate: Date;
@@ -107,7 +103,7 @@ export class MarketSentimentPredictor extends ExperimentRunner<
 
   static override async create(params: {
     currentDate: Date;
-    news: { id: string; markdown: string; url: string; newsDate: Date }[];
+    newsInsights: NewsBasedExperimentParams["newsInsights"];
     onHeartbeat?: () => Promise<void>;
   }) {
     const experimentService = resolve(ExperimentService);

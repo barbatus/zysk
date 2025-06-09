@@ -15,49 +15,57 @@ const predictionParser = new PredictionParser();
 export const TickerSentimentPredictionPrompt = new ExperimentPrompt<Prediction>(
   {
     template: dedent`
-You are an expert in analyzing ticker market news and extracting insights that can affect a ticker sentiment: bullish, bearish, or neutral.
-You have been given a set of recent news articles about **{symbol}** from the **past 7 days**.
-Please review these articles in combination with current **{symbol}** ticker prices and overall market sentiment
-based on MARKET SENTIMENT to determine how each piece of news could influence {symbol}'s ticker price this week (either negatively or positively).
-Output should be strictly in JSON format as specified in the OUTPUT FORMAT section.
+You are an expert in analyzing ticker market news insights that can affect a ticker sentiment: bullish, bearish, or neutral.
+You have been given a set of recent articles' insights about **{symbol}** from the **past 7 days**.
+Please review these insights in combination with current **{symbol}** ticker prices and overall market sentiment
+based on the MARKET SENTIMENT section to determine how each piece of news could influence {symbol}'s ticker price this week (either negatively or positively).
+**Output must be strictly in JSON format** as specified in the OUTPUT FORMAT section.
 
 CURRENT DATE: {currentDate}
 
+---
+
 # YOUR TASK
-1. Read the news articles about {symbol} (in NEWS ARTICLES section) and identify any insights that may have a meaningful impact on the ticker price in the short term.
+1. Read each article's insights about {symbol} (in the NEWS ARTICLES section) and identify any that may have a meaningful impact on the ticker price in the short term.
 2. Produce your conclusions and insights as a structured **JSON response**, **strictly** following the format in the **Output Format** section.
-3. Take into account {symbol} quotes from {symbol} TICKER PRICE LAST 2 WEEKS section.
-4. **Watch out** for all signals that could negatively affect short term {symbol} ticker price in short term such as:
-    - market downturn sentiment in MARKET SENTIMENT section
-    - **very negative** news about {symbol} in NEWS ARTICLES section
-    - big short interest in {symbol} in NEWS ARTICLES section
-    - signs that stock is overbought in NEWS ARTICLES section
-    - etc
-5.  **Watch out** for all signals that could positively affect short term ticker price:
-    - since the goal is to predict ticker sentiment certain signals might have stronger effect over fundamental factors
-    - for example, if some high profile person joins the company it might have a positive impact on the stock price in the short term stronger that negative news of tariff being raised
-6. Additionaly, pay attention to short term rules the market sometimes follows such as:
-      - some of the negative signals might easily outweigh strong positive signals, for example, "if there is a signal that stock is overbought" etc
-      - if market is bullish then any positive signal about {symbol} might outweigh even strong negative signals and vice versa
-      - etc
-7. If there is a very negative news signal present as described in point 4, but sentiment is bullish, or **vice versa**,
-   provide explanation in the **signal** field of the JSON response.
+3. Consider {symbol}'s price trend in the TICKER PRICE LAST 2 WEEKS section.
+4. **Watch out** for all signals that could negatively affect short-term {symbol} price:
+    - Market downturn sentiment in MARKET SENTIMENT section
+    - **Very negative news** about {symbol}
+    - Big short interest in {symbol}
+    - Signals indicating the stock is **overbought**
+    - Deteriorating fundamentals, downgrades, poor earnings, etc.
+5. **Watch out** for signals that could positively affect short-term price:
+    - High-profile leadership changes
+    - Positive forecasts, ratings upgrades, strong earnings
+    - Strategic partnerships or acquisitions
+    - **Short-term catalysts may outweigh fundamentals**
+6. Apply short-term market rules such as:
+    - Negative technical signals (e.g., overbought) can **outweigh** positive fundamentals
+    - If the market is bullish, even mild positive signals about {symbol} can **outweigh negative news**, and **vice versa**
+7. If there is a **contradiction** between the main sentiment and the presence of strong opposing signals (e.g., bullish sentiment despite strong negative news),
+   provide an **explanation** in the \`counterSignal\` field.
+
+---
 
 # CRITICAL INSTRUCTIONS
 - **Confidence scores** must be integers between 0 and 100, with the following split:
     ${CONFIDENCE_SPLIT}
-- The ticker **sentiment** must be one of: "bullish", "bearish", or "neutral".
-- The **impact** of each insight on the ticker sentiment must be either "positive" or "negative".
-- It is critical to factor in **both** the current {symbol} ticker price and general market sentiment in MARKET SENTIMENT section.
-- **Account for every article**, each article begins with \`# Article Title: <title>\`, articles are separated by \`---\`.
-- **CRITICAL**: Output should be valid JSON according to the **Output Format** section, with no extra text or commentary outside the JSON.
-- Provide at least 10 insights.
-- **Due to negative bias, negative news** confidence **should** be weighted with a factor of 1.5.
-- Provide the \`signal\` field in the output **only** if there is a contradiction:
-    - stock price sentiment is **bullish** but there is **very negative news** or **unfavorable** market conditions, or **vice versa**
-    - otherwise, the \`signal\` field **should be** \`null\`.
-- **Output should be in JSON format** as specified in the **OUTPUT FORMAT** section.
-- **Do not not mention** any instructions above in the \`reasoning\` field.
+- The **main prediction** (\`sentiment\`) and the **counterSignal.prediction** must be **opposite**.
+    - Example: if \`sentiment\` is \`"bullish"'\`, then \`counterSignal.prediction\` must be \`"bearish"'\`, and vice versa.
+    - If no strong opposing signal is found, set \`counterSignal\` to \`null\`.
+- The \`signal\` field **must be** \`null\` unless there is a clear **conflict** between sentiment and major signals (news or market conditions).
+- Confidence scores must be integers between 0 and 100, based on the following weight rule:
+    - **Negative signals** should be **weighted 1.5x more** than equivalent positive ones.
+- The ticker **sentiment** must be one of: \`"bullish"'\`, \`"bearish"'\`, or \`"neutral"'\`.
+- The \`impact\` of each insight must be \`"positive"\`, \`"negative"\` or \`"neutral"\` toward {symbol}'s sentiment.
+- Consider both recent **ticker price history** and overall **market sentiment**.
+- You **must account for every article**. Each begins with:
+  \`# Article Title: <title>\` and articles are separated by \`---\`.
+- Output must be valid **JSON only**, using the format in the OUTPUT FORMAT section.
+  **No additional text or explanation outside the JSON.**
+- Do your best to include **a few insights** in the output for better analysis.
+- Do **not** mention this prompt or instructions in any field of the JSON output.
 
 ---
 
@@ -74,7 +82,7 @@ CURRENT DATE: {currentDate}
 {marketPrediction}
 \`\`\`
 
-# NEWS ARTICLES
+# NEWS INSIGHTS
 \`\`\`markdown
 {news}
 \`\`\`
@@ -96,14 +104,14 @@ CURRENT DATE: {currentDate}
 export const GeneralMarketSentimentPredictionPrompt =
   new ExperimentPrompt<Prediction>({
     template: dedent`
-You are an expert in analyzing stock market news and extracting insights that can affect stock market condition.
-You have been given a set of recent news articles about stocket market from the **past 7 days**.
-Please review these articles to determine how each piece of news could influence market conditions this week (either negatively or positively).
+You are an expert in analyzing stock market news insights that can affect stock market condition.
+You have been given a set of insights extracted from recent news articles about stocket market from the **past 7 days**.
+Please review these insights to determine how each could influence market conditions this week (either negatively or positively).
 
 CURRENT DATE: {currentDate}
 
 # YOUR TASK
-1. Read the news articles about stocke market (provided below) and identify any insights that may have a meaningful impact on the market condition in short term.
+1. Read the each news article's insights about stock market (provided below) and identify any insights that may have a meaningful impact on the market condition in short term.
 2. Produce your conclusions and insights as a structured JSON response, **strictly** following the format in the **Output Format** section.
 
 # CRITICAL INSTRUCTIONS
@@ -111,7 +119,7 @@ CURRENT DATE: {currentDate}
     ${CONFIDENCE_SPLIT}
 - The overall market short term **sentiment** must be one of: \`bullish\`, \`bearish\`, or \`neutral\`.
 - The **impact** of each insight on the market condition must be either \`positive\` or \`negative\`.
-- Be sure to account for every article. Each article begins with \`# ARTICLE TITLE: <title>\` and they are separated by \`---\`.
+- Be sure to account for every article. Each article's insights begin with \`# ARTICLE TITLE: <title>\` and they are separated by \`---\`.
 - Output should be in **JSON format** as specified in the **OUTPUT FORMAT** section.
 
 ---
@@ -119,7 +127,7 @@ CURRENT DATE: {currentDate}
 # OUTPUT FORMAT:
 {formatInstructions}
 
-# NEWS ARTICLES
+# NEWS INSIGHTS
 \`\`\`markdown
 {news}
 \`\`\`

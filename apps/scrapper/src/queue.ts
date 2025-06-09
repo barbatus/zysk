@@ -69,6 +69,10 @@ const worker = new Worker<ScrapeJobData>(
   {
     connection: redis,
     concurrency: 30,
+    limiter: {
+      max: 30,
+      duration: 60_000,
+    },
   },
 );
 

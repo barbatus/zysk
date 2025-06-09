@@ -26,7 +26,7 @@ export class PredictionService {
     const prediction = await this.db
       .selectFrom("predictions")
       .selectAll()
-      .where("symbol", "=", "GENERAL")
+      .where((eb) => eb(eb.fn("lower", [eb.ref("symbol")]), "=", "general"))
       .where("period", "<=", period)
       .orderBy("period", "desc")
       .orderBy("createdAt", "desc")

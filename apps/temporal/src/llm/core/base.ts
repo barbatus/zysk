@@ -469,7 +469,8 @@ export class SequentialModelContainerWithFallback implements AbstractContainer {
           },
           `[SequentialModelContainerWithFallback.arun] Container failed`,
         );
-        this.index++;
+        this.index += 1;
+        this.index %= this.modelContainers.length;
       }
     }
 

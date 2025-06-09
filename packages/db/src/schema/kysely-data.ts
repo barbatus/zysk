@@ -2,7 +2,7 @@ import { type ColumnType, type Insertable, type Selectable } from "kysely";
 
 import { type CreateTableType, type Optional } from "../utils/custom-types";
 import { type experimentsTable } from "./experiments";
-import { type stockNewsTable } from "./stock-news";
+import { type StockNewsInsight, type stockNewsTable } from "./stock-news";
 import {
   type companyProfiles,
   type etfProfiles,
@@ -48,6 +48,8 @@ type StockNewsTable = CreateTableType<
     newsDate: ColumnType<Date, string | Date>;
     title: ColumnType<string, Optional<string>>;
     description: ColumnType<string, Optional<string>>;
+    insightsTokenSize: ColumnType<number, Optional<number>>;
+    insights: ColumnType<StockNewsInsight[], Optional<StockNewsInsight[]>>;
   }
 >;
 

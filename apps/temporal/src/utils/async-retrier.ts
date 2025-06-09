@@ -32,13 +32,12 @@ export class AsyncRetrier<T> {
     while (true) {
       attempt++;
       state.attemptNumber = attempt;
+      await this.options.before?.(state);
+
+      if (this.options.stop?.(state)) {
+        throw new Error("AsyncRetrying exceeded max attempts");
+      }
       try {
-        await this.options.before?.(state);
-
-        if (this.options.stop?.(state)) {
-          throw new Error("AsyncRetrying exceeded max attempts");
-        }
-
         const res = await this.callback(attempt);
         state.success = true;
         state.response = res;

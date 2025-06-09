@@ -1,4 +1,4 @@
-import { executeChild, proxyActivities, ApplicationFailure } from "@temporalio/workflow";
+import { executeChild, proxyActivities, ApplicationFailure, uuid4 } from "@temporalio/workflow";
 import { StockNewsStatus } from "@zysk/db";
 import { endOfWeek, parse, startOfDay } from "date-fns";
 import { chunk, mapKeys, uniqBy } from "lodash";
@@ -122,6 +122,7 @@ export async function runExtractNewsInsights(
       return proxy.runNewsInsightsExtractorExperiment({
         symbol,
         newsIds: newsBatch,
+        experimentId: uuid4(),
       });
     }),
   );
@@ -142,7 +143,7 @@ export async function scrapeTickerNewsForPeriod(
   });
 }
 
-export async function syncMarketNewsForPeriod(startDate: Date, endDate?: Date) {
+export async function scrapeMarketNewsForPeriod(startDate: Date, endDate?: Date) {
   await scrapeTickerNewsForPeriod("GENERAL", startDate, endDate);
 }
 

@@ -6,9 +6,9 @@ const NewsInsightSchema = z.object({
   newsId: z.string(),
   insights: z.array(z.object({
     insight: z.string(),
-    impact: z.string(),
-    symbols: z.array(z.string()),
-    sectors: z.array(z.string()),
+    impact: z.string().optional().default("neutral"),
+    symbols: z.array(z.string()).optional().default([]),
+    sectors: z.array(z.string()).optional().default([]),
   })),
 });
 
@@ -39,10 +39,7 @@ each array item is a news article with insights.
 \`\`\`json
   [
     {
-        "newsId": "id of the news article",
-        "title": "title of the article",
-        "date": "date of the article",
-        "url": "url of the article",
+        "newsId": "UUID of the news article from the article heading",
         "insights": [
           {
             "insight": "description of the insight",

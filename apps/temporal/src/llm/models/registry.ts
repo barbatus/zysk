@@ -165,7 +165,7 @@ export function createSequentialModelContainerWithFallback(
       ]);
     case ModelKeyEnum.DeepSeekLlama:
         return new SequentialModelContainerWithFallback([
-          models[ModelKeyEnum.Llama33]!,
+          models[ModelKeyEnum.DeepSeekLlama]!,
         ]);
     case ModelKeyEnum.GeminiFlash25:
       return new SequentialModelContainerWithFallback([

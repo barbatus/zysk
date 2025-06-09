@@ -46,7 +46,7 @@ async function batchNews(params: {
   tokensLimit: number;
   overlapLimit?: number;
 }) {
-  const { overlapLimit = 10_000, news } = params;
+  const { overlapLimit = 0, news } = params;
   const tokensLimit = params.tokensLimit;
 
   let count = 0;
@@ -84,12 +84,42 @@ async function batchNews(params: {
   return newsBatches;
 }
 
+async function batchNewsInsights(params: {
+  insights: {
+    id: string;
+    insightsTokenSize: number;
+  }[];
+  tokensLimit: number;
+}) {
+  const { insights } = params;
+  const tokensLimit = params.tokensLimit;
+
+  let count = 0;
+  const newsBatches: (typeof insights)[] = [];
+  const currentBatch: typeof insights = [];
+
+  for (const n of insights) {
+    if (count + n.insightsTokenSize > tokensLimit) {
+      newsBatches.push(currentBatch);
+      currentBatch.length = 0;
+      count = 0;
+    }
+    currentBatch.push(n);
+    count += n.insightsTokenSize;
+  }
+  if (currentBatch.length > 0) {
+    newsBatches.push(currentBatch);
+  }
+  return newsBatches;
+}
+
+
 export const stockNewsTasksToTokens = {
-  "runNewsInsightsExtractorExperiment": Math.min(200_000,getMaxTokens(NewsInsightsExtractor.modelKey)),
+  "runNewsInsightsExtractorExperiment": Math.min(32_000, getMaxTokens(NewsInsightsExtractor.modelKey)),
   ...experimentTasksToTokens,
 } as const;
 
-export async function fetchNewsForPeriod(params: {
+export async function fetchNewsInsightsForPeriod(params: {
   symbol: string;
   startDate: Date;
   endDate?: Date;
@@ -99,13 +129,17 @@ export async function fetchNewsForPeriod(params: {
   const { symbol, startDate, endDate, ...rest } = params;
 
   const tickerNewsService = resolve(TickerNewsService);
-  const news = (
+  const insights = (
     await tickerNewsService.getNewsBySymbol(symbol, startDate, endDate)
   );
+  const filteredInsights = insights.filter((n) =>
+    n.insights.find((i) => i.sectors.includes(symbol) || i.symbols.includes(symbol)));
 
-  return (await batchNews({ news, tokensLimit: stockNewsTasksToTokens[params.taskName], ...rest })).map((batch) =>
-    batch.map((n) => n.id),
-  );
+  return (await batchNewsInsights({
+    insights: filteredInsights,
+    tokensLimit: stockNewsTasksToTokens[params.taskName],
+    ...rest,
+  })).map((batch) => batch.map((n) => n.id));
 }
 
 export async function runBatchNews(params: {
@@ -124,13 +158,15 @@ export async function runBatchNews(params: {
 export async function runNewsInsightsExtractorExperiment(params: {
   symbol: string;
   newsIds: string[];
+  experimentId?: string
 }) {
-  const { newsIds } = params;
+  const { newsIds, experimentId } = params;
   const tickerNewsService = resolve(TickerNewsService);
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
 
   const runner = await NewsInsightsExtractor.create({
     news,
+    experimentId,
   });
   const result = await runner.run();
 

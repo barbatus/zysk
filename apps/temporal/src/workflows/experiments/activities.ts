@@ -18,7 +18,7 @@ import {
 import { type Prediction } from "#/llm/runners/prompts/prediction-parser";
 import { SentimentPredictor } from "#/llm/runners/sentiment-predictor";
 
-import { fetchNewsForPeriod } from "../stock-news/activities";
+import { fetchNewsInsightsForPeriod } from "../stock-news/activities";
 
 export async function fetchTickerTimeSeries(
   symbol: string,
@@ -42,7 +42,7 @@ export async function fetchSentimentPredictionExperimentData(params: {
   overlapLimit?: number;
 }) {
   const { symbol, startDate, endDate, overlapLimit } = params;
-  const newsBatchIds = await fetchNewsForPeriod({
+  const newsBatchIds = await fetchNewsInsightsForPeriod({
     symbol,
     startDate,
     endDate,
@@ -61,7 +61,7 @@ export async function runTickerSentimentPredictionExperiment(params: {
 }) {
   const { symbol, newsIds, currentDate, timeSeries } = params;
   const tickerNewsService = resolve(TickerNewsService);
-  const news = await tickerNewsService.getNewsByNewsIds(newsIds);
+  const newsInsights = await tickerNewsService.getNewsByNewsIds(newsIds);
 
   const predictionService = resolve(PredictionService);
   const experimentJson =
@@ -69,9 +69,9 @@ export async function runTickerSentimentPredictionExperiment(params: {
       currentDate,
     );
 
-  const agent = await TickerSentimentPredictor.create({
+  const predictor = await TickerSentimentPredictor.create({
     symbol,
-    news,
+    newsInsights,
     timeSeries,
     currentDate,
     marketPrediction: experimentJson,
@@ -80,7 +80,7 @@ export async function runTickerSentimentPredictionExperiment(params: {
     },
   });
 
-  return await agent.run();
+  return await predictor.run();
 }
 
 export async function runMarketSentimentPredictionExperiment(params: {
@@ -89,10 +89,10 @@ export async function runMarketSentimentPredictionExperiment(params: {
 }) {
   const { newsIds, currentDate } = params;
   const tickerNewsService = resolve(TickerNewsService);
-  const news = await tickerNewsService.getNewsByNewsIds(newsIds);
+  const newsInsights = await tickerNewsService.getNewsByNewsIds(newsIds);
 
   const agent = await MarketSentimentPredictor.create({
-    news,
+    newsInsights ,
     currentDate,
     onHeartbeat: async () => {
       heartbeat("MarketSentimentPredictor");

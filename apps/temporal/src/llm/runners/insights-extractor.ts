@@ -19,7 +19,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
   }[];
 
   constructor(
-    params: Omit<NewsBasedExperimentParams<Insights>, "symbol" | "currentDate" | "news"> & {
+    params: Omit<NewsBasedExperimentParams<Insights>, "symbol" | "currentDate" | "newsInsights"> & {
       news: { id: string; markdown: string; url: string; newsDate: Date; symbol: string }[]
     },
   ) {
@@ -32,7 +32,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
       news: this.news
         .map(
           (n) =>
-            `# ARTICLE FOR SYMBOL: ${n.symbol}, ID: ${n.id}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: \`${n.url}\`\n${n.markdown}`,
+            `# ARTICLE FOR: ${n.symbol}, UUID: ${n.id}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: \`${n.url}\`:\n${n.markdown}`,
         )
         .join("\n---\n"),
     };
@@ -41,11 +41,14 @@ export class NewsInsightsExtractor extends ExperimentRunner<
   static override readonly modelKey = ModelKeyEnum.GeminiFlash25;
 
   static override async create(params: {
+    experimentId?: string;
     news: { id: string; markdown: string; url: string; newsDate: Date; symbol: string }[];
     onHeartbeat?: () => Promise<void>;
   }) {
     const experimentService = resolve(ExperimentService);
-    const state = await experimentService.create();
+    const state = await experimentService.create({
+      experimentId: params.experimentId,
+    });
     return new NewsInsightsExtractor({
       state,
       ...params,

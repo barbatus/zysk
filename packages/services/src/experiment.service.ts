@@ -17,13 +17,19 @@ export class ExperimentService implements AgentStateService<Experiment> {
     @inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>,
   ) {}
 
-  async create(): Promise<Experiment> {
+  async create(params?: { experimentId?: string }): Promise<Experiment> {
     return this.db
       .insertInto("app_data.experiments")
       .values({
+        ...(params?.experimentId && { id: params.experimentId }),
         status: ExperimentTaskStatus.Pending,
         version: 1,
       })
+      .onConflict((b) => b.columns(["id"]).doUpdateSet({
+        status: ExperimentTaskStatus.Pending,
+        version: 1,
+        updatedAt: new Date(),
+      }))
       .returningAll()
       .executeTakeFirstOrThrow();
   }
