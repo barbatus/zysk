@@ -35,10 +35,20 @@ export class LLMRunner extends BaseLLMRunner {
           : [callback],
       });
       const end = performance.now();
+
+      const getAIMessageContent = (m: AIMessage) => {
+        if (Array.isArray(m.content)) {
+          if (m.content[0].type === "text") {
+            return m.content[0].text as string;
+          }
+          throw new Error("Unexpected message content type");
+        }
+        return m.content;
+      };
+
       return {
         response:
-          result instanceof AIMessage ?
-            (Array.isArray(result.content) ? String(result.content[0]) : result.content) : result,
+          result instanceof AIMessage ? getAIMessageContent(result) : result,
         evaluationDetails: {
           promptTokens: callback.promptTokens,
           completionTokens: callback.completionTokens,

@@ -1,4 +1,5 @@
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+// eslint-disable-next-line camelcase
 import { encoding_for_model } from "tiktoken";
 
 export interface TrimResult {

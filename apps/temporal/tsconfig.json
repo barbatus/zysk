@@ -11,7 +11,7 @@
       "#/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/*.tsx", "src/utils/async-retrierts"],
+  "include": ["src/**/*.ts", "src/*.tsx", "reset.d.ts"],
   "ts-node": {
     "swc": true,
   }

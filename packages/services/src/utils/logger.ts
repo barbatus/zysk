@@ -17,6 +17,16 @@ export function createLogger(config: AppConfig) {
       name: "temporal",
       level: config.logLevel ?? "info",
       base: undefined,
+      formatters: {
+        log: (obj) => {
+          for (const key in obj) {
+            if (typeof obj[key] === "string") {
+              obj[key] = obj[key].replace(/\r?\n/g, "");
+            }
+          }
+          return obj;
+        },
+      },
     },
     transport,
   );

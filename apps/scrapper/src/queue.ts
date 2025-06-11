@@ -1,7 +1,7 @@
+import { PageLoadError, scrapeUrl } from "@zysk/scrapper";
 import { type ConnectionOptions, Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 
-import { PageLoadError, scrapeUrl } from "./browser";
 import { getAppConfigStatic } from "./config";
 
 interface ScrapeJobData {
@@ -44,13 +44,11 @@ export const scrapeQueue = new Queue<ScrapeJobData>(QUEUE_NAME, {
 const worker = new Worker<ScrapeJobData>(
   QUEUE_NAME,
   async (job) => {
-    const { url, useBrowserApi, useProxy, convertToMd, waitFor, timeout } =
-      job.data;
+    const { url, useProxy, convertToMd, waitFor, timeout } = job.data;
 
     try {
       const result = await scrapeUrl({
         url,
-        useBrowserApi,
         useProxy,
         convertToMd,
         waitFor,
@@ -68,9 +66,9 @@ const worker = new Worker<ScrapeJobData>(
   },
   {
     connection: redis,
-    concurrency: 30,
+    concurrency: 50,
     limiter: {
-      max: 30,
+      max: 50,
       duration: 60_000,
     },
   },

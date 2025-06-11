@@ -45,7 +45,8 @@
     "tiktoken": "^1.0.21",
     "ts-dedent": "^2.2.0",
     "uuid": "^11.1.0",
-    "zod": "catalog:zod"
+    "zod": "catalog:zod",
+    "@zysk/scrapper": "workspace:*"
   },
   "devDependencies": {
     "@total-typescript/ts-reset": "^0.6.1",

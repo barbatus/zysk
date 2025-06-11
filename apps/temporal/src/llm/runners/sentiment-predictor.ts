@@ -14,12 +14,11 @@ import { omit } from "lodash";
 
 import { type AgentExecutionResult } from "#/llm/core/schemas";
 
+import { type AbstractContainer } from "../core/base";
 import { modelsWithFallback } from "../models/registry";
-import { ExperimentPrompt, ExperimentRunner } from "./experimenter";
+import { type ExperimentPrompt, ExperimentRunner } from "./experimenter";
 import { type Prediction } from "./prompts/prediction-parser";
 import { PredictionsMergerPrompt } from "./prompts/predictions-merger.prompt";
-import { type AbstractContainer } from "../core/base";
-
 
 const experimentService = resolve(ExperimentService);
 const predictionService = resolve(PredictionService);
@@ -40,11 +39,7 @@ export class SentimentPredictor extends ExperimentRunner<
     model: AbstractContainer;
     prompt: ExperimentPrompt<Prediction>;
   }) {
-    super(
-      params.state,
-      params.prompt,
-      params.model,
-    );
+    super(params.state, params.prompt, params.model);
     this.predictions = params.predictions;
     this.symbol = params.symbol;
     this.currentDate = params.currentDate;
@@ -71,14 +66,17 @@ export class SentimentPredictor extends ExperimentRunner<
     return await super.arun(promptValues);
   }
 
-  static override readonly modelKey = ModelKeyEnum.GptO3Mini;
+  static override readonly modelKey = ModelKeyEnum.DeepSeekReasoner;
 
   static override async create(params: {
     symbol: string;
     predictions: Prediction[];
     currentDate: Date;
+    experimentId?: string;
   }) {
-    const state = await experimentService.create();
+    const state = await experimentService.create({
+      experimentId: params.experimentId,
+    });
     return new SentimentPredictor({
       state,
       ...params,

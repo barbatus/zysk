@@ -11,8 +11,8 @@
       "#/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/*.tsx"],
-  "ts-node": {
+  "include": ["src/**/*.ts", "src/*.tsx", "reset.d.ts"],
+  "tsx": {
     "swc": true,
   }
 }

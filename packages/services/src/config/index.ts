@@ -85,7 +85,7 @@ export const OpenAIModelConfigSchema = z.object({
 
 export type OpenAIModelConfig = z.infer<typeof OpenAIModelConfigSchema>;
 
-export type BaseModelConfig = {
+export interface BaseModelConfig {
   providerModelName?: string;
   modelName: string;
   temperature: number;
@@ -172,11 +172,13 @@ export const AppConfigEnvVariablesSchema = z.object({
   GOOGLE_MODEL_CONFIGS: z
     .preprocess(
       (val) => JSON.parse(val as string),
-      z.array(z.object({
-        providerModelName: z.string().optional(),
-        modelName: z.enum([ModelKeyEnum.GeminiFlash25]),
-        temperature: z.number(),
-      })),
+      z.array(
+        z.object({
+          providerModelName: z.string().optional(),
+          modelName: z.enum([ModelKeyEnum.GeminiFlash25]),
+          temperature: z.number(),
+        }),
+      ),
     )
     .optional(),
 });

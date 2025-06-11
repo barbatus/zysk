@@ -1,11 +1,12 @@
 import { ExperimentService, ModelKeyEnum, resolve } from "@zysk/services";
 
+import { type AgentExecutionResult } from "#/llm/core/schemas";
+
 import { modelsWithFallback } from "../models/registry";
 import { ExperimentRunner } from "./experimenter";
 import { type NewsBasedExperimentParams } from "./news-based-sentiment-predictor";
 import { NewsInsightsExtractorPrompt } from "./prompts/insights-extractor.prompt";
 import { type Insights } from "./prompts/insights-parser";
-import { type AgentExecutionResult } from "#/llm/core/schemas";
 
 export class NewsInsightsExtractor extends ExperimentRunner<
   Insights,
@@ -18,11 +19,20 @@ export class NewsInsightsExtractor extends ExperimentRunner<
     newsDate: Date;
     url: string;
   }[];
-  private readonly indexToUuid: Map<number, string> = new Map();
+  private readonly indexToUuid = new Map<number, string>();
 
   constructor(
-    params: Omit<NewsBasedExperimentParams<Insights>, "symbol" | "currentDate" | "newsInsights"> & {
-      news: { id: string; markdown: string; url: string; newsDate: Date; symbol: string }[]
+    params: Omit<
+      NewsBasedExperimentParams<Insights>,
+      "symbol" | "currentDate" | "newsInsights"
+    > & {
+      news: {
+        id: string;
+        markdown: string;
+        url: string;
+        newsDate: Date;
+        symbol: string;
+      }[];
     },
   ) {
     super(params.state, params.prompt, params.model, params.onHeartbeat);
@@ -44,7 +54,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
   }
 
   override async setSuccess(result: AgentExecutionResult<Insights>) {
-    const insights = result.response as Insights;
+    const insights = result.response;
     const values = insights.map((i, index) => ({
       ...i,
       acticleId: this.indexToUuid.get(index)!,
@@ -59,7 +69,13 @@ export class NewsInsightsExtractor extends ExperimentRunner<
 
   static override async create(params: {
     experimentId?: string;
-    news: { id: string; markdown: string; url: string; newsDate: Date; symbol: string }[];
+    news: {
+      id: string;
+      markdown: string;
+      url: string;
+      newsDate: Date;
+      symbol: string;
+    }[];
     onHeartbeat?: () => Promise<void>;
   }) {
     const experimentService = resolve(ExperimentService);

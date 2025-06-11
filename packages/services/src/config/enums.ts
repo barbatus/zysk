@@ -62,7 +62,10 @@ export const MODEL_PROVIDERS = [
 
 export const DEEPSEEK_MODEL_KEYS = [ModelKeyEnum.DeepSeekReasoner] as const;
 
-export const META_MODEL_KEYS = [ModelKeyEnum.Llama33, ModelKeyEnum.DeepSeekLlama] as const;
+export const META_MODEL_KEYS = [
+  ModelKeyEnum.Llama33,
+  ModelKeyEnum.DeepSeekLlama,
+] as const;
 
 export const GOOGLE_MODEL_KEYS = [ModelKeyEnum.GeminiFlash25] as const;
 

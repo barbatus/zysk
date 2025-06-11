@@ -43,6 +43,7 @@ You are an expert financial analyst whose goal is to merge multiple {symbol} tic
 
 # CRITICAL INSTRUCTIONS
   - Do not mention any specific instructions of the prompt (e.g. negative news have certain weight, etc) in the \`reasoning\` field.
+  - Make sure that description of each insight is good enough to be understood w/o the context of other fields since it will be shown to the users.
 
 ---
 

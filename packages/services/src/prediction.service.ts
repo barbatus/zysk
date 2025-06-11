@@ -1,4 +1,5 @@
 import { type Database, DataDatabase, PredictionInsert } from "@zysk/db";
+import { format } from "date-fns";
 import { inject, injectable } from "inversify";
 import { type Kysely } from "kysely";
 
@@ -18,7 +19,11 @@ export class PredictionService {
   ) {
     await this.db
       .insertInto("predictions")
-      .values({ ...prediction, symbol })
+      .values({
+        ...prediction,
+        symbol,
+        period: format(prediction.period, "yyyy-MM-dd"),
+      })
       .execute();
   }
 

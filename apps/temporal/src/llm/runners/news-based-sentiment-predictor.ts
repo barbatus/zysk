@@ -1,6 +1,7 @@
-import { type Experiment, StockNewsInsight } from "@zysk/db";
+import { type Experiment, type StockNewsInsight } from "@zysk/db";
 import { ExperimentService, ModelKeyEnum, resolve } from "@zysk/services";
 import { format } from "date-fns";
+import { dedent } from "ts-dedent";
 
 import { type AbstractContainer } from "../core/base";
 import { modelsWithFallback } from "../models/registry";
@@ -10,14 +11,18 @@ import {
   GeneralMarketSentimentPredictionPrompt,
   TickerSentimentPredictionPrompt,
 } from "./prompts/sentiment-prediction.prompt";
-import { dedent } from "ts-dedent";
 
 export interface NewsBasedExperimentParams<TResult = Prediction> {
   state: Experiment;
   symbol: string;
   prompt: ExperimentPrompt<TResult>;
   model: AbstractContainer;
-  newsInsights: { id: string; insights: StockNewsInsight[]; newsDate: Date; url: string }[];
+  newsInsights: {
+    id: string;
+    insights: StockNewsInsight[];
+    newsDate: Date;
+    url: string;
+  }[];
   currentDate: Date;
   onHeartbeat?: () => Promise<void>;
 }
@@ -39,13 +44,17 @@ class NewsBasedSentimentPredictor extends ExperimentRunner<
 
   override async mapPromptValues(): Promise<Record<string, string>> {
     const insightsToMd = (insights: StockNewsInsight[]) => {
-      return insights.map((i, index) => dedent`
+      return insights
+        .map(
+          (i, index) => dedent`
         ### Insight ${index + 1}
          - Insight description: ${i.insight}
          - Impact: ${i.impact}
          - Symbols: ${i.symbols.join(", ")}
          - Sectors: ${i.sectors.join(", ")}
-      `).join("\n");
+      `,
+        )
+        .join("\n");
     };
 
     return {
@@ -93,10 +102,13 @@ export class TickerSentimentPredictor extends NewsBasedSentimentPredictor {
     marketPrediction: Experiment["responseJson"];
     timeSeries: { date: Date; closePrice: number }[];
     currentDate: Date;
+    experimentId?: string;
     onHeartbeat?: () => Promise<void>;
   }) {
     const experimentService = resolve(ExperimentService);
-    const state = await experimentService.create();
+    const state = await experimentService.create({
+      experimentId: params.experimentId,
+    });
     return new TickerSentimentPredictor({
       state,
       ...params,

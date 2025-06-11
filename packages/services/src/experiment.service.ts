@@ -25,11 +25,13 @@ export class ExperimentService implements AgentStateService<Experiment> {
         status: ExperimentTaskStatus.Pending,
         version: 1,
       })
-      .onConflict((b) => b.columns(["id"]).doUpdateSet({
-        status: ExperimentTaskStatus.Pending,
-        version: 1,
-        updatedAt: new Date(),
-      }))
+      .onConflict((b) =>
+        b.columns(["id"]).doUpdateSet({
+          status: ExperimentTaskStatus.Pending,
+          version: 1,
+          updatedAt: new Date(),
+        }),
+      )
       .returningAll()
       .executeTakeFirstOrThrow();
   }
@@ -64,7 +66,9 @@ export class ExperimentService implements AgentStateService<Experiment> {
         status,
         modelName,
         ...(typeof response === "string" && { responseText: response }),
-        ...(typeof response === "object" && { responseJson: sql`(${JSON.stringify(response)}::jsonb)` }),
+        ...(typeof response === "object" && {
+          responseJson: sql`(${JSON.stringify(response)}::jsonb)`,
+        }),
         ...(details && { details }),
         ...(version && { version }),
         updatedAt: new Date(),

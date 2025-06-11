@@ -1,18 +1,16 @@
 {
-  "extends": "@zysk/typescript-config/node.json",
+  "extends": "@zysk/typescript-config/nestjs.json",
   "display": "services",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": ".",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
     "paths": {
       "#/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts"],
-  "ts-node": {
+  "include": ["src/**/*.ts", "reset.d.ts"],
+  "tsx": {
     "swc": true,
   }
 }

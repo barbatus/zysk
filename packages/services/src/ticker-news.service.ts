@@ -154,7 +154,9 @@ export class TickerNewsService {
           error.response?.status === 403 ||
           error.response?.status === 408)
       ) {
-        throw new RequestTimeoutError(`Error scraping URL ${url}: ${error.message}`);
+        throw new RequestTimeoutError(
+          `Error scraping URL ${url}: ${error.message}`,
+        );
       }
       throw error;
     }
@@ -292,9 +294,9 @@ export class TickerNewsService {
               return qb.union(
                 this.db.selectNoFrom([
                   sql<string>`${update.id}::uuid`.as("id"),
-                  sql<StockNewsInsight[]>`(${JSON.stringify(update.insights)}::jsonb)`.as(
-                    "insights",
-                  ),
+                  sql<
+                    StockNewsInsight[]
+                  >`(${JSON.stringify(update.insights)}::jsonb)`.as("insights"),
                   sql<number>`${update.insightsTokenSize}::integer`.as(
                     "insightsTokenSize",
                   ),
@@ -303,7 +305,9 @@ export class TickerNewsService {
             },
             this.db.selectNoFrom([
               sql<string>`${newsInsights[0].id}::uuid`.as("id"),
-              sql<StockNewsInsight[]>`(${JSON.stringify(newsInsights[0].insights)}::jsonb)`.as(
+              sql<
+                StockNewsInsight[]
+              >`(${JSON.stringify(newsInsights[0].insights)}::jsonb)`.as(
                 "insights",
               ),
               sql<number>`${newsInsights[0].insightsTokenSize}::integer`.as(
@@ -314,7 +318,7 @@ export class TickerNewsService {
           .as("data_table"),
       )
       .set((eb) => ({
-        insights: sql`COALESCE(${eb.ref('app_data.stock_news.insights')}, '[]'::jsonb) || ${eb.ref("data_table.insights")}`,
+        insights: sql`COALESCE(${eb.ref("app_data.stock_news.insights")}, '[]'::jsonb) || ${eb.ref("data_table.insights")}`,
         insightsTokenSize: eb.ref("data_table.insightsTokenSize"),
         updatedAt: new Date(),
       }))
@@ -346,7 +350,16 @@ export class TickerNewsService {
   async getNewsBySymbol(symbol: string, startDate: Date, endDate?: Date) {
     return this.db
       .selectFrom("app_data.stock_news")
-      .select(["id", "url", "newsDate", "status", "title", "tokenSize", "insightsTokenSize", "insights"])
+      .select([
+        "id",
+        "url",
+        "newsDate",
+        "status",
+        "title",
+        "tokenSize",
+        "insightsTokenSize",
+        "insights",
+      ])
       .where("symbol", "=", symbol)
       .where("newsDate", ">=", startDate)
       .$if(Boolean(endDate), (eb) => eb.where("newsDate", "<", endDate!))
@@ -356,13 +369,14 @@ export class TickerNewsService {
   }
 
   async getNewsByNewsIds(newsIds: string[]) {
-    return newsIds.length > 0 ? this.db
-      .selectFrom("app_data.stock_news")
-      .selectAll()
-      .where("id", "in", newsIds)
-      .where("status", "=", StockNewsStatus.Scraped)
-        .$narrowType<{ markdown: NotNull }>()
-        .execute()
+    return newsIds.length > 0
+      ? this.db
+          .selectFrom("app_data.stock_news")
+          .selectAll()
+          .where("id", "in", newsIds)
+          .where("status", "=", StockNewsStatus.Scraped)
+          .$narrowType<{ markdown: NotNull }>()
+          .execute()
       : Promise.resolve([]);
   }
 

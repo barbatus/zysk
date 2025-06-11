@@ -3,14 +3,14 @@ import { Redis } from "@upstash/redis";
 import {
   DEEPSEEK_MODEL_KEYS,
   getConfig,
-  META_MODEL_KEYS,
   GOOGLE_MODEL_KEYS,
+  type GoogleModelKey,
+  META_MODEL_KEYS,
   type MetaModelKey,
   ModelKeyEnum,
   ModelProviderEnum,
   OPENAI_MODEL_KEYS,
   type OpenAIModelKey,
-  type GoogleModelKey,
 } from "@zysk/services";
 import { isObject } from "lodash";
 
@@ -20,9 +20,9 @@ import {
   SequentialModelContainerWithFallback,
 } from "../core/base";
 import { getDeepSeekModelContainers } from "./deepseek-models";
+import { getGoogleContainers } from "./google-models";
 import { getMetaContainers } from "./meta-models";
 import { getOpenAIModelContainers } from "./openai-models";
-import { getGoogleContainers } from "./google-models";
 
 export class ModelNotFoundError extends Error {
   constructor(modelKey: ModelKeyEnum) {
@@ -164,9 +164,9 @@ export function createSequentialModelContainerWithFallback(
         models[ModelKeyEnum.Llama33]!,
       ]);
     case ModelKeyEnum.DeepSeekLlama:
-        return new SequentialModelContainerWithFallback([
-          models[ModelKeyEnum.DeepSeekLlama]!,
-        ]);
+      return new SequentialModelContainerWithFallback([
+        models[ModelKeyEnum.DeepSeekLlama]!,
+      ]);
     case ModelKeyEnum.GeminiFlash25:
       return new SequentialModelContainerWithFallback([
         models[ModelKeyEnum.GeminiFlash25]!,

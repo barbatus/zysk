@@ -67,24 +67,26 @@ turndown.addRule("cleanup", {
   },
 });
 
-let chrome: Browser | undefined;
-async function newBrowserContext(params: {
-  useBrowserApi: boolean;
-  useProxy?: boolean;
-}) {
-  const createContext = (browser: Browser) => {
-    return browser.createBrowserContext({
-      proxyServer:
-        useProxy && !useBrowserApi
-          ? `${config.proxyServer}:${config.proxyPort}`
-          : undefined,
-    });
-  };
-
-  const { useProxy = true, useBrowserApi = false } = params;
-  if (chrome) {
-    return createContext(chrome);
+export async function isBrowserHealthy(browser: Browser): Promise<boolean> {
+  try {
+    if (!browser.connected) {
+      return false;
+    }
+    await browser.version();
+    return true;
+  } catch (error) {
+    console.warn("Browser health check failed:", error);
+    await browser.close();
+    return false;
   }
+}
+
+async function newBrowser(params: {
+  useBrowserApi?: boolean;
+  useProxy?: boolean;
+  timeout?: number;
+}) {
+  const { timeout } = params;
 
   puppeteer.use(StealthPlugin());
   puppeteer.use(
@@ -96,35 +98,45 @@ async function newBrowserContext(params: {
       visualFeedback: true,
     }),
   );
-  chrome = useBrowserApi
-    ? await puppeteer.connect({
-        browserWSEndpoint: config.scrapperBrowserWs,
-      })
-    : await puppeteer.launch({
-        headless: true,
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--disable-accelerated-2d-canvas",
-          "--no-first-run",
-          "--no-zygote",
-          "--disable-gpu",
-          "--disable-software-rasterizer",
-          "--mute-audio",
-        ],
-      });
-  return createContext(chrome);
+  const chrome = await puppeteer.launch({
+    headless: true,
+    protocolTimeout: timeout,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-accelerated-2d-canvas",
+      "--no-first-run",
+      "--no-zygote",
+      "--disable-gpu",
+      "--disable-software-rasterizer",
+      "--mute-audio",
+    ],
+  });
+  return chrome;
 }
 
-export async function newBrowserPage(params: {
-  useBrowserApi: boolean;
-  useProxy?: boolean;
-}) {
-  const { useProxy = true, useBrowserApi } = params;
+async function newBrowserContext(params: { useProxy?: boolean }) {
+  const createContext = (browser: Browser) => {
+    return browser.createBrowserContext({
+      proxyServer: useProxy
+        ? `${config.proxyServer}:${config.proxyPort}`
+        : undefined,
+    });
+  };
 
-  const context = await newBrowserContext({
-    useBrowserApi,
+  const browser = await newBrowser({});
+  const { useProxy = true } = params;
+  return {
+    context: await createContext(browser),
+    browser,
+  };
+}
+
+export async function newBrowserPage(params: { useProxy?: boolean }) {
+  const { useProxy = true } = params;
+
+  const { context, browser } = await newBrowserContext({
     useProxy,
   });
 
@@ -146,23 +158,20 @@ export async function newBrowserPage(params: {
     }
   });
 
-  if (!useBrowserApi) {
-    await page.authenticate({
-      username: config.proxyUsername!,
-      password: config.proxyPassword!,
-    });
-  }
+  await page.authenticate({
+    username: config.proxyUsername!,
+    password: config.proxyPassword!,
+  });
 
   const oldGoTo = page.goto.bind(page);
+  page.setDefaultNavigationTimeout(180_000);
   page.goto = async (url, options) => {
     const result = await oldGoTo(url, options);
-    if (!useBrowserApi) {
-      await page.solveRecaptchas();
-    }
+    await page.solveRecaptchas();
     return result;
   };
 
-  return { page, context };
+  return { browser, page, context };
 }
 
 export async function scrapeUrl(params: {
@@ -171,7 +180,6 @@ export async function scrapeUrl(params: {
   timeout?: number;
   convertToMd?: boolean;
   useProxy?: boolean;
-  useBrowserApi?: boolean;
 }) {
   const {
     url,
@@ -179,11 +187,9 @@ export async function scrapeUrl(params: {
     timeout = 180_000,
     convertToMd = true,
     useProxy = true,
-    useBrowserApi = false,
   } = params;
 
-  const { page, context } = await newBrowserPage({
-    useBrowserApi,
+  const { browser, page } = await newBrowserPage({
     useProxy,
   });
 
@@ -196,6 +202,8 @@ export async function scrapeUrl(params: {
   } catch (error) {
     if (
       (error as Error).message.includes("ERR_TIMED_OUT") ||
+      (error as Error).message.includes("ERR_NETWORK_CHANGED") ||
+      (error as Error).message.includes("ERR_SOCKET_NOT_CONNECTED") ||
       (error as PuppeteerError).name === "TimeoutError"
     ) {
       throw new PageLoadError(408, (error as Error).message);
@@ -209,11 +217,11 @@ export async function scrapeUrl(params: {
 
   const content = await page.content();
   if (response!.status() !== 200) {
-    throw new PageLoadError(response!.status(), content);
+    throw new PageLoadError(response!.status(), "Page failed to load");
   }
 
   const finalUrl = response!.url();
-  await context.close();
+  await browser.close();
 
   if (convertToMd) {
     return { content: turndown.turndown(content), url: finalUrl };
