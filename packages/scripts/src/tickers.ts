@@ -18,7 +18,7 @@ export const syncTickerQuotes = createScript<[]>({
   const symbols = await tickerService.getSupportedTickers();
   for await (const symbolsChunk of chunk(symbols, 20)) {
     await Promise.all(
-      symbolsChunk.map((s) => tickerService.getAndSaveQuote(s)),
+      symbolsChunk.map((s) => tickerService.fetchAndSaveQuote(s)),
     );
   }
   return "OK";
@@ -45,7 +45,7 @@ export const syncTickers = createScript({
     "Load and save overviews for supported tickers (US only and for stocks and ETFs currently)",
 })(async () => {
   const tickerService = resolve(TickerService);
-  await tickerService.getUSTickersFromApiAndSave();
+  await tickerService.fetchUSTickersFromApiAndSave();
   return "OK";
 });
 
@@ -79,6 +79,15 @@ export const syncSupportedTickers = createScript<[]>({
 })(async () => {
   const tickerService = resolve(TickerService);
   await tickerService.updateSupportedTickers();
+  return "OK";
+});
+
+export const syncSectors = createScript<[]>({
+  name: "sync-sectors",
+  description: "Update sectors for supported tickers",
+})(async () => {
+  const tickerService = resolve(TickerService);
+  await tickerService.fetchAndSaveSectors();
   return "OK";
 });
 

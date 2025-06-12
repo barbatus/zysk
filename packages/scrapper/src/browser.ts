@@ -1,6 +1,9 @@
+import { getLogger } from "@zysk/services";
 import {
   type Browser,
+  type BrowserContext,
   type HTTPResponse,
+  type Page,
   type PuppeteerError,
 } from "puppeteer";
 import puppeteer from "puppeteer-extra";
@@ -133,99 +136,196 @@ async function newBrowserContext(params: { useProxy?: boolean }) {
   };
 }
 
-export async function newBrowserPage(params: { useProxy?: boolean }) {
-  const { useProxy = true } = params;
+export async function newBrowserPages(params: {
+  pages: number;
+  context: BrowserContext;
+}) {
+  const { context, pages } = params;
 
-  const { context, browser } = await newBrowserContext({
-    useProxy,
-  });
+  const createPage = async () => {
+    const page = await context.newPage();
 
-  const page = await context.newPage();
+    await page.setRequestInterception(true);
+    page.on("request", (request) => {
+      const requestUrl = request.url();
+      const isMedia = MEDIA_EXTENSIONS.some((ext) =>
+        requestUrl.endsWith(`.${ext}`),
+      );
+      const isAd = AD_SERVING_DOMAINS.some((domain) =>
+        requestUrl.includes(domain),
+      );
+      if (isMedia || isAd) {
+        void request.abort();
+      } else {
+        void request.continue();
+      }
+    });
 
-  await page.setRequestInterception(true);
-  page.on("request", (request) => {
-    const requestUrl = request.url();
-    const isMedia = MEDIA_EXTENSIONS.some((ext) =>
-      requestUrl.endsWith(`.${ext}`),
-    );
-    const isAd = AD_SERVING_DOMAINS.some((domain) =>
-      requestUrl.includes(domain),
-    );
-    if (isMedia || isAd) {
-      void request.abort();
-    } else {
-      void request.continue();
-    }
-  });
+    await page.authenticate({
+      username: config.proxyUsername!,
+      password: config.proxyPassword!,
+    });
 
-  await page.authenticate({
-    username: config.proxyUsername!,
-    password: config.proxyPassword!,
-  });
+    const oldGoTo = page.goto.bind(page);
+    page.setDefaultNavigationTimeout(180_000);
+    page.goto = async (url, options) => {
+      const result = await oldGoTo(url, options);
+      await page.solveRecaptchas();
+      return result;
+    };
 
-  const oldGoTo = page.goto.bind(page);
-  page.setDefaultNavigationTimeout(180_000);
-  page.goto = async (url, options) => {
-    const result = await oldGoTo(url, options);
-    await page.solveRecaptchas();
-    return result;
+    return page;
   };
 
-  return { browser, page, context };
+  return {
+    pages: await Promise.all(Array.from({ length: pages }, createPage)),
+  };
 }
 
-export async function scrapeUrl(params: {
+async function sleep(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+const logger = getLogger();
+
+async function scrapeUrl(params: {
   url: string;
+  page: Page;
+  timeout: number;
+  waitFor: number;
+  convertToMd: boolean;
+}) {
+  const { url, page, timeout, waitFor, convertToMd } = params;
+  let response: HTTPResponse | null;
+
+  const visitPage = async () => {
+    try {
+      response = await page.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout,
+      });
+    } catch (error) {
+      if (
+        (error as Error).message.includes("ERR_TIMED_OUT") ||
+        (error as Error).message.includes("ERR_NETWORK_CHANGED") ||
+        (error as Error).message.includes("ERR_SOCKET_NOT_CONNECTED") ||
+        (error as PuppeteerError).name === "TimeoutError"
+      ) {
+        throw new PageLoadError(408, (error as Error).message);
+      }
+      throw error;
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, waitFor);
+    });
+
+    const content = await page.content();
+    if (response!.status() !== 200) {
+      throw new PageLoadError(response!.status(), "Page failed to load");
+    }
+
+    const finalUrl = response!.url();
+
+    logger.info(
+      {
+        finalUrl,
+      },
+      "Page loaded successfully",
+    );
+
+    if (convertToMd) {
+      return { content: turndown.turndown(content), url: finalUrl };
+    }
+
+    return { content, url: finalUrl };
+  };
+
+  let count = 0;
+  while (count < 3) {
+    try {
+      return await visitPage();
+    } catch (error) {
+      if (
+        error instanceof PageLoadError &&
+        (error.status === 408 ||
+          error.status === 401 ||
+          error.status === 403 ||
+          error.status === 429)
+      ) {
+        count++;
+        const ms = Math.pow(2, count - 1) * 30_000;
+        logger.warn(
+          {
+            url,
+            status: error.status,
+          },
+          `[Scrapper] Retrying page.goto in ${Math.round(ms / 1000)} seconds`,
+        );
+        await sleep(ms);
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw new PageLoadError(408, "Page failed to load");
+}
+
+export async function scrapeUrls(params: {
+  urls: string[];
   waitFor?: number;
   timeout?: number;
   convertToMd?: boolean;
   useProxy?: boolean;
-}) {
+}): Promise<
+  {
+    url: string;
+    content?: string;
+    error?: Error;
+  }[]
+> {
   const {
-    url,
+    urls,
     waitFor = 2000,
     timeout = 180_000,
     convertToMd = true,
     useProxy = true,
   } = params;
 
-  const { browser, page } = await newBrowserPage({
+  const { browser, context } = await newBrowserContext({
     useProxy,
   });
 
-  let response: HTTPResponse | null;
-  try {
-    response = await page.goto(url, {
-      waitUntil: "domcontentloaded",
-      timeout,
-    });
-  } catch (error) {
-    if (
-      (error as Error).message.includes("ERR_TIMED_OUT") ||
-      (error as Error).message.includes("ERR_NETWORK_CHANGED") ||
-      (error as Error).message.includes("ERR_SOCKET_NOT_CONNECTED") ||
-      (error as PuppeteerError).name === "TimeoutError"
-    ) {
-      throw new PageLoadError(408, (error as Error).message);
-    }
-    throw error;
-  }
-
-  await new Promise((resolve) => {
-    setTimeout(resolve, waitFor);
+  const { pages } = await newBrowserPages({
+    pages: urls.length,
+    context,
   });
 
-  const content = await page.content();
-  if (response!.status() !== 200) {
-    throw new PageLoadError(response!.status(), "Page failed to load");
-  }
+  const results = await Promise.allSettled(
+    pages.map(async (page, index) => {
+      const { content, url } = await scrapeUrl({
+        url: urls[index],
+        page,
+        timeout,
+        waitFor,
+        convertToMd,
+      });
+      return { content, url };
+    }),
+  );
 
-  const finalUrl = response!.url();
   await browser.close();
 
-  if (convertToMd) {
-    return { content: turndown.turndown(content), url: finalUrl };
-  }
-
-  return { content, url: finalUrl };
+  return results.map((result, index) => {
+    if (result.status === "fulfilled") {
+      return result.value;
+    }
+    return {
+      url: urls[index],
+      error: result.reason as Error,
+    };
+  });
 }

@@ -1,39 +1,93 @@
-import { activityInfo, ApplicationFailure } from "@temporalio/activity";
-import { PageLoadError, scrapeUrl } from "@zysk/scrapper";
-import { getLogger } from "@zysk/services";
+import { scrapeUrls } from "@zysk/scrapper";
+import { getAppConfigStatic, NodeEnvironment } from "@zysk/services";
+import IORedis, { type RedisOptions } from "ioredis";
+import { mapKeys } from "lodash";
 
-export async function scrapeUrlViaBrowser(url: string) {
-  const logger = getLogger();
-  try {
-    const result = await scrapeUrl({
-      url,
-    });
-    return result;
-  } catch (ex) {
-    logger.error(
-      {
-        error: (ex as Error).message,
-      },
-      "Error scraping url",
-    );
+const config = getAppConfigStatic();
 
-    if (
-      ex instanceof PageLoadError &&
-      (ex.status === 401 || ex.status === 403 || ex.status === 408)
-    ) {
-      const attempt = activityInfo().attempt;
-      throw ApplicationFailure.create({
-        type: "RequestTimeout",
-        nonRetryable: attempt >= 3,
-        message: `Error scraping URL ${url} with status ${ex.status}: ${ex.message}`,
-        nextRetryDelay: `${Math.pow(2, attempt - 1) * 60}s`,
-      });
-    }
-    throw ApplicationFailure.create({
-      type: "ScapeError",
-      nonRetryable: true,
-      message: (ex as Error).message,
-      cause: ex as Error,
-    });
-  }
+const redisOptions: RedisOptions = {
+  host: config.upstash?.redisRestUrl,
+  port: 6379,
+  username: "default",
+  password: config.upstash?.redisRestToken,
+  family: 6,
+  maxRetriesPerRequest: null,
+  tls: {},
+};
+
+const redis = new IORedis(
+  config.nodeEnv === NodeEnvironment.DEVELOPMENT
+    ? {
+        host: "localhost",
+        port: 6379,
+        maxRetriesPerRequest: null,
+      }
+    : redisOptions,
+);
+
+export async function scrapeUrlsViaBrowser(params: {
+  urls: string[];
+  useProxy?: boolean;
+  convertToMd?: boolean;
+  waitFor?: number;
+  timeout?: number;
+}) {
+  const {
+    urls,
+    useProxy = true,
+    convertToMd = true,
+    waitFor,
+    timeout,
+  } = params;
+  const cachedUrls = mapKeys(
+    (
+      await Promise.allSettled(
+        urls.map((url) =>
+          redis.get(
+            `scrapper:urls:format:${convertToMd ? "md" : "html"}:${url}`,
+          ),
+        ),
+      )
+    )
+      .map((r, index) => {
+        if (r.status === "fulfilled" && r.value) {
+          return {
+            url: urls[index],
+            content: r.value,
+          } as {
+            url: string;
+            content?: string;
+            error?: Error;
+          };
+        }
+        return null;
+      })
+      .filter(Boolean),
+    "url",
+  );
+
+  const newUrls = urls.filter((url) => !(url in cachedUrls));
+
+  const result = await scrapeUrls({
+    urls: newUrls,
+    useProxy,
+    convertToMd,
+    waitFor,
+    timeout,
+  });
+
+  await Promise.allSettled(
+    result
+      .filter((r) => !r.error && r.content)
+      .map((r) =>
+        redis.set(
+          `scrapper:urls:format:${convertToMd ? "md" : "html"}:${r.url}`,
+          r.content!,
+          "EX",
+          "5 minutes",
+        ),
+      ),
+  );
+
+  return Object.values(cachedUrls).concat(result);
 }

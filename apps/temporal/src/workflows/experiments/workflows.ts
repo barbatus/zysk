@@ -1,4 +1,4 @@
-import { executeChild, proxyActivities } from "@temporalio/workflow";
+import { executeChild, proxyActivities, uuid4 } from "@temporalio/workflow";
 import {
   addDays,
   isMonday,
@@ -10,9 +10,9 @@ import {
 
 import type * as newsActivities from "../stock-news/activities";
 import {
-  syncAllNewsDaily,
   scrapeMarketNewsForPeriod,
   scrapeTickerNewsForPeriod,
+  syncAllNewsDaily,
 } from "../stock-news/workflows";
 import {
   syncTickerQuotesDaily,
@@ -49,6 +49,7 @@ export async function runTickerSentimentPredictionExperiment(
         newsIds,
         timeSeries,
         currentDate: endDate,
+        experimentId: uuid4(),
       }),
     ),
   );
@@ -167,7 +168,7 @@ export async function predictSentimentWeekly(params: {
 
 export async function testTicker() {
   await predictSentimentWeekly({
-    symbol: "AVGO",
-    startWeek: "2025-06-02",
+    symbol: "AAPL",
+    startWeek: "2025-06-09",
   });
 }

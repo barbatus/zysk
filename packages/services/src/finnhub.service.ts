@@ -10,7 +10,7 @@ const finnhubApiUrl = "https://finnhub.io/api/v1";
 export class FinnhubService {
   constructor(@inject(appConfigSymbol) private readonly appConfig: AppConfig) {}
 
-  async getUSTickers(symbols: string[]) {
+  async fetchUSTickers(symbols: string[]) {
     const response = await axios.get<
       {
         displaySymbol: string;
@@ -35,7 +35,7 @@ export class FinnhubService {
     );
   }
 
-  async getTickerNews(params: {
+  async fetchTickerNews(params: {
     symbol: string;
     startDate: Date;
     endDate?: Date;
@@ -62,7 +62,7 @@ export class FinnhubService {
     }));
   }
 
-  async getQuote(symbol: string) {
+  async fetchQuote(symbol: string) {
     const response = await axios.get<{
       c: number;
       d: number;

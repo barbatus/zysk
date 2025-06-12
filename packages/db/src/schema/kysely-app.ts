@@ -34,7 +34,11 @@ export type TickersTable = CreateTableType<
           name: string;
           weight: number;
         }[]
-      >
+      >,
+      {
+        name: string;
+        weight: number;
+      }[]
     >;
     foundedAt: ColumnType<Date | null, Optional<Date>>;
   }

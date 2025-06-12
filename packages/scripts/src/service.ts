@@ -2,6 +2,7 @@ import { orderBy } from "lodash";
 
 import {
   scrapeUrl,
+  syncSectors,
   syncSupportedTickers,
   syncTickerOverviews,
   syncTickerQuotes,
@@ -16,6 +17,7 @@ export const allScripts = [
   syncTickerOverviews,
   syncTickerTimeSeries,
   syncSupportedTickers,
+  syncSectors,
   scrapeUrl,
 ] as ScriptConfig[];
 

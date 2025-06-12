@@ -18,8 +18,10 @@ async function run() {
     taskQueue: "zysk-scrapper",
     workflowsPath: require.resolve("./workflows/scrapper/workflows"),
     activities: { scrapeNews },
-    maxActivitiesPerSecond: 1.2,
-    maxConcurrentActivityTaskExecutions: 50,
+    // 30 activities per minute
+    maxActivitiesPerSecond: 0.5,
+    // Up to 5 browsers per worker
+    maxConcurrentActivityTaskExecutions: 5,
   });
   await Promise.all([workerMain.run(), workerScrapper.run()]);
 }

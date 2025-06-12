@@ -169,13 +169,13 @@ export class TickerNewsService {
     description?: string;
   }> {
     const { url, timeoutSeconds } = params;
-    const article = await this.getArticle(url);
-    if (article) {
+    const articles = await this.getArticles([url]);
+    if (articles.length === 1) {
       return {
-        url: article.url,
-        markdown: article.markdown!,
-        title: article.title,
-        description: article.description,
+        url: articles[0].url,
+        markdown: articles[0].markdown,
+        title: articles[0].title,
+        description: articles[0].description,
       };
     }
     return this.scrapeUrlViaApi(url, timeoutSeconds);
@@ -186,11 +186,11 @@ export class TickerNewsService {
     startDate: Date,
     endDate?: Date,
   ): Promise<{ url: string; title: string; newsDate: Date }[]> {
-    return this.finnhubService.getTickerNews({ symbol, startDate, endDate });
+    return this.finnhubService.fetchTickerNews({ symbol, startDate, endDate });
   }
 
   async getGeneralNews(startDate: Date, endDate?: Date) {
-    return this.finnhubService.getTickerNews({
+    return this.finnhubService.fetchTickerNews({
       symbol: "general",
       startDate,
       endDate,
@@ -380,13 +380,16 @@ export class TickerNewsService {
       : Promise.resolve([]);
   }
 
-  async getArticle(url: string) {
+  async getArticles(urls: string[]) {
     return this.db
       .selectFrom("app_data.stock_news")
       .selectAll()
-      .where((eb) => eb.or([eb("url", "=", url), eb("originalUrl", "=", url)]))
+      .where((eb) =>
+        eb.or([eb("url", "in", urls), eb("originalUrl", "in", urls)]),
+      )
       .where("status", "=", StockNewsStatus.Scraped)
-      .executeTakeFirst();
+      .$narrowType<{ markdown: NotNull }>()
+      .execute();
   }
 
   private async pollUntilCondition<T>({

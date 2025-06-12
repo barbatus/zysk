@@ -45,7 +45,7 @@ export class TickerDataService {
   }
 
   async getCompanyProfileApi(symbol: string) {
-    const result = await this.alphaVantageService.getCompanyOverview(symbol);
+    const result = await this.alphaVantageService.fetchCompanyOverview(symbol);
     if (!result) {
       return undefined;
     }
@@ -144,7 +144,7 @@ export class TickerDataService {
     endDate: Date,
     outputsize: "full" | "compact" = "compact",
   ) {
-    const result = await this.alphaVantageService.getTimeSeriesDaily(
+    const result = await this.alphaVantageService.fetchTimeSeriesDaily(
       symbol,
       outputsize,
     );

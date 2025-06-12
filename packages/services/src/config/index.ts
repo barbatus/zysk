@@ -164,10 +164,12 @@ export const AppConfigEnvVariablesSchema = z.object({
       ),
     )
     .optional(),
-  MODEL_PROVIDERS: z.preprocess(
-    (val) => JSON.parse(val as string),
-    z.record(z.enum(MODEL_KEYS), z.enum(MODEL_PROVIDERS)),
-  ),
+  MODEL_PROVIDERS: z
+    .preprocess(
+      (val) => JSON.parse(val as string),
+      z.record(z.enum(MODEL_KEYS), z.enum(MODEL_PROVIDERS)),
+    )
+    .optional(),
   GOOGLE_API_KEY: z.string().optional(),
   GOOGLE_MODEL_CONFIGS: z
     .preprocess(

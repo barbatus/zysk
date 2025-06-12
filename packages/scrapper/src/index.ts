@@ -1,1 +1,1 @@
-export { PageLoadError, scrapeUrl } from "./browser";
+export { PageLoadError, scrapeUrls } from "./browser";

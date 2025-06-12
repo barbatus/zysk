@@ -1,7 +1,12 @@
-import { executeChild, proxyActivities, ApplicationFailure, uuid4 } from "@temporalio/workflow";
+import {
+  ApplicationFailure,
+  executeChild,
+  proxyActivities,
+  uuid4,
+} from "@temporalio/workflow";
 import { StockNewsStatus } from "@zysk/db";
-import { endOfWeek, parse, startOfDay } from "date-fns";
-import { chunk, mapKeys, uniqBy } from "lodash";
+import { endOfWeek, parse, startOfWeek } from "date-fns";
+import { chunk, mapKeys, omit, uniqBy } from "lodash";
 
 import type * as activities from "./activities";
 
@@ -14,36 +19,33 @@ const proxy = proxyActivities<typeof activities>({
   },
 });
 
+const scrapperProxy = proxyActivities<{
+  scrapeNews: typeof activities.scrapeNews;
+}>({
+  startToCloseTimeout: "5 minutes",
+  retry: {
+    nonRetryableErrorTypes: ["NonRetryable"],
+    maximumAttempts: 3,
+  },
+  taskQueue: "zysk-scrapper",
+});
+
 export async function scrapeTickerNewsUrls(
   news: { newsDate: Date; url: string; symbol: string; title: string }[],
 ) {
-  const callScrapeSymbolNews = async (item: {
-    newsDate: Date;
-    url: string;
-    symbol: string;
-    title: string;
-  }) => {
-    const result = await proxy.scrapeNews(item.url).catch(async () => {
-      return {
-        ...item,
-        originalUrl: item.url,
-        markdown: null,
-        status: StockNewsStatus.Failed,
-        tokenSize: 0,
-      };
-    });
+  const itemByUrl = mapKeys(news, "url");
 
-    return {
-      ...item,
-      ...result,
-    };
-  };
+  const result = await scrapperProxy
+    .scrapeNews(news.map((n) => n.url))
+    .then((r) =>
+      r.map((n) => ({
+        ...itemByUrl[n.url],
+        ...omit(n, "error"),
+        status: n.error ? StockNewsStatus.Failed : StockNewsStatus.Scraped,
+      })),
+    );
 
-  return Promise.allSettled(news.map(callScrapeSymbolNews)).then((result) =>
-    result
-      .map((r) => (r.status === "fulfilled" ? r.value : null))
-      .filter(Boolean),
-  );
+  return result;
 }
 
 export async function scrapeTickerNewsBatchAndSave(
@@ -56,14 +58,14 @@ export async function scrapeTickerNewsBatchAndSave(
   });
 
   const uniqueNews = uniqBy(
-    scrapedNews.flat().map((n) => ({
-      status: StockNewsStatus.Scraped,
+    scrapedNews.map((n) => ({
       ...n,
       symbol,
       newsDate: newsDateMap[n.originalUrl].newsDate,
     })),
     (n) => `${n.symbol}-${n.url}`,
   );
+
   return (await proxy.saveNews(uniqueNews)).map((n) => ({
     id: n.id,
     status: n.status,
@@ -74,37 +76,28 @@ export async function runScrapeTickerNews(
   symbol: string,
   news: { url: string; title: string; newsDate: Date }[],
 ) {
-  const results: PromiseSettledResult<
-    { id: string; status: StockNewsStatus }[]
-  >[] = [];
-  for (let i = 0; i < news.length; i += 100) {
-    results.push(
-      ...(await Promise.allSettled(
-        chunk(news.slice(i, i + 100), 20).map((batch) =>
-          executeChild(scrapeTickerNewsBatchAndSave, {
-            args: [symbol, batch],
-          }),
-        ),
-      )),
-    );
-  }
+  const attemptedNews = (
+    await Promise.all(
+      chunk(news, 15).map((batch) =>
+        executeChild(scrapeTickerNewsBatchAndSave, {
+          args: [symbol, batch],
+        }),
+      ),
+    )
+  ).flat();
 
-  const attemptedNews = results.flatMap((r) => {
-    if (r.status === "fulfilled") {
-      return r.value;
-    }
-    return [];
-  });
-
-  const scrapedNews = attemptedNews.filter(n => n.status === StockNewsStatus.Scraped);
-  const successRate = Math.round(scrapedNews.length / attemptedNews.length * 100);
-  if (successRate >= 0.8) {
-    return attemptedNews;
+  const scrapedNews = attemptedNews.filter(
+    (n) => n.status === StockNewsStatus.Scraped,
+  );
+  const successRate = Math.round(
+    (scrapedNews.length / attemptedNews.length) * 100,
+  );
+  if (successRate >= 80) {
+    return scrapedNews;
   }
   throw ApplicationFailure.create({
     type: "ScrapeError",
-    message: `Success rate of news scraping is ${successRate}%`,
-    nonRetryable: true,
+    message: `Success rate of the scraping is ${successRate}% lower than 80%`,
   });
 }
 
@@ -134,16 +127,16 @@ export async function scrapeTickerNewsForPeriod(
   endDate?: Date,
 ) {
   const currentNews = await proxy.fetchTickerNews(symbol, startDate, endDate);
-  const news = await runScrapeTickerNews(symbol, currentNews);
+  const scrapedNews = await runScrapeTickerNews(symbol, currentNews);
   await executeChild(runExtractNewsInsights, {
-    args: [
-      symbol,
-      news.filter((n) => n.status === StockNewsStatus.Scraped).map((n) => n.id),
-    ],
+    args: [symbol, scrapedNews.map((n) => n.id)],
   });
 }
 
-export async function scrapeMarketNewsForPeriod(startDate: Date, endDate?: Date) {
+export async function scrapeMarketNewsForPeriod(
+  startDate: Date,
+  endDate?: Date,
+) {
   await scrapeTickerNewsForPeriod("GENERAL", startDate, endDate);
 }
 
@@ -202,10 +195,16 @@ export async function syncAllNewsWeekly(symbols: string[]) {
 }
 
 export async function testInsightsExtract() {
-  const startDate = parse("2025-06-02", "yyyy-MM-dd", new Date());
-  await scrapeTickerNewsForPeriod(
-    "UBER",
-    startOfDay(startDate),
-    endOfWeek(startDate),
-  );
+  const startDate = parse("2025-03-10", "yyyy-MM-dd", new Date());
+  for (const symbols of chunk(["CRM", "NVDA"], 5)) {
+    await Promise.all(
+      symbols.map((symbol) =>
+        scrapeTickerNewsForPeriod(
+          symbol,
+          startOfWeek(startDate),
+          endOfWeek(startDate),
+        ),
+      ),
+    );
+  }
 }

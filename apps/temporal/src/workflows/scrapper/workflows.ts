@@ -11,13 +11,15 @@ const proxy = proxyActivities<typeof activities>({
   taskQueue: "zysk-scrapper",
 });
 
-export async function scrapeUrl(url: string) {
-  return proxy.scrapeUrlViaBrowser(url);
+export async function scrapeUrls(urls: string[]) {
+  return proxy.scrapeUrlsViaBrowser({ urls });
 }
 
 export async function testScrapeNews() {
-  const news = await proxy.scrapeUrlViaBrowser(
-    `https://finnhub.io/api/news?id=dd2e6faf9bf2138b2904793cf03d3257d77b07d316db23734569622086e255b6`,
-  );
+  const news = await proxy.scrapeUrlsViaBrowser({
+    urls: [
+      `https://finnhub.io/api/news?id=dd2e6faf9bf2138b2904793cf03d3257d77b07d316db23734569622086e255b6`,
+    ],
+  });
   console.log(news);
 }

@@ -38,7 +38,7 @@ function processResponse<
 export class AlphaVantageService {
   constructor(@inject(appConfigSymbol) private readonly appConfig: AppConfig) {}
 
-  async getCompanyOverview(symbol: string) {
+  async fetchCompanyOverview(symbol: string) {
     const response = await axios.get<
       | {
           Description: string;
@@ -69,7 +69,7 @@ export class AlphaVantageService {
       : undefined;
   }
 
-  async getETFProfile(symbol: string) {
+  async fetchETFProfile(symbol: string) {
     const response = await axios.get<
       | {
           inception_date: string;
@@ -98,7 +98,7 @@ export class AlphaVantageService {
       : undefined;
   }
 
-  async getTimeSeriesDaily(
+  async fetchTimeSeriesDaily(
     symbol: string,
     outputsize: "full" | "compact" = "compact",
   ) {

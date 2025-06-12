@@ -1,15 +1,25 @@
+import { activityInfo } from "@temporalio/activity";
+import { ApplicationFailure } from "@temporalio/workflow";
 import { type StockNewsInsert } from "@zysk/db";
 import { StockNewsStatus } from "@zysk/db";
-import { type Exact, resolve, TickerNewsService } from "@zysk/services";
+import { PageLoadError } from "@zysk/scrapper";
+import {
+  type Exact,
+  getLogger,
+  resolve,
+  TickerNewsService,
+} from "@zysk/services";
 import { startOfDay, subDays } from "date-fns";
-import { isNil } from "lodash";
+import { isNil, mapKeys, omit } from "lodash";
 // eslint-disable-next-line camelcase
 import { encoding_for_model } from "tiktoken";
 
 import { getMaxTokens } from "#/llm/models/registry";
 import { NewsInsightsExtractor } from "#/llm/runners/insights-extractor";
 
-import { scrapeUrlViaBrowser } from "../scrapper/activities";
+import { scrapeUrlsViaBrowser } from "../scrapper/activities";
+
+const logger = getLogger();
 
 async function _fetchTickersToProcess(symbols: string[]) {
   const tickerNewsService = resolve(TickerNewsService);
@@ -164,49 +174,107 @@ export async function fetchTickerNews(
   return tickerNewsService.getTickerNews(symbol, startDate, endDate);
 }
 
-export async function getOrScrapeNews(url: string) {
+export async function getOrScrapeNews(urls: string[]) {
   const tickerNewsService = resolve(TickerNewsService);
-  const dbResult = await tickerNewsService.getArticle(url);
+  const savedNews = (await tickerNewsService.getArticles(urls)).map((n) => ({
+    url: n.url,
+    markdown: n.markdown,
+    originalUrl: n.originalUrl,
+  }));
 
-  if (dbResult) {
-    return {
-      url: dbResult.url,
-      markdown: dbResult.markdown!,
-      title: dbResult.title,
-      description: dbResult.description,
-    };
+  const savedNewsByUrl = mapKeys(savedNews, "originalUrl");
+
+  const urlsToScrape = urls.filter((url) => !(url in savedNewsByUrl));
+
+  const result = (await scrapeUrlsViaBrowser({ urls: urlsToScrape })).map(
+    (r) => ({
+      ...omit(r, "content"),
+      url: r.url,
+      markdown: r.content,
+      originalUrl: r.url,
+    }),
+  );
+
+  const failedNews = result.filter((n) => Boolean(n.error));
+
+  if (failedNews.length > 0) {
+    logger.error(
+      {
+        failedNews: failedNews.map(
+          (n) =>
+            `${n.url} with status ${
+              n.error instanceof PageLoadError ? n.error.status : 500
+            }`,
+        ),
+      },
+      "Failed to scrape news",
+    );
   }
 
-  const result = await scrapeUrlViaBrowser(url);
-
-  return {
-    url: result.url,
-    markdown: result.content,
-  };
+  return (savedNews as typeof result).concat(result);
 }
 
-export async function scrapeNews(url: string, maxTokens = 5000) {
-  const result = await getOrScrapeNews(url);
+export async function scrapeNews(urls: string[], maxTokens = 5000) {
+  const result = await getOrScrapeNews(urls);
 
   const tokenizer = encoding_for_model("gpt-4o");
-  const cleanedMarkdown = result.markdown
-    .replace(/\[.+\]\(.*?\)/gm, "")
-    .replace(/(?:\n\n)+/gm, "\n\n");
-  const tokens = tokenizer.encode(cleanedMarkdown);
-  // Set limit here to 5000 tokens as sometimes it parses more then needed on
-  // pages with infinite scrolling, 5000 is enough to get the main content
-  const slicedTokens = tokens.slice(0, maxTokens);
-  const slicedMarkdown = new TextDecoder().decode(
-    tokenizer.decode(slicedTokens),
-  );
+  const cleanedNews = result.map((r, index) => {
+    if (r.markdown) {
+      const cleanedMarkdown = r.markdown
+        .replace(/\[.+\]\(.*?\)/gm, "")
+        .replace(/(?:\n\n)+/gm, "\n\n");
+      const tokens = tokenizer.encode(cleanedMarkdown);
+      // Set limit here to 5000 tokens as sometimes it parses more then needed on
+      // pages with infinite scrolling, 5000 is enough to get the main content
+      const slicedTokens = tokens.slice(0, maxTokens);
+      const slicedMarkdown = new TextDecoder().decode(
+        tokenizer.decode(slicedTokens),
+      );
+      return {
+        ...r,
+        markdown: slicedMarkdown,
+        url: r.url,
+        originalUrl: urls[index],
+        tokenSize: slicedTokens.length,
+      };
+    }
+    return {
+      ...r,
+      url: r.url,
+      originalUrl: urls[index],
+      tokenSize: 0,
+    };
+  });
+
   tokenizer.free();
-  return {
-    ...result,
-    markdown: slicedMarkdown,
-    url: result.url,
-    originalUrl: url,
-    tokenSize: slicedTokens.length,
-  };
+
+  const successfulUrls = cleanedNews.filter((n) => !n.error).length;
+  const total = urls.length;
+  const successRate = Math.round((successfulUrls / total) * 100);
+
+  logger.info(
+    {
+      successfulUrls,
+      total,
+    },
+    "[scrapeNews] Result",
+  );
+
+  if (successRate >= 80) {
+    return cleanedNews;
+  }
+
+  const attempt = activityInfo().attempt;
+  if (attempt <= 1) {
+    throw ApplicationFailure.create({
+      type: "ScrapeError",
+      message: `Success rate of the scraping is ${successRate}% lower than 80%`,
+      nonRetryable: false,
+      nextRetryDelay: "1m",
+    });
+  }
+
+  return cleanedNews;
 }
 
 export async function saveNews<T extends StockNewsInsert>(
