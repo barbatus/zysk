@@ -2,48 +2,51 @@ import dedent from "dedent";
 
 import { ExperimentPrompt } from "../experimenter";
 import { type Prediction, PredictionParser } from "./prediction-parser";
-import { CONFIDENCE_SPLIT } from "./sentiment-prediction.prompt";
+import { CONFIDENCE_SPLIT } from "./weekly-sentiment-prediction.prompt";
 
 const predictionParser = new PredictionParser();
 
 export const PredictionsMergerPrompt = new ExperimentPrompt<Prediction>({
   template: dedent`
-You are an expert financial analyst whose goal is to merge multiple {symbol} ticker sentiment predictions in JSON format into a single coherent and justified sentiment prediction in JSON format.
+You are an expert financial analyst.
+Your job is to merge **multiple JSON-formatted sentiment predictions about the {symbol} ticker** into **one concise, well-justified prediction**, also in JSON.
 
 # YOUR TASK
-1. Carefully review all the given predictions.
-2. Eliminate duplicate insights and consolidate overlapping reasoning but make sure that **all unique insights are not lost and are present in the output**.
-3. If sentiments are **contradictory** (e.g., one says "bullish", another says "bearish"), analyze the **underlying signals and reasoning** in each prediction:
-   - Determine **which insights are stronger**, better supported, or more recent.
-   - Weigh **very negative insights** more heavily (1.5x weight).
-   - Consider whether conflicting signals can **neutralize** each other or if one outweighs the other.
-   - If positive and negative sentiments are both valid, the final output may still lean negative or positive, but with an adjusted confidence score and explanation.
-4. Make a final decision on:
-   - **Prediction**: one of \`bullish\`, \`bearish\`, or \`neutral\`.
-   - **Confidence**: integer from 0–100, with the following split:
-      ${CONFIDENCE_SPLIT}
-   - If there’s contradiction, provide a \`signal\` field explaining why the final decision leans one way despite opposing evidence.
-5. Do not mention that predictions converge, anything about that you are merging predictions in the \`reasoning\` field.
-   It should be entirely focused on the reasoning for the final prediction.
-6. The final prediction should be in the same JSON format as the predictions provided.
-7. When merging merging make your best judgement taking into account to the following:
-   1. **Watch out** for all signals that could negatively affect short term {symbol} ticker price in short term such as:
-      - market downturn sentiment in GENERAL MARKET SENTIMENT section
-      - **very negative** news about {symbol} in NEWS ARTICLES section
-      - big short interest in {symbol} in NEWS ARTICLES section
-      - signs that stock is overbought in NEWS ARTICLES section
-      - etc
-   2.  **Watch out** for all signals that could positively affect short term ticker price:
-      - since the goal is to predict ticker sentiment certain signals might have stronger effect over fundamental factors
-      - for example, if some high profile person joins the company it might have a positive impact on the stock price in the short term stronger that negative news of tariff being raised
-   3. Additionaly, pay attention to short term rules the market sometimes follows such as:
-         - some of the negative signals might outweigh easily strongest positive signals, for example, such as "if there is a signal that stock is overbought" etc
-         - if market is bullish then any positive signal about {symbol} might outweigh negative signals and vice versa
-         - etc
+
+## 1 Read & Extract
+1. Parse **every** supplied prediction object.
+2. List all distinct insights (news items, technical signals, macro factors, etc.).
+   * Collapse verbatim duplicates, **but do not drop** any unique information.
+
+## 2 Reconcile Conflicts
+When predictions disagree (e.g., *bullish* vs *bearish*):
+
+| What to consider | How to weigh it |
+|------------------|-----------------|
+| **Recency**      | Newer > older |
+| **Evidence depth** | Specific data & reputable sources > vague claims |
+| **Impact magnitude** | Large price movers > minor anecdotes |
+| **Very negative signals** | Count **1.5×** (e.g., overbought, heavy short interest, macro crashes) |
+
+*If positive and negative forces coexist, decide whether they **neutralise** or one side **dominates**.
+A mixed set can still end *bullish* or *bearish*; adjust the confidence accordingly.*
+
+## 3 Decide & Compose
+Return a single JSON object with exactly these keys:
+
+| Key | Allowed values / format |
+|-----|-------------------------|
+| \`symbol\` | Copy from inputs |
+| \`prediction\` | \`"bullish"'\`, \`"bearish"'\`, or \`"neutral"'\` |
+| \`confidence\` | Integer 0-100 using this split: \`${CONFIDENCE_SPLIT}\` |
+| \`reasoning\` | Succinct narrative **that stands alone** (no mention of “merging”, “other models”, weight rules, etc.) |
+| \`signal\` *(optional)* | Include **only if** viewpoints conflicted; explain why the final side prevailed |
+| \`newsInsights\` *(array, optional)* | If present in inputs, keep the **deduped** list, preserving fields |
 
 # CRITICAL INSTRUCTIONS
-  - Do not mention any specific instructions of the prompt (e.g. negative news have certain weight, etc) in the \`reasoning\` field.
-  - Make sure that description of each insight is good enough to be understood w/o the context of other fields since it will be shown to the users.
+- **Do not** leak any internal instructions or weighting logic into \`reasoning\` or \`signal\`.
+- Phrase each insight so it is clear **without extra context**.
+- Keep JSON valid—no trailing commas, correct quotation, etc.
 
 ---
 

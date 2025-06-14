@@ -1,6 +1,6 @@
 import { type DataDatabase } from "@zysk/db";
 import { inject, injectable } from "inversify";
-import { type Kysely } from "kysely";
+import { type Kysely, sql } from "kysely";
 import { keyBy } from "lodash";
 
 import { AlphaVantageService } from "./alpha-vantage.service";
@@ -126,12 +126,17 @@ export class TickerDataService {
     return keyBy(result, "symbol");
   }
 
-  async getTickerTimeSeries(symbol: string, startDate: Date, endDate?: Date) {
+  async getTickerTimeSeries(params: {
+    symbols?: string[];
+    startDate: Date;
+    endDate?: Date;
+  }) {
+    const { symbols, startDate, endDate } = params;
     const result = await this.db
       .selectFrom("app_data.ticker_time_series")
       .selectAll()
-      .where("symbol", "=", symbol)
       .where("date", ">=", startDate)
+      .$if(Boolean(symbols), (eb) => eb.where("symbol", "in", symbols!))
       .$if(Boolean(endDate), (eb) => eb.where("date", "<", endDate!))
       .orderBy("date", "asc")
       .execute();
@@ -167,5 +172,29 @@ export class TickerDataService {
       outputsize,
     );
     await this.saveTickerTimeSeries(result);
+  }
+
+  async getWeeklyOpenClosePrices(
+    symbols: string[],
+    startDate: Date,
+    endDate?: Date,
+  ) {
+    const result = await this.db
+      .selectFrom("app_data.ticker_time_series")
+      .select(() => [
+        sql<Date>`date_trunc('week', date)`.as("weekStart"),
+        sql<string>`symbol`.as("symbol"),
+        sql<number>`first_value("open_price") over (partition by symbol, date_trunc('week', date) order by date asc)`.as(
+          "open",
+        ),
+        sql<number>`last_value("close_price") over (partition by symbol, date_trunc('week', date) order by date asc
+        rows between unbounded preceding and unbounded following)`.as("close"),
+      ])
+      .distinct()
+      .where("date", ">=", startDate)
+      .where("symbol", "in", symbols)
+      .$if(Boolean(endDate), (eb) => eb.where("date", "<", endDate!))
+      .execute();
+    return result;
   }
 }

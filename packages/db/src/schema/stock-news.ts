@@ -39,7 +39,6 @@ export const stockNewsTable = mySchema.table(
     title: text("title"),
     description: text("description"),
     insights: jsonb("insights").$type<StockNewsInsight[]>().default([]),
-    insightsTokenSize: integer("insights_token_size").default(0),
     ...auditColumns(),
   },
   (t) => ({

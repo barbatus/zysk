@@ -126,16 +126,12 @@ export async function runNewsInsightsExtractorExperiment(params: {
   });
   const result = await runner.run();
 
-  const tokenizer = encoding_for_model("gpt-4o");
   const values = result.map(({ acticleId, insights }) => {
     return {
       id: acticleId,
       insights,
-      insightsTokenSize: tokenizer.encode(JSON.stringify(insights, null, 2))
-        .length,
     };
   });
-  tokenizer.free();
 
   await tickerNewsService.saveNewsInsights(values);
 
@@ -197,7 +193,7 @@ export async function getOrScrapeNews(urls: string[]) {
 
   const failedNews = result.filter((n) => Boolean(n.error));
 
-  if (failedNews.length > 0) {
+  if (failedNews.length) {
     logger.error(
       {
         failedNews: failedNews.map(

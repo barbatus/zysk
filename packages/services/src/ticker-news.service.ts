@@ -271,7 +271,6 @@ export class TickerNewsService {
   async saveNewsInsights<
     T extends {
       id: string;
-      insightsTokenSize: number;
       insights: StockNewsInsight[];
     },
   >(
@@ -279,7 +278,6 @@ export class TickerNewsService {
       T,
       {
         id: string;
-        insightsTokenSize: number;
         insights: StockNewsInsight[];
       }
     >[],
@@ -297,9 +295,6 @@ export class TickerNewsService {
                   sql<
                     StockNewsInsight[]
                   >`(${JSON.stringify(update.insights)}::jsonb)`.as("insights"),
-                  sql<number>`${update.insightsTokenSize}::integer`.as(
-                    "insightsTokenSize",
-                  ),
                 ]),
               );
             },
@@ -310,16 +305,12 @@ export class TickerNewsService {
               >`(${JSON.stringify(newsInsights[0].insights)}::jsonb)`.as(
                 "insights",
               ),
-              sql<number>`${newsInsights[0].insightsTokenSize}::integer`.as(
-                "insightsTokenSize",
-              ),
             ]),
           )
           .as("data_table"),
       )
       .set((eb) => ({
         insights: sql`COALESCE(${eb.ref("app_data.stock_news.insights")}, '[]'::jsonb) || ${eb.ref("data_table.insights")}`,
-        insightsTokenSize: eb.ref("data_table.insightsTokenSize"),
         updatedAt: new Date(),
       }))
       .whereRef("app_data.stock_news.id", "=", "data_table.id");
@@ -357,7 +348,6 @@ export class TickerNewsService {
         "status",
         "title",
         "tokenSize",
-        "insightsTokenSize",
         "insights",
       ])
       .where("symbol", "=", symbol)

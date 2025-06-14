@@ -19,6 +19,11 @@ export enum SentimentEnum {
   Neutral = "neutral",
 }
 
+export enum PredictionType {
+  Weekly = "weekly",
+  Daily = "daily",
+}
+
 export interface PredictionResponse {
   prediction: SentimentEnum;
   confidence: number;
@@ -41,5 +46,9 @@ export const predictionsTable = pgTable("predictions", {
   responseJson: jsonb("response_json").$type<PredictionResponse>().notNull(),
   experimentId: uuid("experiment_id").references(() => experimentsTable.id),
   period: date("period"),
+  evaluation: numeric("evaluation"),
+  type: validatedStringEnum("type", PredictionType).default(
+    PredictionType.Weekly,
+  ),
   ...auditColumns(),
 });

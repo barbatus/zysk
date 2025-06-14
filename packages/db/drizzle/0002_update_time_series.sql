@@ -1,0 +1,1 @@
+ALTER TABLE "app_data"."ticker_time_series" ALTER COLUMN "symbol" SET NOT NULL;

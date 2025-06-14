@@ -11,3 +11,5 @@ export const TICKERS = [
   "QQQ",
   "IWM",
 ];
+
+export const SECTORS = ["GENERAL"];

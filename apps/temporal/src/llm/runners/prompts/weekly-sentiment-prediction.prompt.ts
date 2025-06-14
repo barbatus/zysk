@@ -12,8 +12,8 @@ export const CONFIDENCE_SPLIT = dedent`
 
 const predictionParser = new PredictionParser();
 
-export const TickerSentimentPredictionPrompt = new ExperimentPrompt<Prediction>(
-  {
+export const WeeklyTickerSentimentPredictionPrompt =
+  new ExperimentPrompt<Prediction>({
     template: dedent`
 You are an expert in analyzing ticker market news insights that can affect a ticker sentiment: bullish, bearish, or neutral.
 You have been given a set of recent articles' insights about **{symbol}** from the **past 7 days**.
@@ -27,14 +27,14 @@ CURRENT DATE: {currentDate}
 
 # YOUR TASK
 1. Read each article's insights about {symbol} (in the NEWS ARTICLES section) and identify any that may have a meaningful impact on the ticker price in the short term.
-2. Take into account that the prediction should be made for the **next week**, i.e. all the factors that could affect the price in the short term should be weighted more.
+2. Take into account that the prediction should be made for the **following week**, i.e. all the factors that could affect the price in the short term should be weighted more.
 3. Produce your conclusions and insights as a structured **JSON response**, **strictly** following the format in the **Output Format** section.
-4. Consider {symbol}'s price trend in the TICKER PRICE LAST 2 WEEKS section.
+4. Consider {symbol}'s price trend for the last few weeks in the TICKER PRICES section.
 5. **Watch out** for all signals that could negatively affect short-term {symbol} price:
-    - Market downturn sentiment in MARKET SENTIMENT section
+    - Market downturn sentiment in MARKET SENTIMENT PREDICTION section
     - **Very negative news** about {symbol}
     - Big short interest in {symbol}
-    - Signals indicating the stock is **overbought**
+    - Signals indicating {symbol} is **overbought**
     - Deteriorating fundamentals, downgrades, poor earnings, etc.
 6. **Watch out** for signals that could positively affect short-term price:
     - High-profile leadership changes
@@ -51,7 +51,7 @@ CURRENT DATE: {currentDate}
 
 # CRITICAL INSTRUCTIONS
 - **Confidence scores** must be integers between 0 and 100, with the following split:
-    ${CONFIDENCE_SPLIT}
+  ${CONFIDENCE_SPLIT}
 - The **main prediction** (\`sentiment\`) and the **counterSignal.prediction** must be **opposite**.
     - Example: if \`sentiment\` is \`"bullish"'\`, then \`counterSignal.prediction\` must be \`"bearish"'\`, and vice versa.
     - If no strong opposing signal is found, set \`counterSignal\` to \`null\`.
@@ -61,8 +61,7 @@ CURRENT DATE: {currentDate}
 - The ticker **sentiment** must be one of: \`"bullish"'\`, \`"bearish"'\`, or \`"neutral"'\`.
 - The \`impact\` of each insight must be \`"positive"\`, \`"negative"\` or \`"neutral"\` toward {symbol}'s sentiment.
 - Consider both recent **ticker price history** and overall **market sentiment**.
-- You **must account for every article**. Each begins with:
-  \`# Article Title: <title>\` and articles are separated by \`---\`.
+- You **must account for every article**. Each begins with: \`# ARTICLE TITLE: <title>\` and articles are separated by \`---\`.
 - Output must be valid **JSON only**, using the format in the OUTPUT FORMAT section.
   **No additional text or explanation outside the JSON.**
 - Do your best to include **a few insights** in the output for better analysis.
@@ -73,12 +72,12 @@ CURRENT DATE: {currentDate}
 # OUTPUT FORMAT:
 {formatInstructions}
 
-# {symbol} TICKER PRICE LAST 2 WEEKS
+# {symbol} TICKER PRICES
 \`\`\`markdown
 {quotes}
 \`\`\`
 
-# MARKET SENTIMENT
+# MARKET SENTIMENT PREDICTION
 \`\`\`json
 {marketPrediction}
 \`\`\`
@@ -99,20 +98,19 @@ CURRENT DATE: {currentDate}
       formatInstructions: predictionParser.getFormatInstructions(),
     },
     outputParser: predictionParser,
-  },
-);
+  });
 
-export const GeneralMarketSentimentPredictionPrompt =
+export const WeeklyGeneralMarketSentimentPredictionPrompt =
   new ExperimentPrompt<Prediction>({
     template: dedent`
 You are an expert in analyzing stock market news insights that can affect stock market condition.
 You have been given a set of insights extracted from recent news articles about stocket market from the **past 7 days**.
-Please review these insights to determine how each could influence market conditions this week (either negatively or positively).
+Please review these insights to determine how each could influence market conditions the **following week** (either negatively or positively).
 
 CURRENT DATE: {currentDate}
 
 # YOUR TASK
-1. Read the each news article's insights about stock market (provided below) and identify any insights that may have a meaningful impact on the market condition in short term.
+1. Read the each news article's insights about stock market (provided below) and identify any insights that may have a meaningful impact on the market condition in the short term.
 2. Produce your conclusions and insights as a structured JSON response, **strictly** following the format in the **Output Format** section.
 
 # CRITICAL INSTRUCTIONS

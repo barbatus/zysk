@@ -48,7 +48,6 @@ type StockNewsTable = CreateTableType<
     newsDate: ColumnType<Date, string | Date>;
     title: ColumnType<string, Optional<string>>;
     description: ColumnType<string, Optional<string>>;
-    insightsTokenSize: ColumnType<number, Optional<number>>;
     insights: ColumnType<StockNewsInsight[], Optional<StockNewsInsight[]>>;
   }
 >;

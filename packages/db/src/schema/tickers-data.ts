@@ -47,7 +47,7 @@ export const tickerTimeSeries = mySchema.table(
   "ticker_time_series",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    symbol: varchar("symbol", { length: 40 }),
+    symbol: varchar("symbol", { length: 40 }).notNull(),
     openPrice: numeric("open_price").notNull(),
     closePrice: numeric("close_price").notNull(),
     high: numeric("high").notNull(),

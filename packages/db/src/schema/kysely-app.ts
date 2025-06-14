@@ -65,6 +65,7 @@ export type PredictionsTable = CreateTableType<
   {
     confidence: ColumnType<number, string | number>;
     period: ColumnType<Date, string | Date>;
+    evaluation: ColumnType<number, Optional<string | number>>;
   }
 >;
 

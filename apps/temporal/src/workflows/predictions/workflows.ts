@@ -7,6 +7,7 @@ import {
   startOfWeek,
   subDays,
 } from "date-fns";
+import { chunk } from "lodash";
 
 import type * as newsActivities from "../stock-news/activities";
 import {
@@ -163,6 +164,15 @@ export async function predictSentimentWeekly(params: {
     [symbol],
     prevWeekDate,
     currentWeekDate,
+  );
+}
+
+export async function evaluatePredictions() {
+  const periodsToSync = await proxy.syncQuotesForPredictions();
+  await Promise.all(
+    chunk(periodsToSync, 10).map((batch) =>
+      proxy.evaluatePredictions(batch.map(({ symbol }) => symbol)),
+    ),
   );
 }
 

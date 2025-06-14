@@ -1,6 +1,8 @@
 import { type Experiment, type StockNewsInsight } from "@zysk/db";
 import { ExperimentService, ModelKeyEnum, resolve } from "@zysk/services";
 import { format } from "date-fns";
+// eslint-disable-next-line camelcase
+import { encoding_for_model } from "tiktoken";
 import { dedent } from "ts-dedent";
 
 import { type AbstractContainer } from "../core/base";
@@ -8,9 +10,9 @@ import { modelsWithFallback } from "../models/registry";
 import { type ExperimentPrompt, ExperimentRunner } from "./experimenter";
 import { type Prediction } from "./prompts/prediction-parser";
 import {
-  GeneralMarketSentimentPredictionPrompt,
-  TickerSentimentPredictionPrompt,
-} from "./prompts/sentiment-prediction.prompt";
+  WeeklyGeneralMarketSentimentPredictionPrompt,
+  WeeklyTickerSentimentPredictionPrompt,
+} from "./prompts/weekly-sentiment-prediction.prompt";
 
 export interface NewsBasedExperimentParams<TResult = Prediction> {
   state: Experiment;
@@ -25,6 +27,78 @@ export interface NewsBasedExperimentParams<TResult = Prediction> {
   }[];
   currentDate: Date;
   onHeartbeat?: () => Promise<void>;
+}
+
+function formatInsight(n: NewsBasedExperimentParams["newsInsights"][number]) {
+  const insightsToMd = (insights: StockNewsInsight[]) => {
+    return insights
+      .map(
+        (i, index) => dedent`
+      ### Insight ${index + 1}
+       - Insight description: ${i.insight}
+       - Impact: ${i.impact}
+       - Symbols: ${i.symbols.join(", ")}
+       - Sectors: ${i.sectors.join(", ")}
+    `,
+      )
+      .join("\n");
+  };
+
+  return `# ARTICLE TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}:\n${insightsToMd(n.insights)}`;
+}
+
+function mapPromptValues(params: {
+  symbol: string;
+  newsInsights: NewsBasedExperimentParams["newsInsights"];
+  currentDate: Date;
+}) {
+  const { symbol, newsInsights, currentDate } = params;
+
+  return {
+    symbol,
+    news: newsInsights.map(formatInsight).join("\n---\n"),
+    currentDate: format(currentDate, "yyyy-MM-dd"),
+  };
+}
+
+export async function splitNewsInsights(params: {
+  symbol: string;
+  newsInsights: NewsBasedExperimentParams["newsInsights"];
+  currentDate: Date;
+}) {
+  const { symbol, currentDate, newsInsights } = params;
+  const values = mapPromptValues({
+    symbol,
+    newsInsights: [],
+    currentDate,
+  });
+
+  const prompt = await WeeklyTickerSentimentPredictionPrompt.format(values);
+  const tokenizer = encoding_for_model("gpt-4o");
+  const promptSize = tokenizer.encode(prompt).length;
+  const safetyMargin = 100;
+
+  let count = 0;
+  const newsBatches: (typeof newsInsights)[] = [];
+  let currentBatch: typeof newsInsights = [];
+
+  for (const n of newsInsights) {
+    const tokenSize = tokenizer.encode(formatInsight(n)).length;
+    if (count + tokenSize > promptSize - safetyMargin) {
+      newsBatches.push(currentBatch);
+      currentBatch = [];
+      count = 0;
+    }
+    currentBatch.push(n);
+    count += tokenSize;
+  }
+  if (currentBatch.length > 0) {
+    newsBatches.push(currentBatch);
+  }
+
+  tokenizer.free();
+
+  return newsBatches;
 }
 
 class NewsBasedSentimentPredictor extends ExperimentRunner<
@@ -43,34 +117,15 @@ class NewsBasedSentimentPredictor extends ExperimentRunner<
   }
 
   override async mapPromptValues(): Promise<Record<string, string>> {
-    const insightsToMd = (insights: StockNewsInsight[]) => {
-      return insights
-        .map(
-          (i, index) => dedent`
-        ### Insight ${index + 1}
-         - Insight description: ${i.insight}
-         - Impact: ${i.impact}
-         - Symbols: ${i.symbols.join(", ")}
-         - Sectors: ${i.sectors.join(", ")}
-      `,
-        )
-        .join("\n");
-    };
-
-    return {
+    return mapPromptValues({
       symbol: this.symbol,
-      news: this.newsInsights
-        .map(
-          (n) =>
-            `# ARTICLE TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}:\n${insightsToMd(n.insights)}`,
-        )
-        .join("\n---\n"),
-      currentDate: format(this.currentDate, "yyyy-MM-dd"),
-    };
+      newsInsights: this.newsInsights,
+      currentDate: this.currentDate,
+    });
   }
 }
 
-export class TickerSentimentPredictor extends NewsBasedSentimentPredictor {
+export class WeeklyTickerSentimentPredictor extends NewsBasedSentimentPredictor {
   private readonly marketPrediction: Experiment["responseJson"];
   private readonly timeSeries: { date: Date; closePrice: number }[];
   static override readonly modelKey = ModelKeyEnum.DeepSeekReasoner;
@@ -109,10 +164,10 @@ export class TickerSentimentPredictor extends NewsBasedSentimentPredictor {
     const state = await experimentService.create({
       experimentId: params.experimentId,
     });
-    return new TickerSentimentPredictor({
+    return new WeeklyTickerSentimentPredictor({
       state,
       ...params,
-      prompt: TickerSentimentPredictionPrompt,
+      prompt: WeeklyTickerSentimentPredictionPrompt,
       model: modelsWithFallback[this.modelKey]!,
     });
   }
@@ -135,7 +190,7 @@ export class MarketSentimentPredictor extends ExperimentRunner<
       state,
       ...params,
       symbol: "GENERAL",
-      prompt: GeneralMarketSentimentPredictionPrompt,
+      prompt: WeeklyGeneralMarketSentimentPredictionPrompt,
       model: modelsWithFallback[this.modelKey]!,
     });
   }
