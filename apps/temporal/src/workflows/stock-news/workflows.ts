@@ -1,12 +1,8 @@
-import {
-  ApplicationFailure,
-  executeChild,
-  proxyActivities,
-  uuid4,
-} from "@temporalio/workflow";
-import { StockNewsStatus } from "@zysk/db";
-import { endOfWeek, parse, startOfWeek } from "date-fns";
-import { chunk, mapKeys, omit, uniqBy } from "lodash";
+import { executeChild, proxyActivities, uuid4 } from "@temporalio/workflow";
+import { addDays, parse } from "date-fns";
+import { chunk } from "lodash";
+
+import { runScrapeTickerNews } from "#/workflows/scrapper/workflows";
 
 import type * as activities from "./activities";
 
@@ -18,88 +14,6 @@ const proxy = proxyActivities<typeof activities>({
     maximumInterval: "5m",
   },
 });
-
-const scrapperProxy = proxyActivities<{
-  scrapeNews: typeof activities.scrapeNews;
-}>({
-  startToCloseTimeout: "5 minutes",
-  retry: {
-    nonRetryableErrorTypes: ["NonRetryable"],
-    maximumAttempts: 3,
-  },
-  taskQueue: "zysk-scrapper",
-});
-
-export async function scrapeTickerNewsUrls(
-  news: { newsDate: Date; url: string; symbol: string; title: string }[],
-) {
-  const itemByUrl = mapKeys(news, "url");
-
-  const result = await scrapperProxy
-    .scrapeNews(news.map((n) => n.url))
-    .then((r) =>
-      r.map((n) => ({
-        ...itemByUrl[n.url],
-        ...omit(n, "error"),
-        status: n.error ? StockNewsStatus.Failed : StockNewsStatus.Scraped,
-      })),
-    );
-
-  return result;
-}
-
-export async function scrapeTickerNewsBatchAndSave(
-  symbol: string,
-  batch: { newsDate: Date; url: string; title: string }[],
-) {
-  const newsDateMap = mapKeys(batch, "url");
-  const scrapedNews = await executeChild(scrapeTickerNewsUrls, {
-    args: [batch.map((b) => ({ ...b, symbol }))],
-  });
-
-  const uniqueNews = uniqBy(
-    scrapedNews.map((n) => ({
-      ...n,
-      symbol,
-      newsDate: newsDateMap[n.originalUrl].newsDate,
-    })),
-    (n) => `${n.symbol}-${n.url}`,
-  );
-
-  return (await proxy.saveNews(uniqueNews)).map((n) => ({
-    id: n.id,
-    status: n.status,
-  }));
-}
-
-export async function runScrapeTickerNews(
-  symbol: string,
-  news: { url: string; title: string; newsDate: Date }[],
-) {
-  const attemptedNews = (
-    await Promise.all(
-      chunk(news, 15).map((batch) =>
-        executeChild(scrapeTickerNewsBatchAndSave, {
-          args: [symbol, batch],
-        }),
-      ),
-    )
-  ).flat();
-
-  const scrapedNews = attemptedNews.filter(
-    (n) => n.status === StockNewsStatus.Scraped,
-  );
-  const successRate = Math.round(
-    (scrapedNews.length / attemptedNews.length) * 100,
-  );
-  if (successRate >= 80) {
-    return scrapedNews;
-  }
-  throw ApplicationFailure.create({
-    type: "ScrapeError",
-    message: `Success rate of the scraping is ${successRate}% lower than 80%`,
-  });
-}
 
 export async function runExtractNewsInsights(
   symbol: string,
@@ -195,15 +109,11 @@ export async function syncAllNewsWeekly(symbols: string[]) {
 }
 
 export async function testInsightsExtract() {
-  const startDate = parse("2025-03-10", "yyyy-MM-dd", new Date());
-  for (const symbols of chunk(["CRM", "NVDA"], 5)) {
+  const startDate = parse("2025-02-03", "yyyy-MM-dd", new Date());
+  for (const symbols of chunk(["NVDA", "TSLA"], 5)) {
     await Promise.all(
       symbols.map((symbol) =>
-        scrapeTickerNewsForPeriod(
-          symbol,
-          startOfWeek(startDate),
-          endOfWeek(startDate),
-        ),
+        scrapeTickerNewsForPeriod(symbol, startDate, addDays(startDate, 7)),
       ),
     );
   }

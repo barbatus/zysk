@@ -109,7 +109,92 @@ export class TickerNewsService {
       });
   }
 
-  private async scrapeUrlViaApi(
+  private async scrapeUrlsViaBotasaurus(params: {
+    urls: string[];
+    useProxy?: boolean;
+    convertToMd?: boolean;
+    waitFor?: number;
+    timeout?: number;
+  }): Promise<
+    {
+      url: string;
+      content?: string;
+      error?: Error;
+      title?: string;
+      description?: string;
+    }[]
+  > {
+    const { urls } = params;
+    const data = urls.map((link) => ({
+      data: {
+        link,
+        use_proxy: params.useProxy,
+        convert_to_md: params.convertToMd,
+        wait_for: params.waitFor,
+        timeout: params.timeout,
+      },
+      scraper_name: "scrape_md",
+    }));
+    const tasks = await axios.post<
+      [
+        {
+          id: string;
+        },
+      ]
+    >("http://localhost:8000/api/tasks/create-task-async", data);
+
+    const taskIds = tasks.data.map((task) => task.id);
+
+    const results = await Promise.allSettled(
+      taskIds.map((taskId) =>
+        this.pollUntilCondition<{
+          results: {
+            url: string;
+            markdown: string;
+            status: number;
+            title?: string;
+            description?: string;
+          }[];
+          task: {
+            id: string;
+            status: "completed" | "failed" | "pending" | "in_progress";
+          };
+        }>({
+          url: `http://localhost:8000/api/ui/tasks/${taskId}/results`,
+          body: {
+            filters: {},
+            page: 1,
+            per_page: 25,
+          },
+          condition: (response) =>
+            response.data.task.status === "completed" ||
+            response.data.task.status === "failed",
+        }),
+      ),
+    );
+
+    return results.map((r, index) => {
+      if (r.status === "rejected") {
+        return {
+          url: urls[index],
+          error: new Error(r.reason as string),
+        };
+      }
+      const result = r.value.results[0];
+      if (r.value.task.status === "failed" || result.status !== 200) {
+        return {
+          url: urls[index],
+          error: new Error(result.markdown),
+        };
+      }
+      return {
+        url: result.url,
+        content: result.markdown,
+      };
+    });
+  }
+
+  protected async scrapeUrlViaApi(
     url: string,
     _timeoutSeconds?: number,
   ): Promise<{
@@ -162,23 +247,24 @@ export class TickerNewsService {
     }
   }
 
-  async scrapeUrl(params: { url: string; timeoutSeconds?: number }): Promise<{
-    url: string;
-    markdown: string;
-    title?: string;
-    description?: string;
-  }> {
-    const { url, timeoutSeconds } = params;
-    const articles = await this.getArticles([url]);
-    if (articles.length === 1) {
-      return {
-        url: articles[0].url,
-        markdown: articles[0].markdown,
-        title: articles[0].title,
-        description: articles[0].description,
-      };
-    }
-    return this.scrapeUrlViaApi(url, timeoutSeconds);
+  async scrapeUrls(params: {
+    urls: string[];
+    useProxy?: boolean;
+    convertToMd?: boolean;
+    waitFor?: number;
+    timeoutSeconds?: number;
+  }): Promise<
+    {
+      url: string;
+      error?: Error;
+      content?: string;
+      title?: string;
+      description?: string;
+    }[]
+  > {
+    return this.scrapeUrlsViaBotasaurus({
+      urls: params.urls,
+    });
   }
 
   async getTickerNews(
@@ -223,22 +309,22 @@ export class TickerNewsService {
     const news = await this.getTodayNews(symbol);
     const result: {
       url: string;
-      markdown: string;
+      content: string;
       newsDate: Date;
     }[] = [];
     const dateMap = keyBy(news, "newsUrl");
     // Currently, Firecrawl's RL is 100 requests per minute
     const batchSize = 100;
     for (let i = 0; i < news.length; i += batchSize) {
-      const scrapedNews = await Promise.all(
-        news.slice(i, i + batchSize).map((n) => this.scrapeUrl({ url: n.url })),
-      );
+      const scrapedNews = await this.scrapeUrls({
+        urls: news.slice(i, i + batchSize).map((n) => n.url),
+      });
       const data = scrapedNews
         .map((n) =>
-          n.markdown
+          n.content
             ? {
                 ...n,
-                markdown: n.markdown,
+                content: n.content,
                 newsDate: dateMap[n.url].newsDate,
               }
             : null,
@@ -385,10 +471,12 @@ export class TickerNewsService {
   private async pollUntilCondition<T>({
     url,
     condition,
+    body,
     interval = 10000,
     timeout = 600_000,
   }: {
     url: string;
+    body?: Record<string, unknown>;
     condition: (response: { data: T }) => boolean;
     interval?: number;
     timeout?: number;
@@ -396,9 +484,11 @@ export class TickerNewsService {
     const startTime = Date.now();
 
     while (true) {
-      const response = await axios.get<T>(url);
+      const response = await axios.post<T>(url, body).catch(() => {
+        return null;
+      });
 
-      if (condition(response)) {
+      if (response && condition(response)) {
         return response.data;
       }
 

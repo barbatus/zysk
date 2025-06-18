@@ -96,6 +96,7 @@ CURRENT DATE: {currentDate}
     ],
     partialVariables: {
       formatInstructions: predictionParser.getFormatInstructions(),
+      marketPrediction: "",
     },
     outputParser: predictionParser,
   });

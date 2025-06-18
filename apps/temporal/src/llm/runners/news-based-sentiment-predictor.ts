@@ -51,13 +51,17 @@ function mapPromptValues(params: {
   symbol: string;
   newsInsights: NewsBasedExperimentParams["newsInsights"];
   currentDate: Date;
+  quotes: { date: Date; closePrice: number }[];
 }) {
-  const { symbol, newsInsights, currentDate } = params;
+  const { symbol, newsInsights, currentDate, quotes } = params;
 
   return {
     symbol,
     news: newsInsights.map(formatInsight).join("\n---\n"),
     currentDate: format(currentDate, "yyyy-MM-dd"),
+    quotes: quotes
+      .map((t) => `${format(t.date, "yyyy-MM-dd")}: ${t.closePrice}`)
+      .join("\n"),
   };
 }
 
@@ -65,18 +69,21 @@ export async function splitNewsInsights(params: {
   symbol: string;
   newsInsights: NewsBasedExperimentParams["newsInsights"];
   currentDate: Date;
+  tokenLimit: number;
 }) {
-  const { symbol, currentDate, newsInsights } = params;
+  const { symbol, currentDate, newsInsights, tokenLimit } = params;
+
   const values = mapPromptValues({
     symbol,
     newsInsights: [],
     currentDate,
+    quotes: [],
   });
 
   const prompt = await WeeklyTickerSentimentPredictionPrompt.format(values);
   const tokenizer = encoding_for_model("gpt-4o");
   const promptSize = tokenizer.encode(prompt).length;
-  const safetyMargin = 100;
+  const safetyMargin = 500 + promptSize;
 
   let count = 0;
   const newsBatches: (typeof newsInsights)[] = [];
@@ -84,7 +91,7 @@ export async function splitNewsInsights(params: {
 
   for (const n of newsInsights) {
     const tokenSize = tokenizer.encode(formatInsight(n)).length;
-    if (count + tokenSize > promptSize - safetyMargin) {
+    if (count + tokenSize + safetyMargin > tokenLimit) {
       newsBatches.push(currentBatch);
       currentBatch = [];
       count = 0;
@@ -121,6 +128,7 @@ class NewsBasedSentimentPredictor extends ExperimentRunner<
       symbol: this.symbol,
       newsInsights: this.newsInsights,
       currentDate: this.currentDate,
+      quotes: [],
     });
   }
 }

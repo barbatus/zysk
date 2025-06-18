@@ -55,6 +55,7 @@ export async function fetchNewsInsightsForPeriod(params: {
   overlapLimit?: number;
 }) {
   const { symbol, startDate, endDate } = params;
+  const tokenLimit = experimentTasksToTokens[params.taskName];
 
   const tickerNewsService = resolve(TickerNewsService);
   const insights = await tickerNewsService.getNewsBySymbol(
@@ -73,6 +74,7 @@ export async function fetchNewsInsightsForPeriod(params: {
       symbol,
       newsInsights: filteredInsights,
       currentDate: startDate,
+      tokenLimit,
     })
   ).map((batch) => batch.map((n) => n.id));
 }
