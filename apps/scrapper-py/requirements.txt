@@ -1,2 +1,6 @@
 botasaurus
 botasaurus-server
+capsolver_extension_python
+bs4
+botasaurus_driver
+markdownify

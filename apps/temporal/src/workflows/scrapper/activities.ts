@@ -1,6 +1,7 @@
 import { activityInfo } from "@temporalio/activity";
 import { ApplicationFailure } from "@temporalio/workflow";
 import { type StockNewsInsert } from "@zysk/db";
+import { StockNewsStatus } from "@zysk/db";
 import {
   PageLoadError,
   scrapeUrls as scrapeUrlsViaBrowser,
@@ -14,7 +15,7 @@ import {
   TickerNewsService,
 } from "@zysk/services";
 import IORedis, { type RedisOptions } from "ioredis";
-import { mapKeys, omit } from "lodash";
+import { mapKeys, omit, uniqBy } from "lodash";
 // eslint-disable-next-line camelcase
 import { encoding_for_model } from "tiktoken";
 
@@ -118,11 +119,11 @@ export async function scrapeUrls(params: {
 
 export async function getOrScrapeNews(urls: string[]) {
   const tickerNewsService = resolve(TickerNewsService);
-  const savedNews = (await tickerNewsService.getArticles(urls)).map((n) => ({
+  const savedNews = uniqBy((await tickerNewsService.getArticles(urls)).map((n) => ({
     url: n.url,
     markdown: n.markdown,
     originalUrl: n.originalUrl,
-  })) as {
+  })), (n) => n.url) as {
     url: string;
     markdown?: string;
     error?: Error;
@@ -133,9 +134,9 @@ export async function getOrScrapeNews(urls: string[]) {
 
   const urlsToScrape = urls.filter((url) => !(url in savedNewsByUrl));
 
-  const result = (await scrapeUrls({ urls: urlsToScrape })).map((r) => ({
+  const result = (await scrapeUrls({ urls: urlsToScrape })).map((r, index) => ({
     ...r,
-    originalUrl: r.url,
+    originalUrl: urlsToScrape[index],
   }));
 
   const failedNews = result.filter((n) => Boolean(n.error));
@@ -174,7 +175,7 @@ export async function scrapeNews(urls: string[], maxTokens = 5000) {
   const result = await getOrScrapeNews(urls);
 
   const tokenizer = encoding_for_model("gpt-4o");
-  const cleanedNews = result.map((r, index) => {
+  const cleanedNews = result.map((r) => {
     if (r.markdown) {
       const cleanedMarkdown = r.markdown
         .replace(/\[.+\]\(.*?\)/gm, "")
@@ -190,14 +191,12 @@ export async function scrapeNews(urls: string[], maxTokens = 5000) {
         ...r,
         markdown: slicedMarkdown,
         url: r.url,
-        originalUrl: urls[index],
         tokenSize: slicedTokens.length,
       };
     }
     return {
       ...r,
       url: r.url,
-      originalUrl: urls[index],
       tokenSize: 0,
     };
   });
@@ -205,7 +204,7 @@ export async function scrapeNews(urls: string[], maxTokens = 5000) {
   tokenizer.free();
 
   const successfulUrls = cleanedNews.filter((n) => !n.error).length;
-  const total = urls.length;
+  const total = cleanedNews.length;
   const successRate = Math.round((successfulUrls / total) * 100);
 
   logger.info(
@@ -216,7 +215,7 @@ export async function scrapeNews(urls: string[], maxTokens = 5000) {
     "[scrapeNews] Result",
   );
 
-  if (successRate >= 80) {
+  if (successRate >= 85) {
     return cleanedNews;
   }
 
@@ -224,13 +223,41 @@ export async function scrapeNews(urls: string[], maxTokens = 5000) {
   if (attempt <= 1) {
     throw ApplicationFailure.create({
       type: "ScrapeError",
-      message: `Success rate of the scraping is ${successRate}% lower than 80%`,
+      message: `Success rate of the scraping is ${successRate}% lower than 85%`,
       nonRetryable: false,
       nextRetryDelay: "1m",
     });
   }
 
   return cleanedNews;
+}
+
+export async function scrapeTickerNewsUrlsAnsSave(
+  symbol: string,
+  news: { newsDate: Date; url: string; title: string }[],
+) {
+  const itemByUrl = mapKeys(news, "url");
+  const result = await scrapeNews(news.map((n) => n.url)).then((r) =>
+    r.map((n) => ({
+      ...itemByUrl[n.url],
+      ...omit(n, "error"),
+      status: n.error ? StockNewsStatus.Failed : StockNewsStatus.Scraped,
+    })),
+  );
+
+  const uniqueNews = uniqBy(
+    result.map((n) => ({
+      ...n,
+      symbol,
+      newsDate: itemByUrl[n.originalUrl].newsDate,
+    })),
+    (n) => `${n.symbol}-${n.url}`,
+  );
+
+  return (await saveNews(uniqueNews)).map((n) => ({
+    id: n.id,
+    status: n.status,
+  }));
 }
 
 export async function saveNews<T extends StockNewsInsert>(

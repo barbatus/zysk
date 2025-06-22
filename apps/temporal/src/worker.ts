@@ -20,8 +20,7 @@ async function run() {
     activities: scrapperActivities,
     // 30 activities per minute
     maxActivitiesPerSecond: 0.5,
-    // Each activity will scrape 15 links => 105 in parallel
-    maxConcurrentActivityTaskExecutions: 7,
+    maxConcurrentActivityTaskExecutions: 20,
   });
   await Promise.all([workerMain.run(), workerScrapper.run()]);
 }

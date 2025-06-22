@@ -1,60 +1,83 @@
-from botasaurus.browser import browser, Driver
+import re
+from collections.abc import Callable
+from urllib.parse import urlparse
+
+from botasaurus.browser import Driver, browser
+from botasaurus_driver.core.element import Element
 from botasaurus_driver.core.tab import Tab
 from bs4 import BeautifulSoup
+from capsolver_extension_python import Capsolver
 from markdownify import markdownify as md
-import re
-from urllib.parse import urlparse
-from chrome_extension_python import Extension as ChromeExtension
 
-from .utils import mouse_press_and_hold
+from .utils import BotDetectedException, get_all_urls, mouse_press_and_hold
 
 ACCEPT_RE = re.compile(r"accept\s+all", re.I)
-PRESS_HOLD_RE = re.compile(r"press.+hold", re.I | re.DOTALL)
+PRESS_AND_HOLD_RE = re.compile(r"Press & Hold", re.I)
+CHECK_BOT_RE = re.compile(
+    r"(access|bot).+?(denied|blocked|detected)|verification(\s+is\s+|\s+)required", re.I | re.DOTALL
+)
+CHECK_CAPTCHA_RE = re.compile(r"captcha", re.I)
 
 
 def accept_all_cookies(driver: Driver, tab: Tab, *, domain: str):
-    buttons = tab.select_all('button, input, a')
+    buttons = tab.select_all("button, input, a")
     for el in buttons:
         txt = (el.text or el.attrs.get("value") or "").strip()
         if ACCEPT_RE.search(txt):
             print(f"Accepting cookies for {domain}")
             el.click()
-            driver.sleep(1)
+            driver.sleep(3)
             break
 
 
 def press_and_hold(driver: Driver, tab: Tab, *, domain: str):
-    for el in tab.select_all("iframe"):
-        if "challenge" in (el.attrs.get("title") or ""):
-            print(f"Pressing hold for {domain}")
-            center = el.parent.get_position().center
-            mouse_press_and_hold(tab, center[0] - 20, center[1] - 20)
-            driver.sleep(3)
+    def check_press_and_hold(callback: Callable[[Element], None] | None = None):
+        for el in tab.select_all("iframe"):
+            if "human verification challenge" in (el.attrs.get("title") or "").casefold():
+                if callback:
+                    callback(el.parent)
+                return True
+        return False
+
+    def do_press_and_hold(el: Element):
+        print(f"Pressing hold for {domain}")
+        center = el.get_position().center
+        mouse_press_and_hold(tab, center[0] - 20, center[1] - 20, hold_time=15)
+        driver.sleep(5)
+
+    has_press_and_hold = check_press_and_hold(do_press_and_hold)
+
+    if has_press_and_hold and check_press_and_hold():
+        print(f"Press and hold was not successful for {domain}")
+
+
+def check_bot_is_detected(driver: Driver, tab: Tab, *, domain: str):
+    return driver.is_bot_detected() or CHECK_BOT_RE.search(driver.page_text)
+
+
+def check_captcha(driver: Driver, tab: Tab, *, domain: str):
+    return driver.is_bot_detected() or CHECK_CAPTCHA_RE.search(driver.page_text)
 
 
 def convert_to_markdown(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
-    for element in soup.find_all(['a', 'ul', 'ol', 'li']):
-        if element.name == 'a':
+    for element in soup.find_all(["a", "ul", "ol", "li"]):
+        if element.name == "a":
             element.replace_with(element.get_text())
         else:
             element.decompose()
     return md(str(soup))
 
 
-def random_sleep(driver: Driver, tab: Tab, *, domain: str):
-    driver.short_random_sleep()
-
-
 domain_handlers = {
-    "consent.yahoo.com": [accept_all_cookies, random_sleep],
+    "consent.yahoo.com": [accept_all_cookies],
     "seekingalpha.com": [press_and_hold],
     "investors.com": [press_and_hold],
 }
 
 
 @browser(
-    reuse_driver=False,
+    reuse_driver=True,
     max_retry=3,
     block_images_and_css=True,
     window_size=(430, 600),
@@ -65,13 +88,11 @@ domain_handlers = {
     raise_exception=True,
     wait_for_complete_page_load=False,
     headless=True,
-    extensions=[
-        # Captcha Solver
-        ChromeExtension("https://chromewebstore.google.com/detail/buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl")
-    ],
+    extensions=[Capsolver(api_key="CAP-B7692D3299667795364B38F08BFBB815B57B9D50A12CFA349DE226DE17A4F523")],
 )
 def scrape_md(driver: Driver, data):
     link = data["link"]
+    log_md = data.get("log_md", False)
 
     driver.enable_human_mode()
     driver.short_random_sleep()
@@ -89,10 +110,25 @@ def scrape_md(driver: Driver, data):
             handler(driver, response, domain=domain)
             url, html = get_content(response)
 
+    if check_captcha(driver, response, domain=domain):
+        print(f"Waiting for captcha solver for {domain}")
+        driver.sleep(12)
+
     markdown = convert_to_markdown(html)
+    if log_md:
+        print(markdown)
+
+    is_bot_detected = check_bot_is_detected(driver, response, domain=domain)
+    print(f"Failed to parse {url}" if is_bot_detected else f"Successfully parsed {url}")
+
+    if is_bot_detected or len(markdown) <= 100:
+        raise BotDetectedException(url)
+
+    all_urls = get_all_urls(response, url)
 
     return {
         "url": url,
         "status": 200,
         "markdown": markdown,
+        "urls": filter(lambda u: domain in u, all_urls),
     }

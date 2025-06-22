@@ -6,6 +6,7 @@ import {
   StockNewsStatus,
 } from "@zysk/db";
 import axios, { AxiosError } from "axios";
+import axiosRetry from "axios-retry";
 import { startOfDay } from "date-fns";
 import { inject, injectable } from "inversify";
 import { type Kysely, NotNull, sql } from "kysely";
@@ -20,6 +21,15 @@ import {
 } from "./utils/exceptions";
 import { type Logger, loggerSymbol } from "./utils/logger";
 import { Exact } from "./utils/types";
+
+const apiWithRetry = axios.create();
+axiosRetry(apiWithRetry, {
+  retries: 3,
+  retryDelay: axiosRetry.exponentialDelay,
+  retryCondition: (err) =>
+    axiosRetry.isNetworkOrIdempotentRequestError(err) ||
+    err.response?.statusText === "ECONNREFUSED",
+});
 
 @injectable()
 export class TickerNewsService {
@@ -135,7 +145,7 @@ export class TickerNewsService {
       },
       scraper_name: "scrape_md",
     }));
-    const tasks = await axios.post<
+    const tasks = await apiWithRetry.post<
       [
         {
           id: string;
