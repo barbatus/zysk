@@ -9,6 +9,7 @@ import { subYears } from "date-fns";
 import { chunk } from "lodash";
 
 import { createScript } from "./utils";
+import { newsSources, supportedTickers } from "./defaults";
 
 export const syncTickerQuotes = createScript<[]>({
   name: "sync-current-quote",
@@ -45,7 +46,7 @@ export const syncTickers = createScript({
     "Load and save overviews for supported tickers (US only and for stocks and ETFs currently)",
 })(async () => {
   const tickerService = resolve(TickerService);
-  await tickerService.fetchUSTickersFromApiAndSave();
+  await tickerService.fetchUSTickersFromApiAndSave(supportedTickers);
   return "OK";
 });
 
@@ -78,7 +79,7 @@ export const syncSupportedTickers = createScript<[]>({
   description: "Update supported tickers",
 })(async () => {
   const tickerService = resolve(TickerService);
-  await tickerService.updateSupportedTickers();
+  await tickerService.updateSupportedTickers(supportedTickers);
   return "OK";
 });
 
@@ -97,5 +98,14 @@ export const scrapeUrl = createScript<[string]>({
   arguments: [new Argument("url", "URL to scrape").argRequired()],
 })(async (url) => {
   const tickerNewsService = resolve(TickerNewsService);
-  return await tickerNewsService.scrapeUrl({ url });
+  return await tickerNewsService.scrapeUrls({ urls: [url] });
+});
+
+export const syncNewsSources = createScript<[]>({
+  name: "sync-news-sources",
+  description: "Sync news sources",
+})(async () => {
+  const tickerNewsService = resolve(TickerNewsService);
+  await tickerNewsService.saveNewsSources(newsSources);
+  return "OK";
 });

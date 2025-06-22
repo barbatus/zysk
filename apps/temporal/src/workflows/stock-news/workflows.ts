@@ -7,7 +7,7 @@ import { runScrapeTickerNews } from "#/workflows/scrapper/workflows";
 import type * as activities from "./activities";
 
 const proxy = proxyActivities<typeof activities>({
-  startToCloseTimeout: "10 minutes",
+  startToCloseTimeout: "1 day",
   retry: {
     nonRetryableErrorTypes: ["NonRetryable"],
     maximumAttempts: 5,
@@ -41,7 +41,9 @@ export async function scrapeTickerNewsForPeriod(
   endDate?: Date,
 ) {
   const currentNews = await proxy.fetchTickerNews(symbol, startDate, endDate);
-  const scrapedNews = await runScrapeTickerNews(symbol, currentNews);
+  const scrapedNews = await executeChild(runScrapeTickerNews, {
+    args: [symbol, currentNews],
+  });
   await executeChild(runExtractNewsInsights, {
     args: [symbol, scrapedNews.map((n) => n.id)],
   });
@@ -109,11 +111,13 @@ export async function syncAllNewsWeekly(symbols: string[]) {
 }
 
 export async function testInsightsExtract() {
-  const startDate = parse("2025-02-03", "yyyy-MM-dd", new Date());
-  for (const symbols of chunk(["NVDA", "TSLA"], 5)) {
+  const startDate = parse("2025-06-16", "yyyy-MM-dd", new Date());
+  for (const symbols of chunk(["JNJ", "PFE", "MRK", "LLY", "ABBV", "UNH", "BAC", "WFC", "GS", "MS", "C", "AXP", "BLK", "SCHW", "TFC", "XOM", "CVX", "COP", "OXY", "PSX", "EOG", "MPC", "VLO"], 5)) {
     await Promise.all(
       symbols.map((symbol) =>
-        scrapeTickerNewsForPeriod(symbol, startDate, addDays(startDate, 7)),
+        executeChild(scrapeTickerNewsForPeriod, {
+          args: [symbol, startDate, addDays(startDate, 7)],
+        }),
       ),
     );
   }

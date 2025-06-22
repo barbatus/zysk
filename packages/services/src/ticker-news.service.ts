@@ -478,6 +478,22 @@ export class TickerNewsService {
       .execute();
   }
 
+  async saveNewsSources(sources: {
+    name: string;
+    url: string;
+  }[]) {
+    return await this.db
+      .insertInto("app_data.news_sources")
+      .values(sources)
+      .onConflict((oc) =>
+        oc.columns(["url"]).doUpdateSet((eb) => ({
+          name: eb.ref("excluded.name"),
+          url: eb.ref("excluded.url"),
+        })),
+      )
+      .execute();
+  }
+
   private async pollUntilCondition<T>({
     url,
     condition,

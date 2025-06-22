@@ -7,18 +7,6 @@ import { AlphaVantageService } from "./alpha-vantage.service";
 import { appDBSymbol } from "./db";
 import { FinnhubService } from "./finnhub.service";
 
-const supportedTickers = [
-  "AAPL",
-  "TSLA",
-  "NVDA",
-  "LLY",
-  "JPM",
-  "UPS",
-  "XOM",
-  "T",
-  "QQQ",
-];
-
 @injectable()
 export class TickerService {
   constructor(
@@ -53,7 +41,7 @@ export class TickerService {
       .execute();
   }
 
-  async fetchUSTickersFromApiAndSave() {
+  async fetchUSTickersFromApiAndSave(supportedTickers: string[]) {
     const response = (await this.finnhubService.fetchUSTickers([])).filter(
       (r) => r.type === "Common Stock" || r.type === "ETP",
     );
@@ -134,7 +122,7 @@ export class TickerService {
     }
   }
 
-  async updateSupportedTickers() {
+  async updateSupportedTickers(supportedTickers: string[]) {
     await this.appDB
       .updateTable("tickers")
       .set({ supported: true })

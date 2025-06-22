@@ -6,7 +6,9 @@ import {
   uniqueIndex,
   uuid,
   varchar,
+  index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 import { auditColumns } from "../utils/audit";
 import { validatedStringEnum } from "./columns/validated-enum";
@@ -25,10 +27,14 @@ export interface StockNewsInsight {
   impact: string; // "positive" | "negative" | "mixed" | "neutral";
 }
 
+export interface NewsSourceSettings {
+  maxLevelToCrawl: number;
+}
+
 export const stockNewsTable = mySchema.table(
   "stock_news",
   {
-    id: uuid("id").primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(),
     symbol: varchar("symbol", { length: 40 }).notNull(),
     url: varchar("url", { length: 2048 }).notNull(),
     originalUrl: varchar("original_url", { length: 2048 }),
@@ -42,6 +48,27 @@ export const stockNewsTable = mySchema.table(
     ...auditColumns(),
   },
   (t) => ({
-    unique: uniqueIndex("unique_symbol_url").on(t.symbol, t.url),
+    uniqueSymbolUrlIdx: uniqueIndex("unique_symbol_url").on(t.symbol, t.url),
+    insightsGinIdx: index("insights_gin_idx")
+      .using("gin", sql`insights jsonb_path_ops`),
+    urlIdx: index("url_idx").on(t.url),
+    originalUrlIdx: index("original_url_idx").on(t.originalUrl),
+    newsDateIdx: index("news_date_idx").on(t.newsDate),
+    statusIdx: index("status_idx").on(t.status),
+    urlStatusIdx: index("url_status_idx").on(t.url, t.status),
+  }),
+);
+
+export const newsSourcesTable = mySchema.table("news_sources", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  url: varchar("url", { length: 2048 }).notNull(),
+  settings: jsonb("settings").$type<NewsSourceSettings>().default({
+    maxLevelToCrawl: 10,
+  }),
+  ...auditColumns(),
+  },
+  (t) => ({
+    uniqueUrlIdx: uniqueIndex("unique_url").on(t.url),
   }),
 );
