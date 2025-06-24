@@ -19,12 +19,12 @@ export async function scrapeUrls(urls: string[]) {
 
 export async function runScrapeTickerNews(
   symbol: string,
-  news: { url: string; title: string; newsDate: Date }[],
+  news: { url: string; title?: string; newsDate: Date }[],
 ) {
   const attemptedNews = (
     await Promise.allSettled(
       chunk(news, 15).map((batch) =>
-        proxy.scrapeTickerNewsUrlsAnsSave(symbol, batch),
+        proxy.scrapeTickerNewsUrlsAndSave(symbol, batch),
       ),
     )
   ).flat();

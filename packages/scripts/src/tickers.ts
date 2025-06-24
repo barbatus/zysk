@@ -8,8 +8,8 @@ import { Argument } from "commander";
 import { subYears } from "date-fns";
 import { chunk } from "lodash";
 
-import { createScript } from "./utils";
 import { newsSources, supportedTickers } from "./defaults";
+import { createScript } from "./utils";
 
 export const syncTickerQuotes = createScript<[]>({
   name: "sync-current-quote",

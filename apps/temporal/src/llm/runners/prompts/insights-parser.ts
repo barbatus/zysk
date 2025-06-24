@@ -4,10 +4,20 @@ import { JsonOutputParser, ParserError } from "./parsers";
 
 const NewsInsightSchema = z.object({
   acticleId: z.string(),
+  title: z.string(),
+  description: z.string(),
+  mainSymbol: z.string().optional(),
+  impact: z
+    .enum(["positive", "negative", "neutral", "mixed"])
+    .optional()
+    .default("neutral"),
   insights: z.array(
     z.object({
       insight: z.string(),
-      impact: z.string().optional().default("neutral"),
+      impact: z
+        .enum(["positive", "negative", "neutral", "mixed"])
+        .optional()
+        .default("neutral"),
       symbols: z.array(z.string()).optional().default([]),
       sectors: z.array(z.string()).optional().default([]),
       longTerm: z.boolean().optional().default(false),
@@ -16,6 +26,8 @@ const NewsInsightSchema = z.object({
 });
 
 const InsightsSchema = z.array(NewsInsightSchema);
+
+export type NewsInsight = z.infer<typeof NewsInsightSchema>;
 
 export type Insights = z.infer<typeof InsightsSchema>;
 
@@ -45,6 +57,10 @@ each array item is a news article with insights.
   [
     {
         "acticleId": "ID of the news article from the article heading",
+        "title": "descriptive title of the news article",
+        "description": "brief description of the news article",
+        "mainSymbol": "main symbol of the news article",
+        "impact": "sentiment of the news article, one of: positive, negative, neutral, mixed",
         "insights": [
           {
             "insight": "description of the insight",

@@ -5,6 +5,7 @@ export * from "./di";
 export * from "./experiment.service";
 export * from "./finnhub.service";
 export * from "./metrics.service";
+export * from "./news-insights.service";
 export * from "./portfolio.service";
 export * from "./prediction.service";
 export * from "./ticker.service";

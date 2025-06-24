@@ -8,17 +8,19 @@ import { type NewsBasedExperimentParams } from "./news-based-sentiment-predictor
 import { NewsInsightsExtractorPrompt } from "./prompts/insights-extractor.prompt";
 import { type Insights } from "./prompts/insights-parser";
 
+type NewsArticle = {
+  id: string;
+  symbol: string | null;
+  markdown: string;
+  newsDate: Date;
+  url: string;
+};
+
 export class NewsInsightsExtractor extends ExperimentRunner<
   Insights,
   Insights
 > {
-  private readonly news: {
-    id: string;
-    symbol: string;
-    markdown: string;
-    newsDate: Date;
-    url: string;
-  }[];
+  private readonly news: NewsArticle[];
   private readonly indexToUuid = new Map<number, string>();
 
   constructor(
@@ -26,13 +28,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
       NewsBasedExperimentParams<Insights>,
       "symbol" | "currentDate" | "newsInsights"
     > & {
-      news: {
-        id: string;
-        markdown: string;
-        url: string;
-        newsDate: Date;
-        symbol: string;
-      }[];
+      news: NewsArticle[];
     },
   ) {
     super(params.state, params.prompt, params.model, params.onHeartbeat);
@@ -47,7 +43,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
       news: this.news
         .map(
           (n, index) =>
-            `# ARTICLE FOR: ${n.symbol}, ID: ${index}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: \`${n.url}\`:\n${n.markdown}`,
+            `# ARTICLE ${n.symbol ? `FOR: ${n.symbol}` : ""}, ID: ${index}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: \`${n.url}\`:\n${n.markdown}`,
         )
         .join("\n---\n"),
     };
@@ -69,13 +65,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
 
   static override async create(params: {
     experimentId?: string;
-    news: {
-      id: string;
-      markdown: string;
-      url: string;
-      newsDate: Date;
-      symbol: string;
-    }[];
+    news: NewsArticle[];
     onHeartbeat?: () => Promise<void>;
   }) {
     const experimentService = resolve(ExperimentService);

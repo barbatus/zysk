@@ -1,10 +1,15 @@
-import { StockNewsStatus } from "@zysk/db";
-import { resolve, TickerNewsService } from "@zysk/services";
+import { type StockNewsSentiment, StockNewsStatus } from "@zysk/db";
+import {
+  NewsInsightsService,
+  resolve,
+  TickerNewsService,
+} from "@zysk/services";
 import { startOfDay, subDays } from "date-fns";
 import { isNil } from "lodash";
 
 import { getMaxTokens } from "#/llm/models/registry";
 import { NewsInsightsExtractor } from "#/llm/runners/insights-extractor";
+import { type NewsInsight } from "#/llm/runners/prompts/insights-parser";
 
 async function _fetchTickersToProcess(symbols: string[]) {
   const tickerNewsService = resolve(TickerNewsService);
@@ -96,6 +101,32 @@ export async function runBatchNews(params: {
   ).map((batch) => batch.map((n) => n.id));
 }
 
+export async function saveNewsInsights(insights: NewsInsight[]) {
+  const tickerNewsService = resolve(TickerNewsService);
+  const newsInsightsService = resolve(NewsInsightsService);
+
+  const insightsWithNewsId = insights.map(({ acticleId, ...rest }) => ({
+    ...rest,
+    newsId: acticleId,
+    impact: rest.impact as StockNewsSentiment,
+  }));
+  await tickerNewsService.saveNewsInsights(insightsWithNewsId);
+  const allInsights = insightsWithNewsId
+    .map(({ newsId, insights: newsInsights }) => {
+      return newsInsights.map((i) => ({
+        newsId,
+        insight: i.insight,
+        impact: i.impact as StockNewsSentiment,
+        refs: {
+          symbols: i.symbols,
+          sectors: i.sectors,
+        },
+      }));
+    })
+    .flat();
+  await newsInsightsService.saveInsights(allInsights);
+}
+
 export async function runNewsInsightsExtractorExperiment(params: {
   symbol: string;
   newsIds: string[];
@@ -110,16 +141,6 @@ export async function runNewsInsightsExtractorExperiment(params: {
     experimentId,
   });
   const result = await runner.run();
-
-  const values = result.map(({ acticleId, insights }) => {
-    return {
-      id: acticleId,
-      insights,
-    };
-  });
-
-  await tickerNewsService.saveNewsInsights(values);
-
   return result;
 }
 

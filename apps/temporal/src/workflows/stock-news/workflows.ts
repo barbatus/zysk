@@ -26,11 +26,13 @@ export async function runExtractNewsInsights(
 
   await Promise.all(
     newsBatches.map(async (newsBatch) => {
-      return proxy.runNewsInsightsExtractorExperiment({
-        symbol,
-        newsIds: newsBatch,
-        experimentId: uuid4(),
-      });
+      return proxy
+        .runNewsInsightsExtractorExperiment({
+          symbol,
+          newsIds: newsBatch,
+          experimentId: uuid4(),
+        })
+        .then((insights) => proxy.saveNewsInsights(insights));
     }),
   );
 }
@@ -112,7 +114,35 @@ export async function syncAllNewsWeekly(symbols: string[]) {
 
 export async function testInsightsExtract() {
   const startDate = parse("2025-06-16", "yyyy-MM-dd", new Date());
-  for (const symbols of chunk(["JNJ", "PFE", "MRK", "LLY", "ABBV", "UNH", "BAC", "WFC", "GS", "MS", "C", "AXP", "BLK", "SCHW", "TFC", "XOM", "CVX", "COP", "OXY", "PSX", "EOG", "MPC", "VLO"], 5)) {
+  for (const symbols of chunk(
+    [
+      "JNJ",
+      "PFE",
+      "MRK",
+      "LLY",
+      "ABBV",
+      "UNH",
+      "BAC",
+      "WFC",
+      "GS",
+      "MS",
+      "C",
+      "AXP",
+      "BLK",
+      "SCHW",
+      "TFC",
+      "XOM",
+      "CVX",
+      "COP",
+      "OXY",
+      "PSX",
+      "EOG",
+      "MPC",
+      "VLO",
+      "ALL",
+    ],
+    5,
+  )) {
     await Promise.all(
       symbols.map((symbol) =>
         executeChild(scrapeTickerNewsForPeriod, {

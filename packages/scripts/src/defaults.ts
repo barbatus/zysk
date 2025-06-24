@@ -1,4 +1,3 @@
-
 export const supportedTickers = [
   "AAPL",
   "TSLA",

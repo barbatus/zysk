@@ -130,5 +130,5 @@ def scrape_md(driver: Driver, data):
         "url": url,
         "status": 200,
         "markdown": markdown,
-        "urls": filter(lambda u: domain in u, all_urls),
+        "urls": list(filter(lambda u: domain in u, all_urls)),
     }

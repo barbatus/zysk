@@ -3,6 +3,7 @@ import {
   type DataDatabase,
   type StockNewsInsert,
   StockNewsInsight,
+  StockNewsSentiment,
   StockNewsStatus,
 } from "@zysk/db";
 import axios, { AxiosError } from "axios";
@@ -25,7 +26,7 @@ import { Exact } from "./utils/types";
 const apiWithRetry = axios.create();
 axiosRetry(apiWithRetry, {
   retries: 3,
-  retryDelay: axiosRetry.exponentialDelay,
+  retryDelay: axiosRetry.exponentialDelay.bind(axiosRetry),
   retryCondition: (err) =>
     axiosRetry.isNetworkOrIdempotentRequestError(err) ||
     err.response?.statusText === "ECONNREFUSED",
@@ -293,24 +294,6 @@ export class TickerNewsService {
     });
   }
 
-  // *getNewsSince(
-  //   symbol: string,
-  //   sinceDate: Date,
-  // ): Generator<
-  //   Promise<{ url: string; title: string; newsDate: Date }[]>,
-  //   void,
-  //   { url: string; title: string; newsDate: Date }[]
-  // > {
-  //   let page = 1;
-  //   const news = yield this.getNewsPage(symbol, page);
-  //   if (news.length === 0) return;
-
-  //   const filteredNews = news.filter((n) => n.newsDate >= sinceDate);
-  //   yield Promise.resolve(filteredNews);
-
-  //   page++;
-  // }
-
   async getTodayNews(symbol: string) {
     return this.getTickerNews(symbol, startOfDay(new Date()));
   }
@@ -366,14 +349,22 @@ export class TickerNewsService {
 
   async saveNewsInsights<
     T extends {
-      id: string;
+      newsId: string;
+      impact?: StockNewsSentiment;
+      title: string;
+      description: string;
+      mainSymbol?: string;
       insights: StockNewsInsight[];
     },
   >(
     newsInsights: Exact<
       T,
       {
-        id: string;
+        newsId: string;
+        impact?: StockNewsSentiment;
+        title: string;
+        description: string;
+        mainSymbol?: string;
         insights: StockNewsInsight[];
       }
     >[],
@@ -387,19 +378,31 @@ export class TickerNewsService {
             (qb, update) => {
               return qb.union(
                 this.db.selectNoFrom([
-                  sql<string>`${update.id}::uuid`.as("id"),
+                  sql<string>`${update.newsId}::uuid`.as("id"),
                   sql<
                     StockNewsInsight[]
                   >`(${JSON.stringify(update.insights)}::jsonb)`.as("insights"),
+                  sql<StockNewsSentiment>`${update.impact}`.as("impact"),
+                  sql<string>`${update.title}`.as("title"),
+                  sql<string>`${update.description}`.as("description"),
+                  sql<string | undefined>`${update.mainSymbol}`.as(
+                    "mainSymbol",
+                  ),
                 ]),
               );
             },
             this.db.selectNoFrom([
-              sql<string>`${newsInsights[0].id}::uuid`.as("id"),
+              sql<string>`${newsInsights[0].newsId}::uuid`.as("id"),
               sql<
                 StockNewsInsight[]
               >`(${JSON.stringify(newsInsights[0].insights)}::jsonb)`.as(
                 "insights",
+              ),
+              sql<StockNewsSentiment>`${newsInsights[0].impact}`.as("impact"),
+              sql<string>`${newsInsights[0].title}`.as("title"),
+              sql<string>`${newsInsights[0].description}`.as("description"),
+              sql<string | undefined>`${newsInsights[0].mainSymbol}`.as(
+                "mainSymbol",
               ),
             ]),
           )
@@ -407,6 +410,10 @@ export class TickerNewsService {
       )
       .set((eb) => ({
         insights: sql`COALESCE(${eb.ref("app_data.stock_news.insights")}, '[]'::jsonb) || ${eb.ref("data_table.insights")}`,
+        title: eb.ref("data_table.title"),
+        description: eb.ref("data_table.description"),
+        impact: eb.ref("data_table.impact"),
+        symbol: sql`COALESCE(${eb.ref("app_data.stock_news.symbol")}, ${eb.ref("data_table.mainSymbol")})`,
         updatedAt: new Date(),
       }))
       .whereRef("app_data.stock_news.id", "=", "data_table.id");
@@ -478,10 +485,12 @@ export class TickerNewsService {
       .execute();
   }
 
-  async saveNewsSources(sources: {
-    name: string;
-    url: string;
-  }[]) {
+  async saveNewsSources(
+    sources: {
+      name: string;
+      url: string;
+    }[],
+  ) {
     return await this.db
       .insertInto("app_data.news_sources")
       .values(sources)

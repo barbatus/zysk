@@ -119,13 +119,18 @@ export async function scrapeUrls(params: {
 
 export async function getOrScrapeNews(urls: string[]) {
   const tickerNewsService = resolve(TickerNewsService);
-  const savedNews = uniqBy((await tickerNewsService.getArticles(urls)).map((n) => ({
-    url: n.url,
-    markdown: n.markdown,
-    originalUrl: n.originalUrl,
-  })), (n) => n.url) as {
+  const savedNews = uniqBy(
+    (await tickerNewsService.getArticles(urls)).map((n) => ({
+      url: n.url,
+      markdown: n.markdown,
+      title: n.title,
+      originalUrl: n.originalUrl,
+    })),
+    (n) => n.url,
+  ) as {
     url: string;
     markdown?: string;
+    title?: string;
     error?: Error;
     originalUrl: string;
   }[];
@@ -232,9 +237,9 @@ export async function scrapeNews(urls: string[], maxTokens = 5000) {
   return cleanedNews;
 }
 
-export async function scrapeTickerNewsUrlsAnsSave(
+export async function scrapeTickerNewsUrlsAndSave(
   symbol: string,
-  news: { newsDate: Date; url: string; title: string }[],
+  news: { newsDate: Date; url: string; title?: string }[],
 ) {
   const itemByUrl = mapKeys(news, "url");
   const result = await scrapeNews(news.map((n) => n.url)).then((r) =>

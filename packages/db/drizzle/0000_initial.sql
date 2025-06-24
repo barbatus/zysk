@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS "predictions" (
 	"response_json" jsonb NOT NULL,
 	"experiment_id" uuid,
 	"period" date,
+	"evaluation" numeric,
+	"type" text DEFAULT 'weekly',
 	"created_at" timestamp with time zone DEFAULT current_timestamp NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT current_timestamp NOT NULL
 );
@@ -31,9 +33,28 @@ CREATE TABLE IF NOT EXISTS "current_quotes" (
 	"updated_at" timestamp with time zone DEFAULT current_timestamp NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "app_data"."news_insights" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"refs" jsonb,
+	"insight" text NOT NULL,
+	"impact" text DEFAULT 'neutral',
+	"news_id" uuid NOT NULL,
+	"created_at" timestamp with time zone DEFAULT current_timestamp NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT current_timestamp NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "app_data"."news_sources" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" varchar(255) NOT NULL,
+	"url" varchar(2048) NOT NULL,
+	"settings" jsonb DEFAULT '{"maxLevelToCrawl":10}'::jsonb,
+	"created_at" timestamp with time zone DEFAULT current_timestamp NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT current_timestamp NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "app_data"."stock_news" (
-	"id" uuid PRIMARY KEY NOT NULL,
-	"symbol" varchar(40) NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"symbol" varchar(80) NOT NULL,
 	"url" varchar(2048) NOT NULL,
 	"original_url" varchar(2048),
 	"status" text NOT NULL,
@@ -42,8 +63,8 @@ CREATE TABLE IF NOT EXISTS "app_data"."stock_news" (
 	"news_date" timestamp with time zone NOT NULL,
 	"title" text,
 	"description" text,
+	"impact" text DEFAULT 'neutral',
 	"insights" jsonb DEFAULT '[]'::jsonb,
-	"insights_token_size" integer DEFAULT 0,
 	"created_at" timestamp with time zone DEFAULT current_timestamp NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT current_timestamp NOT NULL
 );
@@ -101,7 +122,7 @@ CREATE TABLE IF NOT EXISTS "app_data"."etf_profiles" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "app_data"."ticker_time_series" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"symbol" varchar(40),
+	"symbol" varchar(40) NOT NULL,
 	"open_price" numeric NOT NULL,
 	"close_price" numeric NOT NULL,
 	"high" numeric NOT NULL,
@@ -127,6 +148,12 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
+ ALTER TABLE "app_data"."news_insights" ADD CONSTRAINT "news_insights_news_id_stock_news_id_fk" FOREIGN KEY ("news_id") REFERENCES "app_data"."stock_news"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
@@ -144,6 +171,15 @@ EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "refs_gin_idx" ON "app_data"."news_insights" USING gin (refs jsonb_path_ops);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "insight_idx" ON "app_data"."news_insights" USING btree ("insight");--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "unique_url" ON "app_data"."news_sources" USING btree ("url");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "unique_symbol_url" ON "app_data"."stock_news" USING btree ("symbol","url");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "insights_gin_idx" ON "app_data"."stock_news" USING gin (insights jsonb_path_ops);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "url_idx" ON "app_data"."stock_news" USING btree ("url");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "original_url_idx" ON "app_data"."stock_news" USING btree ("original_url");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "news_date_idx" ON "app_data"."stock_news" USING btree ("news_date");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "status_idx" ON "app_data"."stock_news" USING btree ("status");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "url_status_idx" ON "app_data"."stock_news" USING btree ("url","status");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "user_symbol_idx" ON "subscriptions" USING btree ("user_id","symbol");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "symbol_date_index" ON "app_data"."ticker_time_series" USING btree ("symbol","date");

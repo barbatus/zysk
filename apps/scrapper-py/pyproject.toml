@@ -5,8 +5,9 @@ description = ""
 authors = [
     {name = "alex",email = "alex.borodach@gmail.com"}
 ]
+package-mode = false
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<4"
 dependencies = [
     "botasaurus (>=4.0.88,<5.0.0)",
     "botasaurus-server (>=4.0.60,<5.0.0)",

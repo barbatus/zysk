@@ -2,7 +2,12 @@ import { type ColumnType, type Insertable, type Selectable } from "kysely";
 
 import { type CreateTableType, type Optional } from "../utils/custom-types";
 import { type experimentsTable } from "./experiments";
-import { type newsSourcesTable, type StockNewsInsight, type stockNewsTable } from "./stock-news";
+import {
+  type newsInsightsTable,
+  type newsSourcesTable,
+  type StockNewsInsight,
+  type stockNewsTable,
+} from "./stock-news";
 import {
   type companyProfiles,
   type etfProfiles,
@@ -55,6 +60,9 @@ type StockNewsTable = CreateTableType<
 type NewsSourcesTableBase = typeof newsSourcesTable.$inferSelect;
 type NewsSourcesTable = CreateTableType<NewsSourcesTableBase>;
 
+type NewsInsightsTableBase = typeof newsInsightsTable.$inferSelect;
+type NewsInsightsTable = CreateTableType<NewsInsightsTableBase>;
+
 export interface DataDatabase {
   "app_data.company_profiles": CompanyProfilesTable;
   "app_data.etf_profiles": ETFProfilesTable;
@@ -62,6 +70,7 @@ export interface DataDatabase {
   "app_data.experiments": ExperimentsTable;
   "app_data.stock_news": StockNewsTable;
   "app_data.news_sources": NewsSourcesTable;
+  "app_data.news_insights": NewsInsightsTable;
 }
 
 export type CompanyProfile = Selectable<CompanyProfilesTable>;
@@ -79,3 +88,7 @@ export type StockNewsInsert = Insertable<StockNewsTable>;
 export type NewsSource = Selectable<NewsSourcesTable>;
 
 export type NewsSourceInsert = Insertable<NewsSourcesTable>;
+
+export type NewsInsight = Selectable<NewsInsightsTable>;
+
+export type NewsInsightInsert = Insertable<NewsInsightsTable>;

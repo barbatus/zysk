@@ -8,6 +8,7 @@ import { appDBSymbol, createDb, dataDBSymbol } from "./db";
 import { ExperimentService } from "./experiment.service";
 import { FinnhubService } from "./finnhub.service";
 import { MetricsService } from "./metrics.service";
+import { NewsInsightsService } from "./news-insights.service";
 import { PortfolioService } from "./portfolio.service";
 import { PredictionService } from "./prediction.service";
 import { StockNewsApiService } from "./stock-news-api.service";
@@ -48,6 +49,7 @@ const services = [
   StockNewsApiService,
   TickerService,
   PredictionService,
+  NewsInsightsService,
 ] as const;
 
 services.forEach((service) => {

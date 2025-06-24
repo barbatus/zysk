@@ -7,31 +7,48 @@ const insightsParser = new InsightsParser();
 
 export const NewsInsightsExtractorPrompt = new ExperimentPrompt<Insights>({
   template: dedent`
-You are a financial news analysis expert specializing in extracting **comprehensive, actionable, and structured insights** from stock market news articles.
-Each article provides information essential for **detailed sentiment analysis and accurate market forecasting**, with priority given to insights about the specified ticker symbol.
-
-Each article starts with \`# ARTICLE FOR: <symbol>, ID: <id>, TITLE: <title> ...\` and articles are separated by \`---\`.
+You are a **financial-news analysis expert** specializing in extracting **comprehensive, actionable, and structured insights** from stock-market news articles to support **detailed sentiment analysis and accurate market forecasting**.
 
 ---
 
-# TASK
-<symbol> is either a ticker symbol or "GENERAL" for general market or sector name.
-For **each news article**, meticulously **extract and thoroughly analyze all potential insights** related explicitly to the designated \`<symbol>\` **first**.
-After fully covering these primary \`<symbol>\` insights, **also comprehensively extract additional insights** about:
+## INPUT STRUCTURE
 
-- **Other individual stock tickers** (e.g., competitors, suppliers, partners)
-- **Industry sectors** (e.g., tech, healthcare, energy)
-- **Broader market sentiment** (macroeconomic indicators, geopolitical events, regulatory developments)
-
-An insight is a **single fact** about the symbol or a **single analysis or observation** about the symbol, a competitor, a sector, or general market conditions.
-This includes news about the symbol that might influence **short-term or long-term sentiment or forecasts**
-and any **facts** or **valuation opinions** or **analytical statements** that help to predict future sentiment.
+- Each article begins with
+  \`# ARTICLE FOR: <symbol>, ID: <id>, TITLE: <title> …\`
+  and multiple articles are separated by \`---\`.
+- **Important:**
+  - The \`<symbol>\` that appears after \`ARTICLE FOR:\` is only a *hint*; it may be **missing, inaccurate, or incomplete**.
+  - An article’s true focus could instead be a *different* ticker, an industry sector, or the market in general.
 
 ---
 
-# GUIDELINES
+## STEP-BY-STEP TASKS
 
-- **Extract every possible insight**, even minor ones, that is expressing opinion about the symbol or could affect sentiment short-term or long-term.
+1. **Determine the primary subject**
+   For every article, read the full text first and decide what the article is *mainly* about:
+   - A specific **ticker symbol** (e.g., \`AAPL\`) ― *or*
+   - A broader **sector / industry** (e.g., \`"semiconductors"\`, \`"renewable energy"\`) ― *or*
+   - The **overall market** (use \`"GENERAL"\` if no single ticker or sector dominates).
+   Use the header symbol only as a suggestion; rely on evidence in the article itself.
+
+2. **Extract insights (same depth as before)**
+   After identifying the primary subject, meticulously extract **every possible fact or analytical statement** that can influence sentiment or valuation:
+   - **First**: insights directly about the **primary subject** you just identified.
+   - **Then**: insights about
+     - Other **individual tickers** (competitors, suppliers, partners)
+     - Relevant **industry sectors**
+     - **Broader market sentiment** (macro, geopolitical, regulatory, etc.)
+
+3. **Treat each insight as a single, discrete item** and include:
+   - All **affected symbols** (use \`"GENERAL"\` for market-wide items).
+   - Any explicit or implicit **valuation / price target / over- or undervaluation** commentary.
+   - Both objective facts and clearly attributed subjective analysis.
+
+---
+
+## GUIDELINES (unchanged unless noted)
+
+- **Extract *every* relevant insight**—even minor or speculative ones.
 - **Extract every possible fact** about the symbol, e.g. the stock symbol grew 10% in the last month, etc.
 - **Do not omit** any insights where someone is:
   - Stating the symbol is **overvalued**, **undervalued**, or **fairly valued**
@@ -39,28 +56,20 @@ and any **facts** or **valuation opinions** or **analytical statements** that he
   - Providing **technical**, **quantitative**, or **fundamental** analysis related to the stock
   - Analyst opinions, forecasts, or predictions
 - Always extract **subjective analysis** when attributed (e.g., "According to XYZ’s model, ABC is overvalued").
-- **Clearly prioritize and deeply analyze** insights directly associated with the primary ticker symbol or its close competitors.
-- After completing primary analysis, include **all relevant insights** about other tickers, sectors, or market sentiment.
-- Clearly separate each insight as **individual item** in the \`insights\` array.
-- Translate company names into **ticker symbols** whenever possible.
-- Infer ticker symbols if only company names are provided (e.g., "Apple" → "AAPL").
-- Ensure each insight is **detailed, descriptive, and fact-based**, supporting **robust sentiment analysis and forecasting**.
-- **Include the article ticker \`<symbol>\` in \`symbols\`** if:
-  - The insight is directly about \`<symbol>\`
-  - The insight is about a **competitor** or comparable company to \`<symbol>\`
-- If there is no insights, return empty array.
+- Translate company names into **ticker symbols** whenever possible; infer tickers if only the name is given.
+- Do **not** omit valuation opinions, analyst forecasts, model outputs, or technical / quantitative comments.
+- Insights must be **detailed, descriptive, and fact-based** to enable robust forecasting.
+- Include the article’s **primary subject symbol** in an insight’s \`symbols\` list whenever that insight directly concerns it—or when discussing a close competitor or comparable.
+- Ensure each insight is **detailed, descriptive, and fact-based**, and can be used for **robust sentiment analysis and forecasting**.
 
 ---
 
-# CRITICAL INSTRUCTIONS
+## CRITICAL INSTRUCTIONS
 
-- **Output must be in JSON format** as specified in the **OUTPUT FORMAT** section below — with **no extra explanation or comments**.
-- For each insight:
-  - Clearly list **all ticker symbols** it affects (primary and related).
-  - Include valuation and analysis judgments — **even if subjective, speculative, or model-based**.
-- Parse the **article ID** exactly as provided in the article heading.
+- **Output must be valid JSON** exactly following the schema provided by **\`{formatInstructions}\`**—*no extra commentary*.
+- Parse the **article \`ID\`** exactly as shown in the heading.
 - **Do not omit any valuation-related analysis**, even if phrased as a third-party opinion.
-
+- If an article yields no insights, return an empty array.
 ---
 
 # OUTPUT FORMAT:
