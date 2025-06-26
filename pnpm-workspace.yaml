@@ -15,3 +15,9 @@ catalogs:
   "@emotion/cache":
     "@emotion/cache": ^11.13.1
 
+  "axios":
+    "axios": "^1.7.7"
+
+  "typescript":
+    "typescript": "5.8.3"
+

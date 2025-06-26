@@ -22,7 +22,7 @@
     "@zysk/cube": "workspace:*",
     "@zysk/db": "workspace:*",
     "@zysk/ts-rest": "workspace:*",
-    "axios": "^1.7.7",
+    "axios": "catalog:axios",
     "axios-retry": "^3.4.0",
     "date-fns": "^4.1.0",
     "dedent": "^1.6.0",

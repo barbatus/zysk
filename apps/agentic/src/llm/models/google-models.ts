@@ -17,6 +17,7 @@ function getGoogleContainer(
   },
 ) {
   return new ModelContainer(
+    // @ts-expect-error TS2589 Type instantiation is excessively deep
     new LLMRunner(
       new ChatGoogleGenerativeAI({
         apiKey,

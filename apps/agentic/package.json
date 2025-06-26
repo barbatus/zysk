@@ -1,5 +1,5 @@
 {
-  "name": "@zysk/temporal",
+  "name": "@zysk/agentic",
   "version": "0.1.0",
   "private": true,
   "main": "./dist/index.js",
@@ -33,7 +33,7 @@
     "@zysk/db": "workspace:*",
     "@zysk/scrapper": "workspace:*",
     "@zysk/services": "workspace:*",
-    "axios": "^1.7.7",
+    "axios": "catalog:axios",
     "axios-retry": "^4.5.0",
     "date-fns": "^4.1.0",
     "dedent": "^1.6.0",
@@ -61,6 +61,6 @@
     "npm-run-all": "^4.1.5",
     "tsc-alias": "^1.8.16",
     "tsx": "^4.19.4",
-    "typescript": "5.6.2"
+    "typescript": "catalog:typescript"
   }
 }
