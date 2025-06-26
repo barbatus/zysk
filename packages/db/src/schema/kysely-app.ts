@@ -10,7 +10,12 @@ import { type CreateTableType, type Optional } from "../utils/custom-types";
 import { type predictionsTable } from "./predictions";
 import { type currentQuotesTable } from "./quotes";
 import { type subscriptionsTable } from "./subscriptions";
-import { type tickersTable, type userTickersTable } from "./tickers";
+import {
+  type sectors,
+  type tickersTable,
+  type userTickersTable,
+} from "./tickers";
+import { type companyProfiles, type etfProfiles } from "./tickers-data";
 
 export interface UsersTable {
   id: Generated<string>;
@@ -77,6 +82,25 @@ export type CurrentQuotesTable = CreateTableType<
   }
 >;
 
+type CompanyProfilesTableBase = typeof companyProfiles.$inferSelect;
+export type CompanyProfilesTable = CreateTableType<
+  CompanyProfilesTableBase,
+  {
+    beta: ColumnType<string, Optional<string | number>>;
+  }
+>;
+
+type ETFProfilesTableBase = typeof etfProfiles.$inferSelect;
+export type ETFProfilesTable = CreateTableType<
+  ETFProfilesTableBase,
+  {
+    inceptionDate: ColumnType<Date | null, Optional<string | Date>>;
+  }
+>;
+
+type SectorsTableBase = typeof sectors.$inferSelect;
+export type SectorsTable = CreateTableType<SectorsTableBase>;
+
 export interface Database {
   users: UsersTable;
   tickers: TickersTable;
@@ -84,6 +108,9 @@ export interface Database {
   subscriptions: SubscriptionsTable;
   predictions: PredictionsTable;
   currentQuotes: CurrentQuotesTable;
+  companyProfiles: CompanyProfilesTable;
+  etfProfiles: ETFProfilesTable;
+  sectors: SectorsTable;
 }
 
 export type User = Selectable<UsersTable>;
@@ -92,3 +119,6 @@ export type UserTicker = Selectable<UserTickersTable>;
 export type Subscription = Selectable<SubscriptionsTable>;
 export type Prediction = Selectable<PredictionsTable>;
 export type PredictionInsert = Insertable<PredictionsTable>;
+export type CompanyProfile = Selectable<CompanyProfilesTable>;
+export type ETFProfile = Selectable<ETFProfilesTable>;
+export type Sector = Selectable<SectorsTable>;

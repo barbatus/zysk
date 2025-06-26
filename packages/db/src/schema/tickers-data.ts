@@ -3,6 +3,7 @@ import {
   jsonb,
   numeric,
   pgSchema,
+  pgTable,
   text,
   timestamp,
   uniqueIndex,
@@ -12,9 +13,9 @@ import {
 
 import { auditColumns } from "#/utils/audit";
 
-const mySchema = pgSchema("app_data");
+const dataSchema = pgSchema("app_data");
 
-export const companyProfiles = mySchema.table("company_profiles", {
+export const companyProfiles = pgTable("company_profiles", {
   symbol: varchar("symbol", { length: 40 }).primaryKey(),
   description: text("description").notNull(),
   currency: varchar("currency", { length: 10 }),
@@ -24,7 +25,7 @@ export const companyProfiles = mySchema.table("company_profiles", {
   ...auditColumns,
 });
 
-export const etfProfiles = mySchema.table("etf_profiles", {
+export const etfProfiles = pgTable("etf_profiles", {
   symbol: varchar("symbol", { length: 40 }).primaryKey(),
   sectors: jsonb("sectors").default([]).$type<
     {
@@ -43,7 +44,7 @@ export const etfProfiles = mySchema.table("etf_profiles", {
   ...auditColumns,
 });
 
-export const tickerTimeSeries = mySchema.table(
+export const tickerTimeSeries = dataSchema.table(
   "ticker_time_series",
   {
     id: uuid("id").defaultRandom().primaryKey(),

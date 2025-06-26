@@ -1,0 +1,1 @@
+ALTER TABLE "app_data"."news_insights" ADD COLUMN "long_term" boolean DEFAULT false;

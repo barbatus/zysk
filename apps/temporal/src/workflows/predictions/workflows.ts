@@ -178,7 +178,7 @@ export async function evaluatePredictions() {
 
 export async function testTicker() {
   await predictSentimentWeekly({
-    symbol: "AAPL",
-    startWeek: "2025-06-09",
+    symbol: "UBER",
+    startWeek: "2025-06-16",
   });
 }

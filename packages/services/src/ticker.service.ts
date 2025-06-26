@@ -130,7 +130,25 @@ export class TickerService {
       .execute();
   }
 
-  async getAllSectors() {
+  async updateSectors(
+    sectors: {
+      title: string;
+      symbol: string;
+      alias: string;
+      supported?: boolean;
+    }[],
+  ) {
+    await this.appDB.insertInto("sectors").values(sectors).execute();
+  }
+
+  async getSectors() {
+    return this.appDB
+      .selectFrom("sectors")
+      .select(["title", "symbol", "alias"])
+      .execute();
+  }
+
+  async getTickerSectors() {
     return this.appDB
       .selectFrom("tickers")
       .select(sql<string>`jsonb_array_elements(sectors)->>'name'`.as("sector"))

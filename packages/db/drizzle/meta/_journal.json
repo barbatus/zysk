@@ -15,6 +15,20 @@
       "when": 1750803966424,
       "tag": "0001_update_news",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1750880711043,
+      "tag": "0002_add_sectors_move_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1750881690271,
+      "tag": "0003_update_news_insights",
+      "breakpoints": true
     }
   ]
 }

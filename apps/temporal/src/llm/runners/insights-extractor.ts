@@ -8,19 +8,20 @@ import { type NewsBasedExperimentParams } from "./news-based-sentiment-predictor
 import { NewsInsightsExtractorPrompt } from "./prompts/insights-extractor.prompt";
 import { type Insights } from "./prompts/insights-parser";
 
-type NewsArticle = {
+interface NewsArticle {
   id: string;
   symbol: string | null;
   markdown: string;
   newsDate: Date;
   url: string;
-};
+}
 
 export class NewsInsightsExtractor extends ExperimentRunner<
   Insights,
   Insights
 > {
   private readonly news: NewsArticle[];
+  private readonly sectors: string[];
   private readonly indexToUuid = new Map<number, string>();
 
   constructor(
@@ -29,10 +30,12 @@ export class NewsInsightsExtractor extends ExperimentRunner<
       "symbol" | "currentDate" | "newsInsights"
     > & {
       news: NewsArticle[];
+      sectors: string[];
     },
   ) {
     super(params.state, params.prompt, params.model, params.onHeartbeat);
     this.news = params.news;
+    this.sectors = params.sectors;
   }
 
   override async mapPromptValues(): Promise<Record<string, string>> {
@@ -46,6 +49,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
             `# ARTICLE ${n.symbol ? `FOR: ${n.symbol}` : ""}, ID: ${index}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: \`${n.url}\`:\n${n.markdown}`,
         )
         .join("\n---\n"),
+      sectors: this.sectors.join("\n"),
     };
   }
 
@@ -66,6 +70,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
   static override async create(params: {
     experimentId?: string;
     news: NewsArticle[];
+    sectors: string[];
     onHeartbeat?: () => Promise<void>;
   }) {
     const experimentService = resolve(ExperimentService);

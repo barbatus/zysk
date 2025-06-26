@@ -3,6 +3,7 @@ import {
   NewsInsightsService,
   resolve,
   TickerNewsService,
+  TickerService,
 } from "@zysk/services";
 import { startOfDay, subDays } from "date-fns";
 import { isNil } from "lodash";
@@ -109,6 +110,10 @@ export async function saveNewsInsights(insights: NewsInsight[]) {
     ...rest,
     newsId: acticleId,
     impact: rest.impact as StockNewsSentiment,
+    insights: rest.insights.map((i) => ({
+      ...i,
+      sectors: i.sectors.map((s) => s.toUpperCase()),
+    })),
   }));
   await tickerNewsService.saveNewsInsights(insightsWithNewsId);
   const allInsights = insightsWithNewsId
@@ -117,6 +122,7 @@ export async function saveNewsInsights(insights: NewsInsight[]) {
         newsId,
         insight: i.insight,
         impact: i.impact as StockNewsSentiment,
+        longTerm: i.longTerm,
         refs: {
           symbols: i.symbols,
           sectors: i.sectors,
@@ -134,11 +140,14 @@ export async function runNewsInsightsExtractorExperiment(params: {
 }) {
   const { newsIds, experimentId } = params;
   const tickerNewsService = resolve(TickerNewsService);
+  const tickerService = resolve(TickerService);
   const news = await tickerNewsService.getNewsByNewsIds(newsIds);
+  const sectors = await tickerService.getSectors();
 
   const runner = await NewsInsightsExtractor.create({
     news,
     experimentId,
+    sectors: sectors.map((s) => s.symbol),
   });
   const result = await runner.run();
   return result;

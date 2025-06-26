@@ -5,6 +5,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -61,3 +62,19 @@ export const userTickersTable = pgTable("user_tickers", {
   closePrice: numeric("close_price"),
   ...auditColumns(),
 });
+
+export const sectors = pgTable(
+  "sectors",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    symbol: varchar("symbol", { length: 100 }).notNull(),
+    title: text("title").notNull(),
+    alias: varchar("alias", { length: 40 }),
+    supported: boolean("supported").default(false),
+    ...auditColumns,
+  },
+  (t) => ({
+    symbolIdx: uniqueIndex("symbol_index").on(t.symbol),
+    aliasIdx: uniqueIndex("alias_index").on(t.alias),
+  }),
+);

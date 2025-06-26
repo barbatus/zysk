@@ -1,15 +1,16 @@
-import { type DataDatabase } from "@zysk/db";
+import { type Database, type DataDatabase } from "@zysk/db";
 import { inject, injectable } from "inversify";
 import { type Kysely, sql } from "kysely";
 import { keyBy } from "lodash";
 
 import { AlphaVantageService } from "./alpha-vantage.service";
-import { dataDBSymbol } from "./db";
+import { appDBSymbol, dataDBSymbol } from "./db";
 
 @injectable()
 export class TickerDataService {
   constructor(
-    @inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>,
+    @inject(dataDBSymbol) private readonly dataDb: Kysely<DataDatabase>,
+    @inject(appDBSymbol) private readonly appDb: Kysely<Database>,
     private readonly alphaVantageService: AlphaVantageService,
   ) {}
 
@@ -23,8 +24,8 @@ export class TickerDataService {
       beta: number | null;
     }[],
   ) {
-    return this.db
-      .insertInto("app_data.company_profiles")
+    return this.appDb
+      .insertInto("companyProfiles")
       .values(data)
       .onConflict((oc) =>
         oc.columns(["symbol"]).doUpdateSet({
@@ -37,8 +38,8 @@ export class TickerDataService {
   }
 
   async getCompanyProfiles(symbols: string[]) {
-    return this.db
-      .selectFrom("app_data.company_profiles")
+    return this.appDb
+      .selectFrom("companyProfiles")
       .selectAll()
       .where("symbol", "in", symbols)
       .execute();
@@ -79,7 +80,7 @@ export class TickerDataService {
       volume: number;
     }[],
   ) {
-    return this.db
+    return this.dataDb
       .insertInto("app_data.ticker_time_series")
       .values(data)
       .onConflict((oc) =>
@@ -105,8 +106,8 @@ export class TickerDataService {
       }[];
     }[],
   ) {
-    return this.db
-      .insertInto("app_data.etf_profiles")
+    return this.appDb
+      .insertInto("etfProfiles")
       .values(
         data.map((d) => ({
           ...d,
@@ -117,7 +118,7 @@ export class TickerDataService {
   }
 
   async getLatestQuoteDatePerTicker(symbols: string[]) {
-    const result = await this.db
+    const result = await this.dataDb
       .selectFrom("app_data.ticker_time_series")
       .select(["symbol", (eb) => eb.fn.max("date").as("date")])
       .where("symbol", "in", symbols)
@@ -132,7 +133,7 @@ export class TickerDataService {
     endDate?: Date;
   }) {
     const { symbols, startDate, endDate } = params;
-    const result = await this.db
+    const result = await this.dataDb
       .selectFrom("app_data.ticker_time_series")
       .selectAll()
       .where("date", ">=", startDate)
@@ -179,7 +180,7 @@ export class TickerDataService {
     startDate: Date,
     endDate?: Date,
   ) {
-    const result = await this.db
+    const result = await this.dataDb
       .selectFrom("app_data.ticker_time_series")
       .select(() => [
         sql<Date>`date_trunc('week', date)`.as("weekStart"),

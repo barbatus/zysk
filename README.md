@@ -1,7 +1,4 @@
 ## Getting Started
 
-Running the web app
+Running the web app `./run.sh`
 
-```bash
-npm run dev:web
-```

@@ -8,6 +8,7 @@ import {
   syncTickerOverviews,
   syncTickerQuotes,
   syncTickers,
+  syncTickerSectors,
   syncTickerTimeSeries,
 } from "./tickers";
 import { type ScriptConfig } from "./utils";
@@ -21,6 +22,7 @@ export const allScripts = [
   syncSectors,
   scrapeUrl,
   syncNewsSources,
+  syncTickerSectors,
 ] as ScriptConfig[];
 
 export function getAllScripts() {

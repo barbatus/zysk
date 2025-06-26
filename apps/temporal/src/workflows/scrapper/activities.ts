@@ -8,40 +8,17 @@ import {
 } from "@zysk/scrapper";
 import {
   type Exact,
-  getAppConfigStatic,
   getLogger,
-  NodeEnvironment,
   resolve,
   TickerNewsService,
 } from "@zysk/services";
-import IORedis, { type RedisOptions } from "ioredis";
 import { mapKeys, omit, uniqBy } from "lodash";
 // eslint-disable-next-line camelcase
 import { encoding_for_model } from "tiktoken";
 
+import { memoizeScrapperUrls, retrieveScrapperUrls } from "../../utils/redis";
+
 const logger = getLogger();
-
-const config = getAppConfigStatic();
-
-const redisOptions: RedisOptions = {
-  host: config.upstash?.redisRestUrl,
-  port: 6379,
-  username: "default",
-  password: config.upstash?.redisRestToken,
-  family: 6,
-  maxRetriesPerRequest: null,
-  tls: {},
-};
-
-const redis = new IORedis(
-  config.nodeEnv === NodeEnvironment.DEVELOPMENT
-    ? {
-        host: "localhost",
-        port: 6379,
-        maxRetriesPerRequest: null,
-      }
-    : redisOptions,
-);
 
 export async function scrapeUrls(params: {
   urls: string[];
@@ -59,32 +36,14 @@ export async function scrapeUrls(params: {
     waitFor,
     timeout,
   } = params;
-  const cachedUrls = mapKeys(
-    (
-      await Promise.allSettled(
-        urls.map((url) =>
-          redis.get(
-            `scrapper:urls:format:${convertToMd ? "md" : "html"}:${url}`,
-          ),
-        ),
-      )
-    )
-      .map((r, index) => {
-        if (r.status === "fulfilled" && r.value) {
-          return {
-            url: urls[index],
-            content: r.value,
-          } as {
-            url: string;
-            content?: string;
-            error?: Error;
-          };
-        }
-        return null;
-      })
-      .filter(Boolean),
-    "url",
-  );
+
+  const format = convertToMd ? "md" : "html";
+
+  const cachedUrls: {
+    url: string;
+    content?: string;
+    error?: Error;
+  }[] = (await retrieveScrapperUrls(urls, format)).filter(Boolean);
 
   const newUrls = urls.filter((url) => !(url in cachedUrls));
 
@@ -101,17 +60,14 @@ export async function scrapeUrls(params: {
     timeout,
   });
 
-  await Promise.allSettled(
+  await memoizeScrapperUrls(
     result
       .filter((r) => !r.error && r.content)
-      .map((r) =>
-        redis.set(
-          `scrapper:urls:format:${convertToMd ? "md" : "html"}:${r.url}`,
-          r.content!,
-          "EX",
-          "5 minutes",
-        ),
-      ),
+      .map((r) => ({
+        url: r.url,
+        content: r.content!,
+      })),
+    format,
   );
 
   return Object.values(cachedUrls).concat(result);

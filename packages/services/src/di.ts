@@ -1,5 +1,6 @@
 import { type Database, type DataDatabase } from "@zysk/db";
 import { Container } from "inversify";
+import Redis from "ioredis";
 import { type Kysely } from "kysely";
 
 import { AlphaVantageService } from "./alpha-vantage.service";
@@ -11,6 +12,7 @@ import { MetricsService } from "./metrics.service";
 import { NewsInsightsService } from "./news-insights.service";
 import { PortfolioService } from "./portfolio.service";
 import { PredictionService } from "./prediction.service";
+import { getRedisClient, redisClientSymbol } from "./redis-client";
 import { StockNewsApiService } from "./stock-news-api.service";
 import { TickerService } from "./ticker.service";
 import { TickerDataService } from "./ticker-data.service";
@@ -21,6 +23,8 @@ import { WatchlistService } from "./watchlist.service";
 export const container = new Container();
 
 container.bind(appConfigSymbol).toResolvedValue(() => getAppConfigStatic());
+
+container.bind(redisClientSymbol).toResolvedValue(() => getRedisClient());
 
 container
   .bind<Kysely<DataDatabase>>(dataDBSymbol)
@@ -56,10 +60,14 @@ services.forEach((service) => {
   container.bind<typeof service>(service).toSelf().inSingletonScope();
 });
 
-export function resolve<T extends (typeof services)[number]>(
+container.bind(Redis).toResolvedValue(() => getRedisClient());
+
+export function resolve<T extends (typeof services)[number] | typeof Redis>(
   service: T,
-): InstanceType<T> {
-  return container.get<InstanceType<T>>(service);
+): T extends (typeof services)[number] ? InstanceType<T> : Redis {
+  return container.get<
+    T extends (typeof services)[number] ? InstanceType<T> : Redis
+  >(service);
 }
 
 export function getConfig(): AppConfig {

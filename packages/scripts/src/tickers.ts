@@ -8,7 +8,7 @@ import { Argument } from "commander";
 import { subYears } from "date-fns";
 import { chunk } from "lodash";
 
-import { newsSources, supportedTickers } from "./defaults";
+import { NEWS_SOURCES, SECTORS, SUPPORTED_TICKERS } from "./defaults";
 import { createScript } from "./utils";
 
 export const syncTickerQuotes = createScript<[]>({
@@ -46,7 +46,7 @@ export const syncTickers = createScript({
     "Load and save overviews for supported tickers (US only and for stocks and ETFs currently)",
 })(async () => {
   const tickerService = resolve(TickerService);
-  await tickerService.fetchUSTickersFromApiAndSave(supportedTickers);
+  await tickerService.fetchUSTickersFromApiAndSave(SUPPORTED_TICKERS);
   return "OK";
 });
 
@@ -79,12 +79,12 @@ export const syncSupportedTickers = createScript<[]>({
   description: "Update supported tickers",
 })(async () => {
   const tickerService = resolve(TickerService);
-  await tickerService.updateSupportedTickers(supportedTickers);
+  await tickerService.updateSupportedTickers(SUPPORTED_TICKERS);
   return "OK";
 });
 
-export const syncSectors = createScript<[]>({
-  name: "sync-sectors",
+export const syncTickerSectors = createScript<[]>({
+  name: "sync-ticker-sectors",
   description: "Update sectors for supported tickers",
 })(async () => {
   const tickerService = resolve(TickerService);
@@ -106,6 +106,15 @@ export const syncNewsSources = createScript<[]>({
   description: "Sync news sources",
 })(async () => {
   const tickerNewsService = resolve(TickerNewsService);
-  await tickerNewsService.saveNewsSources(newsSources);
+  await tickerNewsService.saveNewsSources(NEWS_SOURCES);
+  return "OK";
+});
+
+export const syncSectors = createScript<[]>({
+  name: "sync-sectors",
+  description: "Sync sectors",
+})(async () => {
+  const tickerService = resolve(TickerService);
+  await tickerService.updateSectors(SECTORS);
   return "OK";
 });

@@ -1,8 +1,6 @@
 import { PageLoadError, scrapeUrls } from "@zysk/scrapper";
-import { Queue, type RedisOptions, Worker } from "bullmq";
-import IORedis from "ioredis";
-
-import { getAppConfigStatic } from "./config";
+import { getRedisClient } from "@zysk/services";
+import { Queue, Worker } from "bullmq";
 
 interface ScrapeJobData {
   url: string;
@@ -13,32 +11,10 @@ interface ScrapeJobData {
   timeout?: number;
 }
 
-const config = getAppConfigStatic();
-
-const redisOptions: RedisOptions = {
-  host: config.upstashRedisUrl,
-  port: 6379,
-  username: "default",
-  password: config.upstashRedisPassword,
-  family: 6,
-  maxRetriesPerRequest: null,
-  tls: {},
-};
-
-const redis = new IORedis(
-  config.env === "development"
-    ? {
-        host: "localhost",
-        port: 6379,
-        maxRetriesPerRequest: null,
-      }
-    : redisOptions,
-);
-
 export const QUEUE_NAME = "scrape-queue";
 
 export const scrapeQueue = new Queue<ScrapeJobData>(QUEUE_NAME, {
-  connection: redis,
+  connection: getRedisClient(),
 });
 
 const worker = new Worker<ScrapeJobData>(
@@ -65,7 +41,7 @@ const worker = new Worker<ScrapeJobData>(
     }
   },
   {
-    connection: redis,
+    connection: getRedisClient(),
     concurrency: 50,
     limiter: {
       max: 50,

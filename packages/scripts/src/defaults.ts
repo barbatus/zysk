@@ -1,4 +1,4 @@
-export const supportedTickers = [
+export const SUPPORTED_TICKERS = [
   "AAPL",
   "TSLA",
   "NVDA",
@@ -10,7 +10,7 @@ export const supportedTickers = [
   "QQQ",
 ];
 
-export const newsSources = [
+export const NEWS_SOURCES = [
   { name: "Yahoo Finance", url: "finance.yahoo.com" },
   { name: "Seeking Alpha", url: "seekingalpha.com" },
   { name: "Fool.com", url: "fool.com" },
@@ -23,4 +23,95 @@ export const newsSources = [
   { name: "TheStreet", url: "thestreet.com" },
   { name: "Investor's Business Daily", url: "investors.com" },
   { name: "Bloomberg", url: "bloomberg.com" },
+];
+
+export const SECTORS = [
+  {
+    title: "Technology",
+    symbol: "INFORMATION TECHNOLOGY",
+    alias: "tech",
+    supported: true,
+  },
+  {
+    title: "Healthcare",
+    symbol: "HEALTHCARE",
+    alias: "health",
+    supported: true,
+  },
+  { title: "Financials", symbol: "FINANCIALS", alias: "finance" },
+  {
+    title: "Communication Services",
+    symbol: "COMMUNICATION SERVICES",
+    alias: "communication",
+  },
+  {
+    title: "Consumer Staples",
+    symbol: "CONSUMER STAPLES",
+    alias: "consumer_staples",
+  },
+  {
+    title: "Consumer Discretionary",
+    symbol: "CONSUMER DISCRETIONARY",
+    alias: "consumer_goods",
+  },
+  {
+    title: "Industrials",
+    symbol: "INDUSTRIALS",
+    alias: "industrial",
+    supported: true,
+  },
+  { title: "Energy", symbol: "ENERGY", alias: "energy", supported: true },
+  { title: "Materials", symbol: "MATERIALS", alias: "material" },
+  { title: "Insurance", symbol: "INSURANCE", alias: "insurance" },
+  { title: "Fintech", symbol: "FINTECH", alias: "fintech", supported: true },
+  { title: "Utilities", symbol: "UTILITIES", alias: "utilities" },
+  {
+    title: "General market",
+    symbol: "GENERAL",
+    alias: "general",
+    supported: true,
+  },
+  { title: "Travel", symbol: "TRAVEL", alias: "travel" },
+  {
+    title: "AI",
+    symbol: "ARTIFICIAL INTELLIGENCE",
+    alias: "ai",
+    supported: true,
+  },
+  { title: "Social Media", symbol: "SOCIAL MEDIA", alias: "social_media" },
+  { title: "Green Energy", symbol: "GREEN ENERGY", alias: "green_energy" },
+  {
+    title: "E-commerce",
+    symbol: "E-COMMERCE",
+    alias: "ecommerce",
+    supported: true,
+  },
+  { title: "Retail", symbol: "RETAIL", alias: "retail" },
+  { title: "Automotive", symbol: "AUTOMOTIVE", alias: "automotive" },
+  { title: "Logistics", symbol: "LOGISTICS", alias: "logistics" },
+  {
+    title: "Cloud Computing",
+    symbol: "CLOUD COMPUTING",
+    alias: "cloud_computing",
+  },
+  { title: "Robotics", symbol: "ROBOTICS", alias: "robotics" },
+  { title: "Agriculture", symbol: "AGRICULTURE", alias: "agriculture" },
+  { title: "Real Estate", symbol: "REAL ESTATE", alias: "real_estate" },
+  { title: "Apparel", symbol: "APPAREL", alias: "apparel" },
+  { title: "Crypto", symbol: "CRYPTO", alias: "crypto" },
+  {
+    title: "Quantum Computing",
+    symbol: "QUANTUM COMPUTING",
+    alias: "quantum_computing",
+  },
+  { title: "Manufacturing", symbol: "MANUFACTORING", alias: "manufacturing" },
+  { title: "Gaming", symbol: "GAMING", alias: "gaming" },
+  { title: "Software developmen", symbol: "SOFTWARE", alias: "software" },
+  { title: "Security", symbol: "SECURITY", alias: "security" },
+  { title: "Hardware", symbol: "HARDWARE", alias: "hardware" },
+  {
+    title: "Transportation",
+    symbol: "TRANSPORTATION",
+    alias: "transportation",
+  },
 ];

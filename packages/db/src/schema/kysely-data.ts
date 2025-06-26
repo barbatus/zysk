@@ -8,27 +8,7 @@ import {
   type StockNewsInsight,
   type stockNewsTable,
 } from "./stock-news";
-import {
-  type companyProfiles,
-  type etfProfiles,
-  type tickerTimeSeries,
-} from "./tickers-data";
-
-type CompanyProfilesTableBase = typeof companyProfiles.$inferSelect;
-export type CompanyProfilesTable = CreateTableType<
-  CompanyProfilesTableBase,
-  {
-    beta: ColumnType<string, Optional<string | number>>;
-  }
->;
-
-type ETFProfilesTableBase = typeof etfProfiles.$inferSelect;
-export type ETFProfilesTable = CreateTableType<
-  ETFProfilesTableBase,
-  {
-    inceptionDate: ColumnType<Date | null, Optional<string | Date>>;
-  }
->;
+import { type tickerTimeSeries } from "./tickers-data";
 
 type TickerTimeSeriesTableBase = typeof tickerTimeSeries.$inferSelect;
 export type TickerTimeSeriesTable = CreateTableType<
@@ -64,18 +44,12 @@ type NewsInsightsTableBase = typeof newsInsightsTable.$inferSelect;
 type NewsInsightsTable = CreateTableType<NewsInsightsTableBase>;
 
 export interface DataDatabase {
-  "app_data.company_profiles": CompanyProfilesTable;
-  "app_data.etf_profiles": ETFProfilesTable;
   "app_data.ticker_time_series": TickerTimeSeriesTable;
   "app_data.experiments": ExperimentsTable;
   "app_data.stock_news": StockNewsTable;
   "app_data.news_sources": NewsSourcesTable;
   "app_data.news_insights": NewsInsightsTable;
 }
-
-export type CompanyProfile = Selectable<CompanyProfilesTable>;
-
-export type ETFProfile = Selectable<ETFProfilesTable>;
 
 export type TickerTimeSeries = Selectable<TickerTimeSeriesTable>;
 

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -101,6 +102,7 @@ export const newsInsightsTable = mySchema.table(
     impact: validatedStringEnum("impact", StockNewsSentiment).default(
       StockNewsSentiment.Neutral,
     ),
+    longTerm: boolean("long_term").default(false),
     newsId: uuid("news_id")
       .references(() => stockNewsTable.id, {
         onDelete: "cascade",
