@@ -416,7 +416,8 @@ export class TickerNewsService {
         symbol: sql`COALESCE(${eb.ref("app_data.stock_news.symbol")}, ${eb.ref("data_table.mainSymbol")})`,
         updatedAt: new Date(),
       }))
-      .whereRef("app_data.stock_news.id", "=", "data_table.id");
+      .whereRef("app_data.stock_news.id", "=", "data_table.id")
+      .returningAll();
     return query.execute();
   }
 

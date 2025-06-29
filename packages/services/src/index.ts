@@ -12,6 +12,7 @@ export * from "./redis-client";
 export * from "./ticker.service";
 export * from "./ticker-data.service";
 export * from "./ticker-news.service";
+export * from "./utils/datetime";
 export * from "./utils/exceptions";
 export * from "./utils/logger";
 export * from "./utils/types";

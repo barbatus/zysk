@@ -1,8 +1,11 @@
-import { ExperimentService, ModelKeyEnum, resolve } from "@zysk/services";
+import { ExperimentService, resolve } from "@zysk/services";
 
 import { type AgentExecutionResult } from "#/llm/core/schemas";
 
-import { modelsWithFallback } from "../models/registry";
+import {
+  ModelKeyEnumWithFallback,
+  modelsWithFallback,
+} from "../models/registry";
 import { ExperimentRunner } from "./experimenter";
 import { type NewsBasedExperimentParams } from "./news-based-sentiment-predictor";
 import { NewsInsightsExtractorPrompt } from "./prompts/insights-extractor.prompt";
@@ -65,7 +68,8 @@ export class NewsInsightsExtractor extends ExperimentRunner<
     });
   }
 
-  static override readonly modelKey = ModelKeyEnum.GeminiFlash25;
+  static override readonly modelKey =
+    ModelKeyEnumWithFallback.GeminiFlash25AndO3Mini;
 
   static override async create(params: {
     experimentId?: string;

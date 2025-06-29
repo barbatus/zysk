@@ -6,7 +6,7 @@ import {
   TickerService,
 } from "@zysk/services";
 import { startOfDay, subDays } from "date-fns";
-import { isNil } from "lodash";
+import { isNil, keyBy } from "lodash";
 
 import { getMaxTokens } from "#/llm/models/registry";
 import { NewsInsightsExtractor } from "#/llm/runners/insights-extractor";
@@ -115,9 +115,12 @@ export async function saveNewsInsights(insights: NewsInsight[]) {
       sectors: i.sectors.map((s) => s.toUpperCase()),
     })),
   }));
-  await tickerNewsService.saveNewsInsights(insightsWithNewsId);
+  const news = keyBy(
+    await tickerNewsService.saveNewsInsights(insightsWithNewsId),
+    "id",
+  );
   const allInsights = insightsWithNewsId
-    .map(({ newsId, insights: newsInsights }) => {
+    .map(({ newsId, title: newsTitle, insights: newsInsights }) => {
       return newsInsights.map((i) => ({
         newsId,
         insight: i.insight,
@@ -127,6 +130,8 @@ export async function saveNewsInsights(insights: NewsInsight[]) {
           symbols: i.symbols,
           sectors: i.sectors,
         },
+        newsTitle,
+        url: news[newsId].url,
       }));
     })
     .flat();

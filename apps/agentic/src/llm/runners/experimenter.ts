@@ -15,7 +15,10 @@ import {
   stopAfterAttempt,
 } from "#/utils/async-retrier";
 
-import { modelsWithFallback } from "../models/registry";
+import {
+  type ModelKeyEnumWithFallback,
+  modelsWithFallback,
+} from "../models/registry";
 import { ParserError } from "./prompts/parsers";
 
 const experimentService = resolve(ExperimentService);
@@ -123,7 +126,7 @@ export class ExperimentRunner<
   AResult = string,
   TResult = string,
 > extends StatefulModelRunner<Experiment, AResult, TResult> {
-  static readonly modelKey: ModelKeyEnum;
+  static readonly modelKey: ModelKeyEnum | ModelKeyEnumWithFallback;
 
   static async create<TResult = string>(params: {
     prompt?: ExperimentPrompt<TResult>;

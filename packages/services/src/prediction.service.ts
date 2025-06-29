@@ -4,6 +4,7 @@ import { inject, injectable } from "inversify";
 import { type Kysely, sql } from "kysely";
 
 import { appDBSymbol, dataDBSymbol } from "./db";
+import { startOfWeek } from "./utils/datetime";
 import { Exact } from "./utils/types";
 
 @injectable()
@@ -28,15 +29,30 @@ export class PredictionService {
   }
 
   async getLastGeneralMarketPredictionForPeriod(period: Date) {
+    return this.getLastSymbolPredictionForPeriod("general", period, "weekly");
+  }
+
+  async getLastSymbolPredictionForPeriod(
+    symbol: string,
+    period: Date,
+    type: "daily" | "weekly",
+  ) {
     const prediction = await this.db
       .selectFrom("predictions")
       .selectAll()
-      .where((eb) => eb(eb.fn("lower", [eb.ref("symbol")]), "=", "general"))
+      .where((eb) => eb(eb.fn("lower", [eb.ref("symbol")]), "=", symbol))
       .where("period", "<=", period)
+      .$if(type === "daily", (eb) =>
+        eb.where("period", ">=", startOfWeek(period)),
+      )
       .orderBy("period", "desc")
       .orderBy("createdAt", "desc")
       .limit(1)
-      .executeTakeFirstOrThrow();
+      .executeTakeFirst();
+
+    if (!prediction) {
+      return null;
+    }
 
     const experiment = await this.dataDb
       .selectFrom("app_data.experiments")
@@ -44,7 +60,7 @@ export class PredictionService {
       .where("id", "=", prediction.experimentId)
       .executeTakeFirstOrThrow();
 
-    return experiment.responseJson;
+    return { prediction, experimentJson: experiment.responseJson };
   }
 
   async getPredictionsToEvaluate(symbols?: string[]) {

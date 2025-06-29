@@ -103,6 +103,8 @@ export const newsInsightsTable = mySchema.table(
       StockNewsSentiment.Neutral,
     ),
     longTerm: boolean("long_term").default(false),
+    newsTitle: text("news_title").notNull(),
+    url: varchar("url", { length: 2048 }).notNull(),
     newsId: uuid("news_id")
       .references(() => stockNewsTable.id, {
         onDelete: "cascade",

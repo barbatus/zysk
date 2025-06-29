@@ -5,11 +5,6 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    // host: process.env.APP_POSTGRES_HOST ?? "",
-    // port: Number(process.env.APP_POSTGRES_PORT),
-    // user: process.env.APP_POSTGRES_USERNAME,
-    // password: process.env.APP_POSTGRES_PASSWORD,
-    // database: process.env.APP_POSTGRES_DATABASE ?? "",
-    url: "postgresql://postgres:pgpassword@localhost:5432/zysk",
+    url: `postgresql://${process.env.APP_DB_USERNAME}:${process.env.APP_DB_PASSWORD}@${process.env.APP_DB_HOST}:${process.env.APP_DB_PORT}/${process.env.APP_DB_DATABASE}`,
   },
 });

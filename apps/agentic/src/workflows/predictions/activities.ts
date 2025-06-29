@@ -3,6 +3,8 @@ import { PredictionType } from "@zysk/db";
 import {
   ExperimentService,
   getLogger,
+  getPrevDay,
+  getNextDay,
   PredictionService,
   resolve,
   TickerDataService,
@@ -22,8 +24,7 @@ import { type Prediction } from "#/llm/runners/prompts/prediction-parser";
 import { SentimentPredictor } from "#/llm/runners/sentiment-predictor";
 
 import { fetchAndSaveTickerQuotes } from "../ticker-data/activities";
-
-const logger = getLogger();
+import { getPrevWeekDate } from "#/utils/datetime";
 
 export async function fetchTickerTimeSeries(
   symbol: string,
@@ -137,6 +138,16 @@ export async function runMarketSentimentPredictionExperiment(params: {
   const { newsIds, currentDate } = params;
   const tickerNewsService = resolve(TickerNewsService);
   const newsInsights = await tickerNewsService.getNewsByNewsIds(newsIds);
+
+  const predictionService = resolve(PredictionService);
+  const result =
+    await predictionService.getLastGeneralMarketPredictionForPeriod(
+      currentDate,
+    );
+
+  if (result) {
+    return result.experimentJson as Prediction;
+  }
 
   const runner = await MarketSentimentPredictor.create({
     newsInsights,
@@ -303,6 +314,8 @@ export async function evaluatePredictions(symbols: string[]) {
     await predictionService.updatePredictionEvaluation(weeklyEvaluations);
   }
 
+  const logger = getLogger();
+
   if (weeklyPredictionsWithPrices.length !== weeklyPredictions.length) {
     logger.warn(
       `Not all weekly predictions have been evaluated due quotes absent for ${symbols.join(", ")}`,
@@ -331,4 +344,22 @@ export async function evaluatePredictions(symbols: string[]) {
       `Not all daily predictions have been evaluated due quotes absent for ${symbols.join(", ")}`,
     );
   }
+}
+
+export async function getLastPredictionDate(
+  symbol: string,
+  currentDate: Date,
+  type: "daily" | "weekly",
+) {
+  if (type === "weekly") {
+    return getPrevWeekDate(currentDate);
+  }
+
+  const predictionService = resolve(PredictionService);
+  const result = await predictionService.getLastSymbolPredictionForPeriod(
+    symbol,
+    currentDate,
+    type,
+  );
+  return result?.prediction.period ? getNextDay(result.prediction.period) : getPrevDay(currentDate);
 }

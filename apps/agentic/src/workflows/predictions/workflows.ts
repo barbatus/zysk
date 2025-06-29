@@ -1,9 +1,7 @@
 import { executeChild, proxyActivities, uuid4 } from "@temporalio/workflow";
 import {
   addDays,
-  isMonday,
   parse,
-  startOfDay,
   startOfWeek,
   subDays,
 } from "date-fns";
@@ -20,6 +18,7 @@ import {
   syncTickerQuotesForPeriod,
 } from "../ticker-data/workflows";
 import type * as activities from "./activities";
+import { getUpcomingWeekDate } from "#/utils/datetime";
 
 const proxy = proxyActivities<typeof activities & typeof newsActivities>({
   startToCloseTimeout: "15 minutes",
@@ -32,14 +31,20 @@ const proxy = proxyActivities<typeof activities & typeof newsActivities>({
 
 export async function runTickerSentimentPredictionExperiment(
   symbol: string,
-  startDate: Date,
-  endDate: Date,
+  currentDate: Date,
+  type: "daily" | "weekly",
 ) {
+  const startDate = await proxy.getLastPredictionDate(
+    symbol,
+    currentDate,
+    type,
+  );
+
   const { newsBatchIds, timeSeries } =
     await proxy.fetchSentimentPredictionExperimentData({
       symbol,
       startDate,
-      endDate,
+      endDate: currentDate,
       taskName: "runTickerSentimentPredictionExperiment",
     });
 
@@ -49,7 +54,7 @@ export async function runTickerSentimentPredictionExperiment(
         symbol,
         newsIds,
         timeSeries,
-        currentDate: endDate,
+        currentDate,
         experimentId: uuid4(),
       }),
     ),
@@ -58,18 +63,20 @@ export async function runTickerSentimentPredictionExperiment(
   return proxy.makePredictions({
     symbol,
     predictions,
-    currentDate: endDate,
+    currentDate,
   });
 }
 
-export async function runMarketSentimentPredictionExperiment(
-  startDate: Date,
-  endDate: Date,
+export async function runMarketSentimentPredictionExperimentWeekly(
+  weekStartDate: Date,
 ) {
+  const startDate = subDays(weekStartDate, 7);
+  const currentDate = weekStartDate;
+
   const newsBatches = await proxy.fetchNewsInsightsForPeriod({
     symbol: "GENERAL",
     startDate,
-    endDate,
+    endDate: currentDate,
     taskName: "runMarketSentimentPredictionExperiment",
   });
 
@@ -77,7 +84,7 @@ export async function runMarketSentimentPredictionExperiment(
     newsBatches.map((batch) =>
       proxy.runMarketSentimentPredictionExperiment({
         newsIds: batch,
-        currentDate: endDate,
+        currentDate,
       }),
     ),
   );
@@ -85,33 +92,26 @@ export async function runMarketSentimentPredictionExperiment(
   return proxy.makePredictions({
     symbol: "GENERAL",
     predictions,
-    currentDate: endDate,
+    currentDate,
   });
 }
 
 export async function runTickerSentimentPredictionExperiments(
   symbols: string[],
-  startDate: Date,
-  endDate: Date,
+  currentDate: Date,
+  type: "daily" | "weekly",
 ) {
   await Promise.all(
     symbols.map((symbol) =>
-      runTickerSentimentPredictionExperiment(symbol, startDate, endDate),
+      runTickerSentimentPredictionExperiment(symbol, currentDate, type),
     ),
   );
 }
-
-const getPrevDate = (currentDate: Date) => {
-  const prevDate = subDays(currentDate, isMonday(currentDate) ? 2 : 1);
-  return startOfDay(prevDate);
-};
 
 export async function predictSentimentsDaily() {
   const symbols = await proxy.getSupportedTickers();
 
   const currentDate = new Date();
-
-  const prevDate = getPrevDate(currentDate);
 
   await executeChild(syncTickerQuotesDaily, {
     args: [symbols],
@@ -120,11 +120,12 @@ export async function predictSentimentsDaily() {
     args: [symbols],
   });
 
-  await executeChild(runMarketSentimentPredictionExperiment, {
-    args: [prevDate, currentDate],
+  const currentWeekDate = getStartWeekDate(currentDate);
+  await executeChild(runMarketSentimentPredictionExperimentWeekly, {
+    args: [currentWeekDate],
   });
 
-  await runTickerSentimentPredictionExperiments(symbols, prevDate, currentDate);
+  await runTickerSentimentPredictionExperiments(symbols, currentDate, "daily");
 }
 
 const getStartWeekDate = (date: Date) =>
@@ -138,7 +139,7 @@ export async function predictSentimentWeekly(params: {
 }) {
   const { symbol, startWeek } = params;
 
-  const currentWeekDate = getStartWeekDate(
+  const currentWeekDate = getUpcomingWeekDate(
     parse(startWeek, "yyyy-MM-dd", new Date()),
   );
   const prevWeekDate = subDays(currentWeekDate, 7);
@@ -152,8 +153,8 @@ export async function predictSentimentWeekly(params: {
     }),
   ]);
 
-  await executeChild(runMarketSentimentPredictionExperiment, {
-    args: [prevWeekDate, currentWeekDate],
+  await executeChild(runMarketSentimentPredictionExperimentWeekly, {
+    args: [currentWeekDate],
   });
 
   await executeChild(scrapeTickerNewsForPeriod, {
@@ -162,8 +163,8 @@ export async function predictSentimentWeekly(params: {
 
   await runTickerSentimentPredictionExperiments(
     [symbol],
-    prevWeekDate,
     currentWeekDate,
+    "weekly"
   );
 }
 
@@ -178,7 +179,7 @@ export async function evaluatePredictions() {
 
 export async function testTicker() {
   await predictSentimentWeekly({
-    symbol: "UBER",
-    startWeek: "2025-06-16",
+    symbol: "BA",
+    startWeek: "2025-06-30",
   });
 }

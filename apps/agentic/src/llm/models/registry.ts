@@ -31,6 +31,10 @@ export class ModelNotFoundError extends Error {
   }
 }
 
+export enum ModelKeyEnumWithFallback {
+  GeminiFlash25AndO3Mini = "gemini-2.5-flash-and-o3-mini",
+}
+
 export const MODEL_TO_MAX_TOKENS = {
   [ModelKeyEnum.Gpt4o]: 128_000,
   [ModelKeyEnum.Gpt4oMini]: 128_000,
@@ -44,13 +48,24 @@ export const MODEL_TO_MAX_TOKENS = {
   [ModelKeyEnum.Llama33]: 128_000,
   [ModelKeyEnum.DeepSeekLlama]: 128_000,
   [ModelKeyEnum.GeminiFlash25]: 1_000_000,
-} as Record<ModelKeyEnum, number | Record<ModelProviderEnum, number>>;
+  [ModelKeyEnumWithFallback.GeminiFlash25AndO3Mini]: 200_000,
+} as Record<
+  ModelKeyEnum | ModelKeyEnumWithFallback,
+  number | Record<ModelProviderEnum, number>
+>;
 
-export function getMaxTokens(modelKey: ModelKeyEnum) {
+const isModelKeyEnum = (
+  modelKey: ModelKeyEnum | ModelKeyEnumWithFallback,
+): modelKey is ModelKeyEnum => Object.keys(ModelKeyEnum).includes(modelKey);
+
+export function getMaxTokens(
+  modelKey: ModelKeyEnum | ModelKeyEnumWithFallback,
+) {
   const appConfig = getConfig();
   const config = MODEL_TO_MAX_TOKENS[modelKey];
   if (
     isObject(config) &&
+    isModelKeyEnum(modelKey) &&
     appConfig.modelProviders?.[modelKey] &&
     config[appConfig.modelProviders[modelKey]]
   ) {
@@ -127,7 +142,7 @@ const models = new Proxy(
 );
 
 export function createSequentialModelContainerWithFallback(
-  modelKey: ModelKeyEnum,
+  modelKey: ModelKeyEnum | ModelKeyEnumWithFallback,
 ) {
   switch (modelKey) {
     case ModelKeyEnum.Gpt4o:
@@ -171,16 +186,24 @@ export function createSequentialModelContainerWithFallback(
       return new SequentialModelContainerWithFallback([
         models[ModelKeyEnum.GeminiFlash25]!,
       ]);
+    case ModelKeyEnumWithFallback.GeminiFlash25AndO3Mini:
+      return new SequentialModelContainerWithFallback([
+        models[ModelKeyEnum.GeminiFlash25]!,
+        models[ModelKeyEnum.GptO3Mini]!,
+      ]);
     default:
       throw new ModelNotFoundError(modelKey);
   }
 }
 
 export const modelsWithFallback = new Proxy(
-  {} as Record<ModelKeyEnum, SequentialModelContainerWithFallback | undefined>,
+  {} as Record<
+    ModelKeyEnum | ModelKeyEnumWithFallback,
+    SequentialModelContainerWithFallback | undefined
+  >,
   {
     get: (target, prop: string) => {
-      const modelKey = prop as ModelKeyEnum;
+      const modelKey = prop as ModelKeyEnum | ModelKeyEnumWithFallback;
       const model =
         target[modelKey] ??
         createSequentialModelContainerWithFallback(modelKey);
