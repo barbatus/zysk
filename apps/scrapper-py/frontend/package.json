@@ -18,10 +18,10 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
     "build": "next build --no-lint",
     "clean": "rm -rf node_modules/ package-lock.json yarn.lock .next/* && npm install --legacy-peer-deps",
-    "start": "next start"
+    "start": "next start -p 3001"
   },
   "repository": {
     "type": "git",
@@ -49,7 +49,7 @@
     "copy-webpack-plugin": "^10.0.0",
     "glob": "^7.2.0",
     "moment": "^2.29.4",
-    "typescript": "catalog:typescript"
+    "typescript": "^4.8.4"
   },
   "browserslist": [
     "last 2 chrome versions"

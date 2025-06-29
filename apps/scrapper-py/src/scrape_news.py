@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from capsolver_extension_python import Capsolver
 from markdownify import markdownify as md
 
-from .utils import BotDetectedException, get_all_urls, mouse_press_and_hold
+from .utils import BotDetectedException, ChromeErrorException, get_all_urls, mouse_press_and_hold
 
 ACCEPT_RE = re.compile(r"accept\s+all", re.I)
 PRESS_AND_HOLD_RE = re.compile(r"Press & Hold", re.I)
@@ -17,6 +17,16 @@ CHECK_BOT_RE = re.compile(
     r"(access|bot).+?(denied|blocked|detected)|verification(\s+is\s+|\s+)required", re.I | re.DOTALL
 )
 CHECK_CAPTCHA_RE = re.compile(r"captcha", re.I)
+
+
+def convert_to_markdown(html: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+    for element in soup.find_all(["a", "ul", "ol", "li"]):
+        if element.name == "a":
+            element.replace_with(element.get_text())
+        else:
+            element.decompose()
+    return md(str(soup))
 
 
 def accept_all_cookies(driver: Driver, tab: Tab, *, domain: str):
@@ -52,21 +62,13 @@ def press_and_hold(driver: Driver, tab: Tab, *, domain: str):
 
 
 def check_bot_is_detected(driver: Driver, tab: Tab, *, domain: str):
-    return driver.is_bot_detected() or CHECK_BOT_RE.search(driver.page_text)
+    md = convert_to_markdown(tab.get_content())
+    return driver.is_bot_detected() or CHECK_BOT_RE.search(md)
 
 
 def check_captcha(driver: Driver, tab: Tab, *, domain: str):
-    return driver.is_bot_detected() or CHECK_CAPTCHA_RE.search(driver.page_text)
-
-
-def convert_to_markdown(html: str) -> str:
-    soup = BeautifulSoup(html, "html.parser")
-    for element in soup.find_all(["a", "ul", "ol", "li"]):
-        if element.name == "a":
-            element.replace_with(element.get_text())
-        else:
-            element.decompose()
-    return md(str(soup))
+    md = convert_to_markdown(tab.get_content())
+    return driver.is_bot_detected() or CHECK_CAPTCHA_RE.search(md)
 
 
 domain_handlers = {
@@ -74,6 +76,17 @@ domain_handlers = {
     "seekingalpha.com": [press_and_hold],
     "investors.com": [press_and_hold],
 }
+
+
+def get_proxy(
+    data: dict[str, str],
+    retry_attempt: int,
+    last_error: Exception | None,
+) -> str | None:
+    if last_error and isinstance(last_error, BotDetectedException) and retry_attempt >= 2:
+        print("Bot detected, using proxy")
+        return "http://alexborod6:1XZuFmgybAb2D5KtmpoR@core-residential.evomi.com:1000"
+    return None
 
 
 @browser(
@@ -89,6 +102,7 @@ domain_handlers = {
     wait_for_complete_page_load=False,
     headless=True,
     extensions=[Capsolver(api_key="CAP-B7692D3299667795364B38F08BFBB815B57B9D50A12CFA349DE226DE17A4F523")],
+    proxy=get_proxy,
 )
 def scrape_md(driver: Driver, data):
     link = data["link"]
@@ -97,7 +111,7 @@ def scrape_md(driver: Driver, data):
     driver.enable_human_mode()
     driver.short_random_sleep()
 
-    def get_content(response):
+    def get_content(response) -> tuple[str, str]:
         url = response.evaluate("return window.location.href;")
         html = response.get_content()
         return url, html
@@ -123,6 +137,9 @@ def scrape_md(driver: Driver, data):
 
     if is_bot_detected or len(markdown) <= 100:
         raise BotDetectedException(url)
+
+    if url.startswith("chrome-error"):
+        raise ChromeErrorException(markdown)
 
     all_urls = get_all_urls(response, url)
 

@@ -75,3 +75,8 @@ class ScaperException(Exception):
 class BotDetectedException(ScaperException):
     def __init__(self, url: str) -> None:
         super().__init__(f"Bot detected on {url}")
+
+
+class ChromeErrorException(ScaperException):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)

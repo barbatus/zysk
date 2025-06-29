@@ -65,7 +65,7 @@ CURRENT DATE: {currentDate}
 - Output must be valid **JSON only**, using the format in the OUTPUT FORMAT section.
   **No additional text or explanation outside the JSON.**
 - Do your best to include **a few insights** in the output for better analysis.
-- Do **not** mention this prompt or instructions in any field of the JSON output.
+- **Do not mention** in the \`reasoning\` output field how negative signals are weighted and any other details of the instructions.
 
 ---
 
