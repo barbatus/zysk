@@ -1,11 +1,8 @@
 import { executeChild, proxyActivities, uuid4 } from "@temporalio/workflow";
-import {
-  addDays,
-  parse,
-  startOfWeek,
-  subDays,
-} from "date-fns";
+import { addDays, parse, startOfWeek, subDays } from "date-fns";
 import { chunk } from "lodash";
+
+import { getUpcomingWeekDate } from "#/utils/datetime";
 
 import type * as newsActivities from "../stock-news/activities";
 import {
@@ -18,10 +15,9 @@ import {
   syncTickerQuotesForPeriod,
 } from "../ticker-data/workflows";
 import type * as activities from "./activities";
-import { getUpcomingWeekDate } from "#/utils/datetime";
 
 const proxy = proxyActivities<typeof activities & typeof newsActivities>({
-  startToCloseTimeout: "15 minutes",
+  startToCloseTimeout: "1 hour",
   heartbeatTimeout: "10 minutes",
   retry: {
     nonRetryableErrorTypes: ["NonRetryable"],
@@ -72,6 +68,11 @@ export async function runMarketSentimentPredictionExperimentWeekly(
 ) {
   const startDate = subDays(weekStartDate, 7);
   const currentDate = weekStartDate;
+
+  const lastPrediction = await proxy.getMarketSentimentPrediction(currentDate);
+  if (lastPrediction) {
+    return lastPrediction;
+  }
 
   const newsBatches = await proxy.fetchNewsInsightsForPeriod({
     symbol: "GENERAL",
@@ -164,7 +165,7 @@ export async function predictSentimentWeekly(params: {
   await runTickerSentimentPredictionExperiments(
     [symbol],
     currentWeekDate,
-    "weekly"
+    "weekly",
   );
 }
 
@@ -178,8 +179,38 @@ export async function evaluatePredictions() {
 }
 
 export async function testTicker() {
-  await predictSentimentWeekly({
-    symbol: "BA",
-    startWeek: "2025-06-30",
-  });
+  const symbols = [
+    // "JNJ",
+    // "PFE",
+    "MRK",
+    // "LLY",
+    // "ABBV",
+    // "UNH",
+    // "BAC",
+    // "WFC",
+    // "GS",
+    // "MS",
+    // "C",
+    // "AXP",
+    // "BLK",
+    // "SCHW",
+    // "TFC",
+    // "XOM",
+    // "CVX",
+    // "COP",
+    // "OXY",
+    // "PSX",
+    // "EOG",
+    // "MPC",
+    // "VLO",
+    // "ALL",
+  ];
+  await Promise.allSettled(
+    symbols.map((symbol) =>
+      predictSentimentWeekly({
+        symbol,
+        startWeek: "2025-07-07",
+      }),
+    ),
+  );
 }

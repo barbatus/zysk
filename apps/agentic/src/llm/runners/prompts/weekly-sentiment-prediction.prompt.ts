@@ -30,13 +30,13 @@ CURRENT DATE: {currentDate}
 2. Take into account that the prediction should be made for the **following week**, i.e. all the factors that could affect the price in the short term should be weighted more.
 3. Produce your conclusions and insights as a structured **JSON response**, **strictly** following the format in the **Output Format** section.
 4. Consider {symbol}'s price trend for the last few weeks in the TICKER PRICES section.
-5. **Watch out** for all signals that could negatively affect short-term {symbol} price:
+5. **Watch out** for all signals that could negatively affect **short-term {symbol} price**:
     - Market downturn sentiment in MARKET SENTIMENT PREDICTION section
     - **Very negative news** about {symbol}
     - Big short interest in {symbol}
     - Signals indicating {symbol} is **overbought**
     - Deteriorating fundamentals, downgrades, poor earnings, etc.
-6. **Watch out** for signals that could positively affect short-term price:
+6. **Watch out** for signals that could positively affect **short-term price**:
     - High-profile leadership changes
     - Positive forecasts, ratings upgrades, strong earnings
     - Strategic partnerships or acquisitions

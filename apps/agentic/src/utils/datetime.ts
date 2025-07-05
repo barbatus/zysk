@@ -1,4 +1,10 @@
-import { isMonday, startOfWeek as startOfWeek_, addMinutes, endOfWeek, subDays } from "date-fns";
+import {
+  addMinutes,
+  endOfWeek,
+  isMonday,
+  startOfWeek as startOfWeek_,
+  subDays,
+} from "date-fns";
 
 export const startOfWeek = (date: Date) => {
   return startOfWeek_(date, { weekStartsOn: 1 });
@@ -13,5 +19,6 @@ export const getUpcomingWeekDate = (currentDate: Date) => {
     return startOfWeek(currentDate);
   }
 
-  return addMinutes(endOfWeek(currentDate), 1);
+  const endOfWeekDate = endOfWeek(currentDate);
+  return addMinutes(endOfWeekDate, 1);
 };

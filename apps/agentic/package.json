@@ -33,6 +33,7 @@
     "@zysk/db": "workspace:*",
     "@zysk/scrapper": "workspace:*",
     "@zysk/services": "workspace:*",
+    "@zysk/ts-rest": "workspace:*",
     "axios": "catalog:axios",
     "axios-retry": "^4.5.0",
     "date-fns": "^4.1.0",

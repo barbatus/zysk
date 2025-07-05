@@ -21,7 +21,7 @@ CHECK_CAPTCHA_RE = re.compile(r"captcha", re.I)
 
 def convert_to_markdown(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
-    for element in soup.find_all(["a", "ul", "ol", "li"]):
+    for element in soup.find_all(["a", "ul", "ol", "li", "img"]):
         if element.name == "a":
             element.replace_with(element.get_text())
         else:
@@ -91,7 +91,7 @@ def get_proxy(
 
 @browser(
     reuse_driver=True,
-    max_retry=3,
+    max_retry=5,
     block_images_and_css=True,
     window_size=(430, 600),
     parallel=100,
@@ -144,7 +144,7 @@ def scrape_md(driver: Driver, data):
     all_urls = get_all_urls(response, url)
 
     return {
-        "url": url,
+        "url": urlparse(url).geturl(),
         "status": 200,
         "markdown": markdown,
         "urls": list(filter(lambda u: domain in u, all_urls)),

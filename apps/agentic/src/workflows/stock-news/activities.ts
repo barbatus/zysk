@@ -102,7 +102,11 @@ export async function runBatchNews(params: {
   ).map((batch) => batch.map((n) => n.id));
 }
 
-export async function saveNewsInsights(insights: NewsInsight[]) {
+export async function saveNewsInsights(params: {
+  insights: NewsInsight[];
+  experimentId: string;
+}) {
+  const { insights, experimentId } = params;
   const tickerNewsService = resolve(TickerNewsService);
   const newsInsightsService = resolve(NewsInsightsService);
 
@@ -114,6 +118,7 @@ export async function saveNewsInsights(insights: NewsInsight[]) {
       ...i,
       sectors: i.sectors.map((s) => s.toUpperCase()),
     })),
+    experimentId,
   }));
   const news = keyBy(
     await tickerNewsService.saveNewsInsights(insightsWithNewsId),

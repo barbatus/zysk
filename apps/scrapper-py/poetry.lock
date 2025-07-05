@@ -181,15 +181,14 @@ rich = "*"
 urllib3 = "*"
 
 [[package]]
-name = "botasaurus-server"
+name = "botasaurus_server"
 version = "4.0.60"
 description = "Botasaurus Server allows you to transform your scrapers into APIs or scale them using Kubernetes."
 optional = false
 python-versions = ">=3.6"
 groups = ["main"]
-files = [
-    {file = "botasaurus_server-4.0.60.tar.gz", hash = "sha256:41a76be1c2da4b3b63635c033af2095b0ac8fd409cded64217dc379b9ebe532e"},
-]
+files = []
+develop = true
 
 [package.dependencies]
 bottle = "*"
@@ -199,6 +198,10 @@ ndjson = "*"
 sqlalchemy = "*"
 Unidecode = "*"
 xlsxwriter = "*"
+
+[package.source]
+type = "directory"
+url = "../../packages/botasaurus/botasaurus_server"
 
 [[package]]
 name = "bottle"
@@ -2005,4 +2008,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4"
-content-hash = "34c12f12807fb6e793d4adf235e48e3c5c97cd954d936904cde48f8e036c86f5"
+content-hash = "3849d4ef20884f5a000d22d0a0f9aa328b89307c0685454fe8691a68d1d16ff9"

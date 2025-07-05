@@ -13,11 +13,12 @@ import {
 
 import { auditColumns } from "../utils/audit";
 import { validatedStringEnum } from "./columns/validated-enum";
-import { mySchema } from "./experiments";
+import { experimentsTable, mySchema } from "./experiments";
 
 export enum StockNewsStatus {
   Pending = "pending",
   Scraped = "scraped",
+  InsightsExtracted = "insights_extracted",
   Failed = "failed",
 }
 
@@ -45,7 +46,7 @@ export const stockNewsTable = mySchema.table(
     id: uuid("id").defaultRandom().primaryKey(),
     symbol: varchar("symbol", { length: 80 }),
     url: varchar("url", { length: 2048 }).notNull(),
-    originalUrl: varchar("original_url", { length: 2048 }),
+    originalUrl: varchar("original_url", { length: 2048 }).notNull(),
     status: validatedStringEnum("status", StockNewsStatus).notNull(),
     tokenSize: integer("token_size").notNull().default(0),
     markdown: text("markdown"),
@@ -56,16 +57,20 @@ export const stockNewsTable = mySchema.table(
       StockNewsSentiment.Neutral,
     ),
     insights: jsonb("insights").$type<StockNewsInsight[]>().default([]),
+    experiementId: uuid("experiement_id").references(() => experimentsTable.id),
     ...auditColumns(),
   },
   (t) => ({
-    uniqueSymbolUrlIdx: uniqueIndex("unique_symbol_url").on(t.symbol, t.url),
     insightsGinIdx: index("insights_gin_idx").using(
       "gin",
       sql`insights jsonb_path_ops`,
     ),
-    urlIdx: index("url_idx").on(t.url),
-    originalUrlIdx: index("original_url_idx").on(t.originalUrl),
+    symbolUrlIdx: uniqueIndex("symbol_url_idx").on(t.symbol, t.url),
+    experiementIdIdx: index("experiement_id_idx").on(t.experiementId),
+    symbolOriginalUrlIdx: uniqueIndex("symbol_original_url_idx").on(
+      t.symbol,
+      t.originalUrl,
+    ),
     newsDateIdx: index("news_date_idx").on(t.newsDate),
     statusIdx: index("status_idx").on(t.status),
     urlStatusIdx: index("url_status_idx").on(t.url, t.status),

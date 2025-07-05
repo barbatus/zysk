@@ -85,6 +85,9 @@ importers:
       '@zysk/services':
         specifier: workspace:*
         version: link:../../packages/services
+      '@zysk/ts-rest':
+        specifier: workspace:*
+        version: link:../../packages/ts-rest
       axios:
         specifier: catalog:axios
         version: 1.9.0(debug@4.4.1)
@@ -401,6 +404,8 @@ importers:
       typescript:
         specifier: catalog:typescript
         version: 5.8.3
+
+  packages/botasaurus: {}
 
   packages/config-typescript: {}
 

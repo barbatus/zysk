@@ -16,9 +16,7 @@ import { mapKeys, omit, uniqBy } from "lodash";
 // eslint-disable-next-line camelcase
 import { encoding_for_model } from "tiktoken";
 
-import { memoizeScrapperUrls, retrieveScrapperUrls } from "../../utils/redis";
-
-const logger = getLogger();
+import { memoizeScrapperUrls } from "../../utils/redis";
 
 export async function scrapeUrls(params: {
   urls: string[];
@@ -39,38 +37,25 @@ export async function scrapeUrls(params: {
 
   const format = convertToMd ? "md" : "html";
 
-  const cachedUrls: {
-    url: string;
-    content?: string;
-    error?: Error;
-  }[] = (await retrieveScrapperUrls(urls, format)).filter(Boolean);
-
-  const newUrls = urls.filter((url) => !(url in cachedUrls));
-
-  const tickerNewsService = resolve(TickerNewsService);
-  const result = await (
-    viaApi
-      ? tickerNewsService.scrapeUrls.bind(tickerNewsService)
-      : scrapeUrlsViaBrowser
-  )({
-    urls: newUrls,
-    useProxy,
-    convertToMd,
-    waitFor,
-    timeout,
-  });
-
-  await memoizeScrapperUrls(
-    result
-      .filter((r) => !r.error && r.content)
-      .map((r) => ({
-        url: r.url,
-        content: r.content!,
-      })),
+  return await memoizeScrapperUrls(
+    urls,
     format,
+    async (urlsToScrape: string[]) => {
+      const tickerNewsService = resolve(TickerNewsService);
+      const result = await (
+        viaApi
+          ? tickerNewsService.scrapeUrls.bind(tickerNewsService)
+          : scrapeUrlsViaBrowser
+      )({
+        urls: urlsToScrape,
+        useProxy,
+        convertToMd,
+        waitFor,
+        timeout,
+      });
+      return result;
+    },
   );
-
-  return Object.values(cachedUrls).concat(result);
 }
 
 export async function getOrScrapeNews(urls: string[]) {
@@ -81,6 +66,7 @@ export async function getOrScrapeNews(urls: string[]) {
       markdown: n.markdown,
       title: n.title,
       originalUrl: n.originalUrl,
+      status: n.status,
     })),
     (n) => n.url,
   ) as {
@@ -89,6 +75,7 @@ export async function getOrScrapeNews(urls: string[]) {
     title?: string;
     error?: Error;
     originalUrl: string;
+    status: StockNewsStatus;
   }[];
 
   const savedNewsByUrl = mapKeys(savedNews, "originalUrl");
@@ -98,9 +85,11 @@ export async function getOrScrapeNews(urls: string[]) {
   const result = (await scrapeUrls({ urls: urlsToScrape })).map((r, index) => ({
     ...r,
     originalUrl: urlsToScrape[index],
+    title: savedNewsByUrl[urlsToScrape[index]].title,
   }));
 
   const failedNews = result.filter((n) => Boolean(n.error));
+  const logger = getLogger();
 
   if (failedNews.length) {
     logger.error(
@@ -120,6 +109,7 @@ export async function getOrScrapeNews(urls: string[]) {
     result.map((r) => ({
       ...omit(r, "content"),
       markdown: r.content,
+      status: r.error ? StockNewsStatus.Failed : StockNewsStatus.Scraped,
     })),
   );
 }
@@ -167,6 +157,7 @@ export async function scrapeNews(urls: string[], maxTokens = 5000) {
   const successfulUrls = cleanedNews.filter((n) => !n.error).length;
   const total = cleanedNews.length;
   const successRate = Math.round((successfulUrls / total) * 100);
+  const logger = getLogger();
 
   logger.info(
     {
@@ -181,7 +172,7 @@ export async function scrapeNews(urls: string[], maxTokens = 5000) {
   }
 
   const attempt = activityInfo().attempt;
-  if (attempt <= 1) {
+  if (attempt <= 2) {
     throw ApplicationFailure.create({
       type: "ScrapeError",
       message: `Success rate of the scraping is ${successRate}% lower than 85%`,
@@ -193,16 +184,24 @@ export async function scrapeNews(urls: string[], maxTokens = 5000) {
   return cleanedNews;
 }
 
-export async function scrapeTickerNewsUrlsAndSave(
-  symbol: string,
-  news: { newsDate: Date; url: string; title?: string }[],
-) {
+export async function scrapeTickerNewsUrlsAndSave(params: {
+  symbol?: string;
+  news: { newsDate: Date; url: string; title?: string }[];
+}) {
+  const { symbol, news } = params;
+  const logger = getLogger();
+
+  if (news.length === 0) {
+    logger.error({ symbol }, "No news to scrape");
+    return [];
+  }
+
   const itemByUrl = mapKeys(news, "url");
   const result = await scrapeNews(news.map((n) => n.url)).then((r) =>
     r.map((n) => ({
       ...itemByUrl[n.url],
       ...omit(n, "error"),
-      status: n.error ? StockNewsStatus.Failed : StockNewsStatus.Scraped,
+      markdown: n.error ? n.error.message : n.markdown,
     })),
   );
 
@@ -212,7 +211,7 @@ export async function scrapeTickerNewsUrlsAndSave(
       symbol,
       newsDate: itemByUrl[n.originalUrl].newsDate,
     })),
-    (n) => `${n.symbol}-${n.url}`,
+    (n) => n.url,
   );
 
   return (await saveNews(uniqueNews)).map((n) => ({

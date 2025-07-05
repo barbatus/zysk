@@ -156,46 +156,42 @@ export class TickerNewsService {
 
     const taskIds = tasks.data.map((task) => task.id);
 
-    const results = await Promise.allSettled(
-      taskIds.map((taskId) =>
-        this.pollUntilCondition<{
-          results: {
-            url: string;
-            markdown: string;
-            status: number;
-            title?: string;
-            description?: string;
-          }[];
-          task: {
-            id: string;
-            status: "completed" | "failed" | "pending" | "in_progress";
-          };
-        }>({
-          url: `http://localhost:8000/api/ui/tasks/${taskId}/results`,
-          body: {
-            filters: {},
-            page: 1,
-            per_page: 25,
-          },
-          condition: (response) =>
-            response.data.task.status === "completed" ||
-            response.data.task.status === "failed",
-        }),
-      ),
-    );
+    const results = await this.pollUntilCondition<
+      {
+        results?: {
+          url: string;
+          markdown: string;
+          status: number;
+          title?: string;
+          description?: string;
+        }[];
+        task: {
+          id: string;
+          status: "completed" | "failed" | "pending" | "in_progress";
+        };
+      }[]
+    >({
+      url: `http://localhost:8000/api/ui/tasks/results`,
+      body: {
+        task_ids: taskIds,
+        filters: {},
+        page: 1,
+        per_page: 25,
+      },
+      timeout: 300_000 * taskIds.length,
+      condition: (response) =>
+        response.data.every((r) => r.task.status === "completed") ||
+        response.data.some((r) => r.task.status === "failed"),
+    });
 
     return results.map((r, index) => {
-      if (r.status === "rejected") {
+      const result = r.results?.[0];
+      if (r.task.status === "failed" || !result || result.status !== 200) {
         return {
           url: urls[index],
-          error: new Error(r.reason as string),
-        };
-      }
-      const result = r.value.results[0];
-      if (r.value.task.status === "failed" || result.status !== 200) {
-        return {
-          url: urls[index],
-          error: new Error(result.markdown),
+          error: result
+            ? new Error(result.markdown)
+            : new Error("Failed to scrape URL"),
         };
       }
       return {
@@ -334,7 +330,7 @@ export class TickerNewsService {
       .values(news)
       .returningAll()
       .onConflict((oc) =>
-        oc.columns(["url", "symbol"]).doUpdateSet((eb) => ({
+        oc.columns(["symbol", "originalUrl"]).doUpdateSet((eb) => ({
           markdown: eb.ref("excluded.markdown"),
           tokenSize: eb.ref("excluded.tokenSize"),
           newsDate: eb.ref("excluded.newsDate"),
@@ -355,6 +351,7 @@ export class TickerNewsService {
       description: string;
       mainSymbol?: string;
       insights: StockNewsInsight[];
+      experimentId: string;
     },
   >(
     newsInsights: Exact<
@@ -366,9 +363,25 @@ export class TickerNewsService {
         description: string;
         mainSymbol?: string;
         insights: StockNewsInsight[];
+        experimentId: string;
       }
     >[],
   ) {
+    const mapCols = (update: T) => {
+      return [
+        sql<string>`${update.newsId}::uuid`.as("id"),
+        sql<StockNewsInsight[]>`(${JSON.stringify(update.insights)}::jsonb)`.as(
+          "insights",
+        ),
+        sql<StockNewsSentiment>`${update.impact}`.as("impact"),
+        sql<string>`${update.title}`.as("title"),
+        sql<string>`${update.description}`.as("description"),
+        sql<string | undefined>`${update.mainSymbol}`.as("mainSymbol"),
+        sql<string>`${update.experimentId}::uuid`.as("experiementId"),
+        sql<StockNewsStatus>`${StockNewsStatus.InsightsExtracted}`.as("status"),
+      ];
+    };
+
     const query = this.db
       .updateTable("app_data.stock_news")
       .from(
@@ -376,35 +389,9 @@ export class TickerNewsService {
           .slice(1)
           .reduce(
             (qb, update) => {
-              return qb.union(
-                this.db.selectNoFrom([
-                  sql<string>`${update.newsId}::uuid`.as("id"),
-                  sql<
-                    StockNewsInsight[]
-                  >`(${JSON.stringify(update.insights)}::jsonb)`.as("insights"),
-                  sql<StockNewsSentiment>`${update.impact}`.as("impact"),
-                  sql<string>`${update.title}`.as("title"),
-                  sql<string>`${update.description}`.as("description"),
-                  sql<string | undefined>`${update.mainSymbol}`.as(
-                    "mainSymbol",
-                  ),
-                ]),
-              );
+              return qb.union(this.db.selectNoFrom(mapCols(update)));
             },
-            this.db.selectNoFrom([
-              sql<string>`${newsInsights[0].newsId}::uuid`.as("id"),
-              sql<
-                StockNewsInsight[]
-              >`(${JSON.stringify(newsInsights[0].insights)}::jsonb)`.as(
-                "insights",
-              ),
-              sql<StockNewsSentiment>`${newsInsights[0].impact}`.as("impact"),
-              sql<string>`${newsInsights[0].title}`.as("title"),
-              sql<string>`${newsInsights[0].description}`.as("description"),
-              sql<string | undefined>`${newsInsights[0].mainSymbol}`.as(
-                "mainSymbol",
-              ),
-            ]),
+            this.db.selectNoFrom(mapCols(newsInsights[0])),
           )
           .as("data_table"),
       )
@@ -413,7 +400,9 @@ export class TickerNewsService {
         title: eb.ref("data_table.title"),
         description: eb.ref("data_table.description"),
         impact: eb.ref("data_table.impact"),
-        symbol: sql`COALESCE(${eb.ref("app_data.stock_news.symbol")}, ${eb.ref("data_table.mainSymbol")})`,
+        symbol: sql`COALESCE(${eb.ref("data_table.mainSymbol")}, ${eb.ref("app_data.stock_news.symbol")})`,
+        status: eb.ref("data_table.status"),
+        experiementId: eb.ref("data_table.experiementId"),
         updatedAt: new Date(),
       }))
       .whereRef("app_data.stock_news.id", "=", "data_table.id")

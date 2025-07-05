@@ -1,39 +1,55 @@
 import { resolve } from "@zysk/services";
 import Redis from "ioredis";
-
-export async function retrieveScrapperUrls(
-  urls: string[],
-  format: "md" | "html",
-) {
-  const redis = resolve(Redis);
-  return (
-    await Promise.allSettled(
-      urls.map((url) => redis.get(`scrapper:urls:format:${format}:${url}`)),
-    )
-  ).map((r, index) => {
-    if (r.status === "fulfilled" && r.value) {
-      return {
-        url: urls[index],
-        content: r.value,
-      } as {
-        url: string;
-        content: string;
-      };
-    }
-    return null;
-  });
-}
+import { keyBy } from "lodash";
 
 export async function memoizeScrapperUrls(
-  result: {
-    url: string;
-    content: string;
-  }[],
+  urls: string[],
   format: "md" | "html",
+  callback: (urls: string[]) => Promise<
+    {
+      url: string;
+      content?: string;
+      error?: Error;
+    }[]
+  >,
 ) {
   const redis = resolve(Redis);
+  const cachedUrls = keyBy(
+    (
+      await Promise.allSettled(
+        urls.map((url) => redis.get(`scrapper:urls:format:${format}:${url}`)),
+      )
+    )
+      .map((r, index) => {
+        if (r.status === "fulfilled" && r.value) {
+          return {
+            url: urls[index],
+            content: r.value,
+          } as {
+            url: string;
+            content: string;
+            error?: Error;
+          };
+        }
+        return null;
+      })
+      .filter(Boolean),
+    "url",
+  );
+
+  const newUrls = urls.filter((url) => !(url in cachedUrls));
+
+  const newUrlsContent = await callback(newUrls);
+
+  const contentToCache = newUrlsContent
+    .filter((r) => !r.error && r.content)
+    .map((r) => ({
+      url: r.url,
+      content: r.content!,
+    }));
+
   await Promise.allSettled(
-    result.map((r) =>
+    contentToCache.map((r) =>
       redis.set(
         `scrapper:urls:format:${format}:${r.url}`,
         r.content,
@@ -42,4 +58,6 @@ export async function memoizeScrapperUrls(
       ),
     ),
   );
+
+  return [...Object.values(cachedUrls), ...newUrlsContent];
 }

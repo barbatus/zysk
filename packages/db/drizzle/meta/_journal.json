@@ -36,6 +36,13 @@
       "when": 1751127355255,
       "tag": "0004_update_news_insights",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1751725424942,
+      "tag": "0005_update_news",
+      "breakpoints": true
     }
   ]
 }

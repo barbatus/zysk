@@ -3,15 +3,15 @@ import { PredictionType } from "@zysk/db";
 import {
   ExperimentService,
   getLogger,
-  getPrevDay,
   getNextDay,
+  getPrevDay,
   PredictionService,
   resolve,
   TickerDataService,
   TickerNewsService,
   TickerService,
 } from "@zysk/services";
-import { addDays, format, startOfDay, subDays } from "date-fns";
+import { addDays, format, isSameDay, startOfDay, subDays } from "date-fns";
 import { chunk, groupBy, keyBy, mapValues } from "lodash";
 
 import { getMaxTokens } from "#/llm/models/registry";
@@ -22,9 +22,9 @@ import {
 } from "#/llm/runners/news-based-sentiment-predictor";
 import { type Prediction } from "#/llm/runners/prompts/prediction-parser";
 import { SentimentPredictor } from "#/llm/runners/sentiment-predictor";
+import { getPrevWeekDate } from "#/utils/datetime";
 
 import { fetchAndSaveTickerQuotes } from "../ticker-data/activities";
-import { getPrevWeekDate } from "#/utils/datetime";
 
 export async function fetchTickerTimeSeries(
   symbol: string,
@@ -131,6 +131,21 @@ export async function runTickerSentimentPredictionExperiment(params: {
   return await predictor.run();
 }
 
+export async function getMarketSentimentPrediction(currentDate: Date) {
+  const predictionService = resolve(PredictionService);
+  const result =
+    await predictionService.getLastGeneralMarketPredictionForPeriod(
+      currentDate,
+    );
+  if (!result) {
+    return null;
+  }
+
+  return isSameDay(result.prediction.period, currentDate)
+    ? result.prediction
+    : null;
+}
+
 export async function runMarketSentimentPredictionExperiment(params: {
   newsIds: string[];
   currentDate: Date;
@@ -138,16 +153,6 @@ export async function runMarketSentimentPredictionExperiment(params: {
   const { newsIds, currentDate } = params;
   const tickerNewsService = resolve(TickerNewsService);
   const newsInsights = await tickerNewsService.getNewsByNewsIds(newsIds);
-
-  const predictionService = resolve(PredictionService);
-  const result =
-    await predictionService.getLastGeneralMarketPredictionForPeriod(
-      currentDate,
-    );
-
-  if (result) {
-    return result.experimentJson as Prediction;
-  }
 
   const runner = await MarketSentimentPredictor.create({
     newsInsights,
@@ -361,5 +366,7 @@ export async function getLastPredictionDate(
     currentDate,
     type,
   );
-  return result?.prediction.period ? getNextDay(result.prediction.period) : getPrevDay(currentDate);
+  return result?.prediction.period
+    ? getNextDay(result.prediction.period)
+    : getPrevDay(currentDate);
 }

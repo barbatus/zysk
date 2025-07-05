@@ -9,12 +9,12 @@ package-mode = false
 readme = "README.md"
 requires-python = ">=3.11,<4"
 dependencies = [
-    "botasaurus-server (>=4.0.60,<5.0.0)",
     "capsolver-extension-python (>=1.0.3,<2.0.0)",
     "bs4 (>=0.0.2,<0.0.3)",
     "botasaurus-driver (>=4.0.91,<5.0.0)",
     "markdownify (>=1.1.0,<2.0.0)",
-    "botasaurus @ file:///Users/alex/Documents/projects/zysk/main/packages/botasaurus"
+    "botasaurus @ file:///Users/alex/Documents/projects/zysk/main/packages/botasaurus",
+    "botasaurus-server @ file:///Users/alex/Documents/projects/zysk/main/packages/botasaurus/botasaurus_server"
 ]
 
 [build-system]
@@ -33,3 +33,4 @@ ruff = "^0.12.0"
 
 [tool.poetry.dependencies]
 botasaurus = {develop = true}
+botasaurus-server = {develop = true}

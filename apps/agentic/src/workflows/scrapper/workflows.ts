@@ -17,14 +17,16 @@ export async function scrapeUrls(urls: string[]) {
   return proxy.scrapeUrls({ urls });
 }
 
-export async function runScrapeTickerNews(
-  symbol: string,
-  news: { url: string; title?: string; newsDate: Date }[],
-) {
+export async function runScrapeTickerNews(params: {
+  symbol?: string;
+  news: { url: string; title?: string; newsDate: Date }[];
+}) {
+  const { symbol, news } = params;
+
   const attemptedNews = (
     await Promise.allSettled(
       chunk(news, 15).map((batch) =>
-        proxy.scrapeTickerNewsUrlsAndSave(symbol, batch),
+        proxy.scrapeTickerNewsUrlsAndSave({ symbol, news: batch }),
       ),
     )
   ).flat();

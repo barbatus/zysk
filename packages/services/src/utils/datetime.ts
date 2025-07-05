@@ -1,9 +1,9 @@
 import {
+  addDays,
   isMonday,
   startOfDay,
   startOfWeek as startOfWeek_,
   subDays,
-  addDays,
 } from "date-fns";
 
 export const getPrevDay = (currentDate: Date) => {
