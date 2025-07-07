@@ -56,7 +56,7 @@ export const MODEL_TO_MAX_TOKENS = {
 
 const isModelKeyEnum = (
   modelKey: ModelKeyEnum | ModelKeyEnumWithFallback,
-): modelKey is ModelKeyEnum => Object.keys(ModelKeyEnum).includes(modelKey);
+): modelKey is ModelKeyEnum => Object.values(ModelKeyEnum).includes(modelKey);
 
 export function getMaxTokens(
   modelKey: ModelKeyEnum | ModelKeyEnumWithFallback,

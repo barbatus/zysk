@@ -1,5 +1,5 @@
 import { heartbeat } from "@temporalio/activity";
-import { PredictionType } from "@zysk/db";
+import { PredictionType, StockNewsStatus } from "@zysk/db";
 import {
   ExperimentService,
   getLogger,
@@ -59,21 +59,16 @@ export async function fetchNewsInsightsForPeriod(params: {
   const tokenLimit = experimentTasksToTokens[params.taskName];
 
   const tickerNewsService = resolve(TickerNewsService);
-  const insights = await tickerNewsService.getNewsBySymbol(
+  const newsInsights = await tickerNewsService.getNewsByInsightsSymbol(
     symbol,
     startDate,
     endDate,
-  );
-  const filteredInsights = insights.filter((n) =>
-    n.insights.find(
-      (i) => i.sectors.includes(symbol) || i.symbols.includes(symbol),
-    ),
   );
 
   return (
     await splitNewsInsights({
       symbol,
-      newsInsights: filteredInsights,
+      newsInsights,
       currentDate: startDate,
       tokenLimit,
     })
@@ -108,7 +103,10 @@ export async function runTickerSentimentPredictionExperiment(params: {
 }) {
   const { symbol, newsIds, currentDate, timeSeries, experimentId } = params;
   const tickerNewsService = resolve(TickerNewsService);
-  const newsInsights = await tickerNewsService.getNewsByNewsIds(newsIds);
+  const newsInsights = await tickerNewsService.getNewsByNewsIds(
+    newsIds,
+    StockNewsStatus.InsightsExtracted,
+  );
 
   const predictionService = resolve(PredictionService);
   const experimentJson =
@@ -152,7 +150,10 @@ export async function runMarketSentimentPredictionExperiment(params: {
 }) {
   const { newsIds, currentDate } = params;
   const tickerNewsService = resolve(TickerNewsService);
-  const newsInsights = await tickerNewsService.getNewsByNewsIds(newsIds);
+  const newsInsights = await tickerNewsService.getNewsByNewsIds(
+    newsIds,
+    StockNewsStatus.InsightsExtracted,
+  );
 
   const runner = await MarketSentimentPredictor.create({
     newsInsights,

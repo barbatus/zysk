@@ -45,6 +45,7 @@ export const stockNewsTable = mySchema.table(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     symbol: varchar("symbol", { length: 80 }),
+    extracted_symbol: varchar("extracted_symbol", { length: 80 }),
     url: varchar("url", { length: 2048 }).notNull(),
     originalUrl: varchar("original_url", { length: 2048 }).notNull(),
     status: validatedStringEnum("status", StockNewsStatus).notNull(),
@@ -67,10 +68,6 @@ export const stockNewsTable = mySchema.table(
     ),
     symbolUrlIdx: uniqueIndex("symbol_url_idx").on(t.symbol, t.url),
     experiementIdIdx: index("experiement_id_idx").on(t.experiementId),
-    symbolOriginalUrlIdx: uniqueIndex("symbol_original_url_idx").on(
-      t.symbol,
-      t.originalUrl,
-    ),
     newsDateIdx: index("news_date_idx").on(t.newsDate),
     statusIdx: index("status_idx").on(t.status),
     urlStatusIdx: index("url_status_idx").on(t.url, t.status),

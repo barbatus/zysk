@@ -58,15 +58,22 @@ export async function scrapeUrls(params: {
   );
 }
 
-export async function getOrScrapeNews(urls: string[]) {
+export async function getOrScrapeNews(
+  news: {
+    url: string;
+    title?: string;
+    newsDate: Date;
+  }[],
+) {
   const tickerNewsService = resolve(TickerNewsService);
   const savedNews = uniqBy(
-    (await tickerNewsService.getArticles(urls)).map((n) => ({
+    (await tickerNewsService.getArticles(news.map((n) => n.url))).map((n) => ({
       url: n.url,
       markdown: n.markdown,
       title: n.title,
       originalUrl: n.originalUrl,
       status: n.status,
+      newsDate: n.newsDate,
     })),
     (n) => n.url,
   ) as {
@@ -76,16 +83,22 @@ export async function getOrScrapeNews(urls: string[]) {
     error?: Error;
     originalUrl: string;
     status: StockNewsStatus;
+    newsDate: Date;
   }[];
+
+  const newsByUrl = mapKeys(news, "url");
 
   const savedNewsByUrl = mapKeys(savedNews, "originalUrl");
 
-  const urlsToScrape = urls.filter((url) => !(url in savedNewsByUrl));
+  const urlsToScrape = news
+    .filter((n) => !(n.url in savedNewsByUrl))
+    .map((n) => n.url);
 
   const result = (await scrapeUrls({ urls: urlsToScrape })).map((r, index) => ({
     ...r,
     originalUrl: urlsToScrape[index],
-    title: savedNewsByUrl[urlsToScrape[index]].title,
+    title: newsByUrl[urlsToScrape[index]].title,
+    newsDate: newsByUrl[urlsToScrape[index]].newsDate,
   }));
 
   const failedNews = result.filter((n) => Boolean(n.error));
@@ -114,7 +127,14 @@ export async function getOrScrapeNews(urls: string[]) {
   );
 }
 
-export async function scrapeNews(urls: string[], maxTokens = 5000) {
+export async function scrapeNews(
+  urls: {
+    url: string;
+    title?: string;
+    newsDate: Date;
+  }[],
+  maxTokens = 5000,
+) {
   if (urls.length === 0) {
     throw ApplicationFailure.create({
       type: "ScrapeError",
@@ -197,21 +217,17 @@ export async function scrapeTickerNewsUrlsAndSave(params: {
   }
 
   const itemByUrl = mapKeys(news, "url");
-  const result = await scrapeNews(news.map((n) => n.url)).then((r) =>
+  const result = await scrapeNews(news).then((r) =>
     r.map((n) => ({
       ...itemByUrl[n.url],
       ...omit(n, "error"),
       markdown: n.error ? n.error.message : n.markdown,
+      symbol,
     })),
   );
 
-  const uniqueNews = uniqBy(
-    result.map((n) => ({
-      ...n,
-      symbol,
-      newsDate: itemByUrl[n.originalUrl].newsDate,
-    })),
-    (n) => n.url,
+  const uniqueNews = uniqBy(result, (n) =>
+    n.symbol ? `${n.symbol}-${n.url}` : n.url,
   );
 
   return (await saveNews(uniqueNews)).map((n) => ({

@@ -330,7 +330,7 @@ export class TickerNewsService {
       .values(news)
       .returningAll()
       .onConflict((oc) =>
-        oc.columns(["symbol", "originalUrl"]).doUpdateSet((eb) => ({
+        oc.columns(["symbol", "url"]).doUpdateSet((eb) => ({
           markdown: eb.ref("excluded.markdown"),
           tokenSize: eb.ref("excluded.tokenSize"),
           newsDate: eb.ref("excluded.newsDate"),
@@ -400,7 +400,7 @@ export class TickerNewsService {
         title: eb.ref("data_table.title"),
         description: eb.ref("data_table.description"),
         impact: eb.ref("data_table.impact"),
-        symbol: sql`COALESCE(${eb.ref("data_table.mainSymbol")}, ${eb.ref("app_data.stock_news.symbol")})`,
+        extracted_symbol: eb.ref("data_table.mainSymbol"),
         status: eb.ref("data_table.status"),
         experiementId: eb.ref("data_table.experiementId"),
         updatedAt: new Date(),
@@ -451,13 +451,43 @@ export class TickerNewsService {
       .execute();
   }
 
-  async getNewsByNewsIds(newsIds: string[]) {
+  async getNewsByInsightsSymbol(
+    symbol: string,
+    startDate: Date,
+    endDate?: Date,
+  ) {
+    const symbolFilter = sql<boolean>`${sql.ref("insights")} @> ${sql.lit(
+      JSON.stringify([{ symbols: [symbol] }]),
+    )}::jsonb`;
+    const sectorFilter = sql<boolean>`${sql.ref("insights")} @> ${sql.lit(
+      JSON.stringify([{ sectors: [symbol] }]),
+    )}::jsonb`;
+    return this.db
+      .selectFrom("app_data.stock_news")
+      .select([
+        "id",
+        "url",
+        "newsDate",
+        "status",
+        "title",
+        "tokenSize",
+        "insights",
+      ])
+      .where((eb) => eb.or([symbolFilter, sectorFilter]))
+      .where("newsDate", ">=", startDate)
+      .$if(Boolean(endDate), (eb) => eb.where("newsDate", "<", endDate!))
+      .where("status", "=", StockNewsStatus.InsightsExtracted)
+      .orderBy("newsDate", "desc")
+      .execute();
+  }
+
+  async getNewsByNewsIds(newsIds: string[], status: StockNewsStatus) {
     return newsIds.length > 0
       ? this.db
           .selectFrom("app_data.stock_news")
           .selectAll()
           .where("id", "in", newsIds)
-          .where("status", "=", StockNewsStatus.Scraped)
+          .where("status", "=", status)
           .$narrowType<{ markdown: NotNull }>()
           .execute()
       : Promise.resolve([]);
@@ -470,7 +500,10 @@ export class TickerNewsService {
       .where((eb) =>
         eb.or([eb("url", "in", urls), eb("originalUrl", "in", urls)]),
       )
-      .where("status", "=", StockNewsStatus.Scraped)
+      .where("status", "in", [
+        StockNewsStatus.Scraped,
+        StockNewsStatus.InsightsExtracted,
+      ])
       .$narrowType<{ markdown: NotNull }>()
       .execute();
   }

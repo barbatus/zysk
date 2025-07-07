@@ -1,3 +1,4 @@
+import os
 import re
 from collections.abc import Callable
 from urllib.parse import urlparse
@@ -7,9 +8,12 @@ from botasaurus_driver.core.element import Element
 from botasaurus_driver.core.tab import Tab
 from bs4 import BeautifulSoup
 from capsolver_extension_python import Capsolver
+from dotenv import load_dotenv
 from markdownify import markdownify as md
 
 from .utils import BotDetectedException, ChromeErrorException, get_all_urls, mouse_press_and_hold
+
+load_dotenv()
 
 ACCEPT_RE = re.compile(r"accept\s+all", re.I)
 PRESS_AND_HOLD_RE = re.compile(r"Press & Hold", re.I)
@@ -61,7 +65,7 @@ def press_and_hold(driver: Driver, tab: Tab, *, domain: str):
         print(f"Press and hold was not successful for {domain}")
 
 
-def check_bot_is_detected(driver: Driver, tab: Tab, *, domain: str):
+def check_bot_is_detected(driver: Driver, tab: Tab):
     md = convert_to_markdown(tab.get_content())
     return driver.is_bot_detected() or CHECK_BOT_RE.search(md)
 
@@ -85,7 +89,7 @@ def get_proxy(
 ) -> str | None:
     if last_error and isinstance(last_error, BotDetectedException) and retry_attempt >= 2:
         print("Bot detected, using proxy")
-        return "http://alexborod6:1XZuFmgybAb2D5KtmpoR@core-residential.evomi.com:1000"
+        return os.getenv("PROXY_URL")
     return None
 
 
@@ -101,8 +105,9 @@ def get_proxy(
     raise_exception=True,
     wait_for_complete_page_load=False,
     headless=True,
-    extensions=[Capsolver(api_key="CAP-B7692D3299667795364B38F08BFBB815B57B9D50A12CFA349DE226DE17A4F523")],
+    extensions=[Capsolver(api_key=os.getenv("CAPSOLVER_API_KEY"))],
     proxy=get_proxy,
+    cache=True,
 )
 def scrape_md(driver: Driver, data):
     link = data["link"]
@@ -132,7 +137,7 @@ def scrape_md(driver: Driver, data):
     if log_md:
         print(markdown)
 
-    is_bot_detected = check_bot_is_detected(driver, response, domain=domain)
+    is_bot_detected = check_bot_is_detected(driver, response)
     print(f"Failed to parse {url}" if is_bot_detected else f"Successfully parsed {url}")
 
     if is_bot_detected or len(markdown) <= 100:

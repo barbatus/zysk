@@ -1,4 +1,5 @@
 import { executeChild, proxyActivities, uuid4 } from "@temporalio/workflow";
+import { StockNewsStatus } from "@zysk/db";
 import { addDays, parse } from "date-fns";
 import { chunk } from "lodash";
 
@@ -24,15 +25,21 @@ export async function runExtractNewsInsights(
     taskName: "runNewsInsightsExtractorExperiment",
   });
 
+  const experimentId = uuid4();
   await Promise.all(
     newsBatches.map(async (newsBatch) => {
       return proxy
         .runNewsInsightsExtractorExperiment({
           symbol,
           newsIds: newsBatch,
-          experimentId: uuid4(),
+          experimentId,
         })
-        .then((insights) => proxy.saveNewsInsights(insights));
+        .then((insights) =>
+          proxy.saveNewsInsights({
+            insights,
+            experimentId,
+          }),
+        );
     }),
   );
 }
@@ -44,10 +51,15 @@ export async function scrapeTickerNewsForPeriod(
 ) {
   const currentNews = await proxy.fetchTickerNews(symbol, startDate, endDate);
   const scrapedNews = await executeChild(runScrapeTickerNews, {
-    args: [symbol, currentNews],
+    args: [{ symbol, news: currentNews }],
   });
   await executeChild(runExtractNewsInsights, {
-    args: [symbol, scrapedNews.map((n) => n.id)],
+    args: [
+      symbol,
+      scrapedNews
+        .filter((n) => n.status === StockNewsStatus.Scraped)
+        .map((n) => n.id),
+    ],
   });
 }
 
@@ -86,7 +98,7 @@ export async function syncTickerNewsWeekly(symbols: string[]) {
       });
     } else {
       await executeChild(runScrapeTickerNews, {
-        args: [symbol, failedNews],
+        args: [{ symbol, news: failedNews }],
       });
     }
   }
@@ -113,7 +125,7 @@ export async function syncAllNewsWeekly(symbols: string[]) {
 }
 
 export async function testInsightsExtract() {
-  const startDate = parse("2025-06-16", "yyyy-MM-dd", new Date());
+  const startDate = parse("2025-06-30", "yyyy-MM-dd", new Date());
   for (const symbols of chunk(
     [
       "JNJ",
@@ -140,6 +152,15 @@ export async function testInsightsExtract() {
       "MPC",
       "VLO",
       "ALL",
+      "AAPL",
+      "MSFT",
+      "GOOG",
+      "AMZN",
+      "META",
+      "TSLA",
+      "NVDA",
+      "CSCO",
+      "MRK",
     ],
     5,
   )) {

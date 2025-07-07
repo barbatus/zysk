@@ -92,7 +92,10 @@ export async function runBatchNews(params: {
 }) {
   const { newsIds, ...rest } = params;
   const tickerNewsService = resolve(TickerNewsService);
-  const news = await tickerNewsService.getNewsByNewsIds(newsIds);
+  const news = await tickerNewsService.getNewsByNewsIds(
+    newsIds,
+    StockNewsStatus.Scraped,
+  );
   return (
     await batchNews({
       news,
@@ -151,7 +154,10 @@ export async function runNewsInsightsExtractorExperiment(params: {
   const { newsIds, experimentId } = params;
   const tickerNewsService = resolve(TickerNewsService);
   const tickerService = resolve(TickerService);
-  const news = await tickerNewsService.getNewsByNewsIds(newsIds);
+  const news = await tickerNewsService.getNewsByNewsIds(
+    newsIds,
+    StockNewsStatus.Scraped,
+  );
   const sectors = await tickerService.getSectors();
 
   const runner = await NewsInsightsExtractor.create({

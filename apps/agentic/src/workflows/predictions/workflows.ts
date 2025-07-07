@@ -25,16 +25,24 @@ const proxy = proxyActivities<typeof activities & typeof newsActivities>({
   },
 });
 
-export async function runTickerSentimentPredictionExperiment(
-  symbol: string,
-  currentDate: Date,
-  type: "daily" | "weekly",
-) {
+export async function runTickerSentimentPredictionExperiment(params: {
+  symbol: string;
+  currentDate: Date;
+  type: "daily" | "weekly";
+  withScrape: boolean;
+}) {
+  const { symbol, currentDate, type, withScrape } = params;
   const startDate = await proxy.getLastPredictionDate(
     symbol,
     currentDate,
     type,
   );
+
+  if (withScrape) {
+    await executeChild(scrapeTickerNewsForPeriod, {
+      args: [symbol, startDate, currentDate],
+    });
+  }
 
   const { newsBatchIds, timeSeries } =
     await proxy.fetchSentimentPredictionExperimentData({
@@ -63,15 +71,24 @@ export async function runTickerSentimentPredictionExperiment(
   });
 }
 
-export async function runMarketSentimentPredictionExperimentWeekly(
-  weekStartDate: Date,
-) {
+export async function runMarketSentimentPredictionExperimentWeekly(params: {
+  weekStartDate: Date;
+  withScrape?: boolean;
+}) {
+  const { weekStartDate, withScrape } = params;
   const startDate = subDays(weekStartDate, 7);
   const currentDate = weekStartDate;
 
   const lastPrediction = await proxy.getMarketSentimentPrediction(currentDate);
   if (lastPrediction) {
     return lastPrediction;
+  }
+
+  if (withScrape) {
+    const prevWeekDate = subDays(weekStartDate, 7);
+    await executeChild(scrapeMarketNewsForPeriod, {
+      args: [prevWeekDate, weekStartDate],
+    });
   }
 
   const newsBatches = await proxy.fetchNewsInsightsForPeriod({
@@ -97,14 +114,21 @@ export async function runMarketSentimentPredictionExperimentWeekly(
   });
 }
 
-export async function runTickerSentimentPredictionExperiments(
-  symbols: string[],
-  currentDate: Date,
-  type: "daily" | "weekly",
-) {
+export async function runTickerSentimentPredictionExperiments(params: {
+  symbols: string[];
+  currentDate: Date;
+  withScrape: boolean;
+  type: "daily" | "weekly";
+}) {
+  const { symbols, currentDate, withScrape, type } = params;
   await Promise.all(
     symbols.map((symbol) =>
-      runTickerSentimentPredictionExperiment(symbol, currentDate, type),
+      runTickerSentimentPredictionExperiment({
+        symbol,
+        currentDate,
+        withScrape,
+        type,
+      }),
     ),
   );
 }
@@ -123,10 +147,15 @@ export async function predictSentimentsDaily() {
 
   const currentWeekDate = getStartWeekDate(currentDate);
   await executeChild(runMarketSentimentPredictionExperimentWeekly, {
-    args: [currentWeekDate],
+    args: [{ weekStartDate: currentWeekDate, withScrape: false }],
   });
 
-  await runTickerSentimentPredictionExperiments(symbols, currentDate, "daily");
+  await runTickerSentimentPredictionExperiments({
+    symbols,
+    currentDate,
+    withScrape: false,
+    type: "daily",
+  });
 }
 
 const getStartWeekDate = (date: Date) =>
@@ -149,24 +178,17 @@ export async function predictSentimentWeekly(params: {
     executeChild(syncTickerQuotesForPeriod, {
       args: [[symbol], subDays(prevWeekDate, 7), addDays(currentWeekDate, 7)],
     }),
-    executeChild(scrapeMarketNewsForPeriod, {
-      args: [prevWeekDate, currentWeekDate],
+    executeChild(runMarketSentimentPredictionExperimentWeekly, {
+      args: [{ weekStartDate: currentWeekDate, withScrape: true }],
     }),
   ]);
 
-  await executeChild(runMarketSentimentPredictionExperimentWeekly, {
-    args: [currentWeekDate],
+  await runTickerSentimentPredictionExperiments({
+    symbols: [symbol],
+    currentDate: currentWeekDate,
+    withScrape: true,
+    type: "weekly",
   });
-
-  await executeChild(scrapeTickerNewsForPeriod, {
-    args: [symbol, prevWeekDate, currentWeekDate],
-  });
-
-  await runTickerSentimentPredictionExperiments(
-    [symbol],
-    currentWeekDate,
-    "weekly",
-  );
 }
 
 export async function evaluatePredictions() {
@@ -180,30 +202,30 @@ export async function evaluatePredictions() {
 
 export async function testTicker() {
   const symbols = [
-    // "JNJ",
-    // "PFE",
+    "JNJ",
+    "PFE",
     "MRK",
-    // "LLY",
-    // "ABBV",
-    // "UNH",
-    // "BAC",
-    // "WFC",
-    // "GS",
-    // "MS",
-    // "C",
-    // "AXP",
-    // "BLK",
-    // "SCHW",
-    // "TFC",
-    // "XOM",
-    // "CVX",
-    // "COP",
-    // "OXY",
-    // "PSX",
-    // "EOG",
-    // "MPC",
-    // "VLO",
-    // "ALL",
+    "LLY",
+    "ABBV",
+    "UNH",
+    "BAC",
+    "WFC",
+    "GS",
+    "MS",
+    "C",
+    "AXP",
+    "BLK",
+    "SCHW",
+    "TFC",
+    "XOM",
+    "CVX",
+    "COP",
+    "OXY",
+    "PSX",
+    "EOG",
+    "MPC",
+    "VLO",
+    "ALL",
   ];
   await Promise.allSettled(
     symbols.map((symbol) =>

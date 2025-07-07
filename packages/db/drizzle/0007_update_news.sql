@@ -1,0 +1,1 @@
+ALTER TABLE "app_data"."stock_news" ADD COLUMN "extracted_symbol" varchar(80);

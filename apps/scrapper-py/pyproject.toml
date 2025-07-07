@@ -14,7 +14,8 @@ dependencies = [
     "botasaurus-driver (>=4.0.91,<5.0.0)",
     "markdownify (>=1.1.0,<2.0.0)",
     "botasaurus @ file:///Users/alex/Documents/projects/zysk/main/packages/botasaurus",
-    "botasaurus-server @ file:///Users/alex/Documents/projects/zysk/main/packages/botasaurus/botasaurus_server"
+    "botasaurus-server @ file:///Users/alex/Documents/projects/zysk/main/packages/botasaurus/botasaurus_server",
+    "python-dotenv (>=1.1.1,<2.0.0)"
 ]
 
 [build-system]
