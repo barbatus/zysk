@@ -33,6 +33,7 @@ export class ModelNotFoundError extends Error {
 
 export enum ModelKeyEnumWithFallback {
   GeminiFlash25AndO3Mini = "gemini-2.5-flash-and-o3-mini",
+  DeepSeekReasonerAndO3Mini = "deepseek-reasoner-and-o3-mini",
 }
 
 export const MODEL_TO_MAX_TOKENS = {
@@ -49,6 +50,7 @@ export const MODEL_TO_MAX_TOKENS = {
   [ModelKeyEnum.DeepSeekLlama]: 128_000,
   [ModelKeyEnum.GeminiFlash25]: 1_000_000,
   [ModelKeyEnumWithFallback.GeminiFlash25AndO3Mini]: 200_000,
+  [ModelKeyEnumWithFallback.DeepSeekReasonerAndO3Mini]: 65_000,
 } as Record<
   ModelKeyEnum | ModelKeyEnumWithFallback,
   number | Record<ModelProviderEnum, number>
@@ -189,6 +191,11 @@ export function createSequentialModelContainerWithFallback(
     case ModelKeyEnumWithFallback.GeminiFlash25AndO3Mini:
       return new SequentialModelContainerWithFallback([
         models[ModelKeyEnum.GeminiFlash25]!,
+        models[ModelKeyEnum.GptO3Mini]!,
+      ]);
+    case ModelKeyEnumWithFallback.DeepSeekReasonerAndO3Mini:
+      return new SequentialModelContainerWithFallback([
+        models[ModelKeyEnum.DeepSeekReasoner]!,
         models[ModelKeyEnum.GptO3Mini]!,
       ]);
     default:

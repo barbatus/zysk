@@ -1,5 +1,5 @@
 {
-  "id": "f7423bc1-7e8d-43ac-8af8-40eec3f3de03",
+  "id": "00309327-6791-449b-9649-8eb631586c36",
   "prevId": "4ce467fc-6f5a-4076-8118-bb5ba08864e3",
   "version": "7",
   "dialect": "postgresql",
@@ -401,11 +401,18 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "symbol": {
-          "name": "symbol",
+        "main_symbol": {
+          "name": "main_symbol",
           "type": "varchar(80)",
           "primaryKey": false,
           "notNull": false
+        },
+        "extracted_symbols": {
+          "name": "extracted_symbols",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
         },
         "url": {
           "name": "url",
@@ -507,6 +514,36 @@
           "method": "gin",
           "with": {}
         },
+        "extracted_symbols_gin_idx": {
+          "name": "extracted_symbols_gin_idx",
+          "columns": [
+            {
+              "expression": "extracted_symbols jsonb_path_ops",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "main_symbol_idx": {
+          "name": "main_symbol_idx",
+          "columns": [
+            {
+              "expression": "main_symbol",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "url_idx": {
           "name": "url_idx",
           "columns": [
@@ -527,21 +564,6 @@
           "columns": [
             {
               "expression": "experiement_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "original_url_idx": {
-          "name": "original_url_idx",
-          "columns": [
-            {
-              "expression": "original_url",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

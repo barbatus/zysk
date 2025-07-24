@@ -6,6 +6,7 @@ import type * as activities from "./activities";
 
 const proxy = proxyActivities<typeof activities>({
   startToCloseTimeout: "1 day",
+  heartbeatTimeout: "5 minutes",
   retry: {
     nonRetryableErrorTypes: ["NonRetryable"],
     maximumAttempts: 5,
@@ -25,7 +26,7 @@ export async function runScrapeTickerNews(params: {
 
   const attemptedNews = (
     await Promise.allSettled(
-      chunk(news, 15).map((batch) =>
+      chunk(news, 30).map((batch) =>
         proxy.scrapeTickerNewsUrlsAndSave({ symbol, news: batch }),
       ),
     )
@@ -34,7 +35,11 @@ export async function runScrapeTickerNews(params: {
   const scrapedNews = attemptedNews
     .filter((n) => n.status === "fulfilled")
     .flatMap((n) => n.value)
-    .filter((n) => n.status === StockNewsStatus.Scraped);
+    .filter(
+      (n) =>
+        n.status === StockNewsStatus.Scraped ||
+        n.status === StockNewsStatus.InsightsExtracted,
+    );
   const successRate =
     attemptedNews.length > 0
       ? Math.round((scrapedNews.length / attemptedNews.length) * 100)

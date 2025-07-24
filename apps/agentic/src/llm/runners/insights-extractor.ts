@@ -13,7 +13,7 @@ import { type Insights } from "./prompts/insights-parser";
 
 interface NewsArticle {
   id: string;
-  symbol: string | null;
+  symbol?: string;
   markdown: string;
   newsDate: Date;
   url: string;

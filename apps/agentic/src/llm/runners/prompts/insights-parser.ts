@@ -7,6 +7,7 @@ const NewsInsightSchema = z.object({
   title: z.string(),
   description: z.string(),
   mainSymbol: z.string().optional(),
+  extractedSymbols: z.array(z.string()).optional().default([]),
   impact: z
     .enum(["positive", "negative", "neutral", "mixed"])
     .optional()
@@ -59,8 +60,9 @@ each array item is a news article with insights.
         "acticleId": "ID of the news article from the article heading",
         "title": "descriptive title of the news article",
         "description": "brief description of the news article",
-        "mainSymbol": "main symbol of the news article",
+        "mainSymbol": "main ticker symbol of the news article",
         "impact": "sentiment of the news article, one of: positive, negative, neutral, mixed",
+        "extractedSymbols": "list of ticker symbols of the companies mentioned in the article, if any",
         "insights": [
           {
             "insight": "description of the insight",

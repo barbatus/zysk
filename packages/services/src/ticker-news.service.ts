@@ -126,6 +126,7 @@ export class TickerNewsService {
     convertToMd?: boolean;
     waitFor?: number;
     timeout?: number;
+    onPoll?: () => void;
   }): Promise<
     {
       url: string;
@@ -330,7 +331,7 @@ export class TickerNewsService {
       .values(news)
       .returningAll()
       .onConflict((oc) =>
-        oc.columns(["symbol", "url"]).doUpdateSet((eb) => ({
+        oc.columns(["url"]).doUpdateSet((eb) => ({
           markdown: eb.ref("excluded.markdown"),
           tokenSize: eb.ref("excluded.tokenSize"),
           newsDate: eb.ref("excluded.newsDate"),
@@ -350,6 +351,7 @@ export class TickerNewsService {
       title: string;
       description: string;
       mainSymbol?: string;
+      extractedSymbols: string[];
       insights: StockNewsInsight[];
       experimentId: string;
     },
@@ -362,6 +364,7 @@ export class TickerNewsService {
         title: string;
         description: string;
         mainSymbol?: string;
+        extractedSymbols: string[];
         insights: StockNewsInsight[];
         experimentId: string;
       }
@@ -376,7 +379,10 @@ export class TickerNewsService {
         sql<StockNewsSentiment>`${update.impact}`.as("impact"),
         sql<string>`${update.title}`.as("title"),
         sql<string>`${update.description}`.as("description"),
-        sql<string | undefined>`${update.mainSymbol}`.as("mainSymbol"),
+        sql<string[]>`(${JSON.stringify(update.extractedSymbols)}::jsonb)`.as(
+          "extractedSymbols",
+        ),
+        sql<string>`${JSON.stringify(update.mainSymbol)}`.as("mainSymbol"),
         sql<string>`${update.experimentId}::uuid`.as("experiementId"),
         sql<StockNewsStatus>`${StockNewsStatus.InsightsExtracted}`.as("status"),
       ];
@@ -400,8 +406,9 @@ export class TickerNewsService {
         title: eb.ref("data_table.title"),
         description: eb.ref("data_table.description"),
         impact: eb.ref("data_table.impact"),
-        extracted_symbol: eb.ref("data_table.mainSymbol"),
+        extractedSymbols: sql`${eb.ref("app_data.stock_news.extractedSymbols")} || ${eb.ref("data_table.extractedSymbols")}`,
         status: eb.ref("data_table.status"),
+        mainSymbol: sql`COALESCE(${eb.ref("app_data.stock_news.mainSymbol")}, ${eb.ref("data_table.mainSymbol")})`,
         experiementId: eb.ref("data_table.experiementId"),
         updatedAt: new Date(),
       }))
@@ -413,18 +420,18 @@ export class TickerNewsService {
   async getLatestNewsDatePerTicker(symbols: string[]) {
     const result = await this.db
       .selectFrom("app_data.stock_news")
-      .select(["symbol", (eb) => eb.fn.max("newsDate").as("newsDate")])
-      .where("symbol", "in", symbols)
-      .groupBy("symbol")
+      .select(["mainSymbol", (eb) => eb.fn.max("newsDate").as("newsDate")])
+      .where("mainSymbol", "in", symbols)
+      .groupBy("mainSymbol")
       .execute();
-    return keyBy(result, "symbol");
+    return keyBy(result, "mainSymbol");
   }
 
   async getNewsSincePerTicker(symbol: string, sinceDate: Date) {
     return this.db
       .selectFrom("app_data.stock_news")
       .select(["url", "newsDate", "status", "title"])
-      .where("symbol", "=", symbol)
+      .where("mainSymbol", "=", symbol)
       .where("newsDate", ">=", sinceDate)
       .where("status", "=", StockNewsStatus.Scraped)
       .orderBy("newsDate", "desc")
@@ -432,6 +439,10 @@ export class TickerNewsService {
   }
 
   async getNewsBySymbol(symbol: string, startDate: Date, endDate?: Date) {
+    const symbolFilter = sql<boolean>`${sql.ref("extracted_symbols")} @> ${sql.lit(
+      JSON.stringify([symbol]),
+    )}::jsonb`;
+
     return this.db
       .selectFrom("app_data.stock_news")
       .select([
@@ -443,7 +454,7 @@ export class TickerNewsService {
         "tokenSize",
         "insights",
       ])
-      .where("symbol", "=", symbol)
+      .where((eb) => eb.or([symbolFilter]))
       .where("newsDate", ">=", startDate)
       .$if(Boolean(endDate), (eb) => eb.where("newsDate", "<", endDate!))
       .where("status", "=", StockNewsStatus.Scraped)
@@ -532,16 +543,20 @@ export class TickerNewsService {
     body,
     interval = 10000,
     timeout = 600_000,
+    onPoll,
   }: {
     url: string;
     body?: Record<string, unknown>;
     condition: (response: { data: T }) => boolean;
     interval?: number;
     timeout?: number;
+    onPoll?: () => void;
   }): Promise<T> {
     const startTime = Date.now();
 
     while (true) {
+      onPoll?.();
+
       const response = await axios.post<T>(url, body).catch(() => {
         return null;
       });

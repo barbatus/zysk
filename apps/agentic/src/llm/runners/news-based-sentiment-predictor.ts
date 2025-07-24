@@ -6,7 +6,10 @@ import { encoding_for_model } from "tiktoken";
 import { dedent } from "ts-dedent";
 
 import { type AbstractContainer } from "../core/base";
-import { modelsWithFallback } from "../models/registry";
+import {
+  ModelKeyEnumWithFallback,
+  modelsWithFallback,
+} from "../models/registry";
 import { type ExperimentPrompt, ExperimentRunner } from "./experimenter";
 import { type Prediction } from "./prompts/prediction-parser";
 import {
@@ -23,6 +26,7 @@ export interface NewsBasedExperimentParams<TResult = Prediction> {
     id: string;
     insights: StockNewsInsight[];
     newsDate: Date;
+    title: string;
     url: string;
   }[];
   currentDate: Date;
@@ -44,7 +48,7 @@ function formatInsight(n: NewsBasedExperimentParams["newsInsights"][number]) {
       .join("\n");
   };
 
-  return `# ARTICLE TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}:\n${insightsToMd(n.insights)}`;
+  return `# ARTICLE TITLE: ${n.title}, DATE: ${n.newsDate.toISOString()}, URL: ${n.url}:\n${insightsToMd(n.insights)}`;
 }
 
 function mapPromptValues(params: {
@@ -136,7 +140,8 @@ class NewsBasedSentimentPredictor extends ExperimentRunner<
 export class WeeklyTickerSentimentPredictor extends NewsBasedSentimentPredictor {
   private readonly marketPrediction: Experiment["responseJson"];
   private readonly timeSeries: { date: Date; closePrice: number }[];
-  static override readonly modelKey = ModelKeyEnum.DeepSeekReasoner;
+  static override readonly modelKey =
+    ModelKeyEnumWithFallback.GeminiFlash25AndO3Mini;
 
   constructor(
     params: NewsBasedExperimentParams & {

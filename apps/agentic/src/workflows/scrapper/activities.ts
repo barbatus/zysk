@@ -1,4 +1,4 @@
-import { activityInfo } from "@temporalio/activity";
+import { activityInfo, heartbeat } from "@temporalio/activity";
 import { ApplicationFailure } from "@temporalio/workflow";
 import { type StockNewsInsert } from "@zysk/db";
 import { StockNewsStatus } from "@zysk/db";
@@ -52,6 +52,7 @@ export async function scrapeUrls(params: {
         convertToMd,
         waitFor,
         timeout,
+        onPoll: heartbeat,
       });
       return result;
     },
@@ -222,12 +223,12 @@ export async function scrapeTickerNewsUrlsAndSave(params: {
       ...itemByUrl[n.url],
       ...omit(n, "error"),
       markdown: n.error ? n.error.message : n.markdown,
-      symbol,
+      mainSymbol: symbol,
     })),
   );
 
   const uniqueNews = uniqBy(result, (n) =>
-    n.symbol ? `${n.symbol}-${n.url}` : n.url,
+    n.mainSymbol ? `${n.mainSymbol}-${n.url}` : n.url,
   );
 
   return (await saveNews(uniqueNews)).map((n) => ({

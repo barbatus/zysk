@@ -40,22 +40,8 @@
     {
       "idx": 5,
       "version": "7",
-      "when": 1751725424942,
+      "when": 1753303082356,
       "tag": "0005_update_news",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1751914603473,
-      "tag": "0006_update_news",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1751916354352,
-      "tag": "0007_update_news",
       "breakpoints": true
     }
   ]

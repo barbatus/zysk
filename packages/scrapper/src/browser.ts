@@ -280,6 +280,7 @@ export async function scrapeUrls(params: {
   timeout?: number;
   convertToMd?: boolean;
   useProxy?: boolean;
+  onPoll?: () => void;
 }): Promise<
   {
     url: string;
