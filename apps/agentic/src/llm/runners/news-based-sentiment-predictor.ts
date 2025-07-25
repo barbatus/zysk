@@ -141,7 +141,7 @@ export class WeeklyTickerSentimentPredictor extends NewsBasedSentimentPredictor 
   private readonly marketPrediction: Experiment["responseJson"];
   private readonly timeSeries: { date: Date; closePrice: number }[];
   static override readonly modelKey =
-    ModelKeyEnumWithFallback.GeminiFlash25AndO3Mini;
+    ModelKeyEnumWithFallback.DeepSeekReasonerAndO3Mini;
 
   constructor(
     params: NewsBasedExperimentParams & {

@@ -136,7 +136,7 @@ export class TickerNewsService {
       description?: string;
     }[]
   > {
-    const { urls } = params;
+    const { urls, onPoll } = params;
     const data = urls.map((link) => ({
       data: {
         link,
@@ -177,12 +177,13 @@ export class TickerNewsService {
         task_ids: taskIds,
         filters: {},
         page: 1,
-        per_page: 25,
+        per_page: 100,
       },
       timeout: 300_000 * taskIds.length,
       condition: (response) =>
         response.data.every((r) => r.task.status === "completed") ||
         response.data.some((r) => r.task.status === "failed"),
+      onPoll,
     });
 
     return results.map((r, index) => {
@@ -261,6 +262,7 @@ export class TickerNewsService {
     convertToMd?: boolean;
     waitFor?: number;
     timeoutSeconds?: number;
+    onPoll?: () => void;
   }): Promise<
     {
       url: string;
@@ -268,11 +270,10 @@ export class TickerNewsService {
       content?: string;
       title?: string;
       description?: string;
+      onPoll?: () => void;
     }[]
   > {
-    return this.scrapeUrlsViaBotasaurus({
-      urls: params.urls,
-    });
+    return this.scrapeUrlsViaBotasaurus(params);
   }
 
   async getTickerNews(

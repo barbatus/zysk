@@ -21,7 +21,7 @@ const proxy = proxyActivities<typeof activities & typeof newsActivities>({
   heartbeatTimeout: "10 minutes",
   retry: {
     nonRetryableErrorTypes: ["NonRetryable"],
-    maximumAttempts: 2,
+    maximumAttempts: 3,
   },
 });
 
@@ -202,6 +202,9 @@ export async function evaluatePredictions() {
 
 export async function testTicker() {
   const symbols = [
+    "NBIS",
+    "RVMD",
+    "UBER",
     "JNJ",
     "PFE",
     "MRK",
@@ -231,7 +234,7 @@ export async function testTicker() {
     symbols.map((symbol) =>
       predictSentimentWeekly({
         symbol,
-        startWeek: "2025-07-07",
+        startWeek: "2025-07-21",
       }),
     ),
   );

@@ -4,18 +4,16 @@ import {
   type PredictionInsert,
   SentimentEnum,
 } from "@zysk/db";
-import {
-  ExperimentService,
-  ModelKeyEnum,
-  PredictionService,
-  resolve,
-} from "@zysk/services";
+import { ExperimentService, PredictionService, resolve } from "@zysk/services";
 import { omit } from "lodash";
 
 import { type AgentExecutionResult } from "#/llm/core/schemas";
 
 import { type AbstractContainer } from "../core/base";
-import { modelsWithFallback } from "../models/registry";
+import {
+  ModelKeyEnumWithFallback,
+  modelsWithFallback,
+} from "../models/registry";
 import { type ExperimentPrompt, ExperimentRunner } from "./experimenter";
 import { type Prediction } from "./prompts/prediction-parser";
 import { PredictionsMergerPrompt } from "./prompts/predictions-merger.prompt";
@@ -66,7 +64,8 @@ export class SentimentPredictor extends ExperimentRunner<
     return await super.arun(promptValues);
   }
 
-  static override readonly modelKey = ModelKeyEnum.DeepSeekReasoner;
+  static override readonly modelKey =
+    ModelKeyEnumWithFallback.DeepSeekReasonerAndO3Mini;
 
   static override async create(params: {
     symbol: string;
