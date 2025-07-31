@@ -1,5 +1,5 @@
 import { executeChild, proxyActivities, uuid4 } from "@temporalio/workflow";
-import { StockNewsStatus } from "@zysk/db";
+import { StockNewsSource, StockNewsStatus } from "@zysk/db";
 import { addDays, parse } from "date-fns";
 import { chunk } from "lodash";
 
@@ -51,7 +51,15 @@ export async function scrapeTickerNewsForPeriod(
 ) {
   const currentNews = await proxy.fetchTickerNews(symbol, startDate, endDate);
   const scrapedNews = await executeChild(runScrapeTickerNews, {
-    args: [{ symbol, news: currentNews }],
+    args: [
+      {
+        symbol,
+        news: currentNews.map((n) => ({
+          ...n,
+          source: StockNewsSource.Finnhub,
+        })),
+      },
+    ],
   });
   await executeChild(runExtractNewsInsights, {
     args: [
@@ -98,7 +106,15 @@ export async function syncTickerNewsWeekly(symbols: string[]) {
       });
     } else {
       await executeChild(runScrapeTickerNews, {
-        args: [{ symbol, news: failedNews }],
+        args: [
+          {
+            symbol,
+            news: failedNews.map((n) => ({
+              ...n,
+              source: StockNewsSource.Finnhub,
+            })),
+          },
+        ],
       });
     }
   }
@@ -125,9 +141,13 @@ export async function syncAllNewsWeekly(symbols: string[]) {
 }
 
 export async function testInsightsExtract() {
-  const startDate = parse("2025-06-30", "yyyy-MM-dd", new Date());
+  const startDate = parse("2025-07-21", "yyyy-MM-dd", new Date());
   for (const symbols of chunk(
     [
+      "NBIS",
+      "PLTR",
+      "UBER",
+      "RVMD",
       "JNJ",
       "PFE",
       "MRK",

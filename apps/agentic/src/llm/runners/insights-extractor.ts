@@ -15,8 +15,9 @@ interface NewsArticle {
   id: string;
   symbol?: string;
   markdown: string;
-  newsDate: Date;
+  newsDate?: Date;
   url: string;
+  title?: string;
 }
 
 export class NewsInsightsExtractor extends ExperimentRunner<
@@ -49,7 +50,7 @@ export class NewsInsightsExtractor extends ExperimentRunner<
       news: this.news
         .map(
           (n, index) =>
-            `# ARTICLE ${n.symbol ? `FOR: ${n.symbol}` : ""}, ID: ${index}, TITLE: ${n.newsDate.toISOString()}, DATE: ${n.newsDate.toISOString()}, URL: \`${n.url}\`:\n${n.markdown}`,
+            `# ARTICLE ${n.symbol ? `FOR: ${n.symbol}` : ""}, ID: ${index}, ${n.title ? `TITLE: ${n.title}` : ""}, ${n.newsDate ? `DATE: ${n.newsDate.toISOString()}` : ""}, URL: \`${n.url}\`:\n${n.markdown}`,
         )
         .join("\n---\n"),
       sectors: this.sectors.join("\n"),

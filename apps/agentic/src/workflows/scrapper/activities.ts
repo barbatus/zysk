@@ -1,7 +1,10 @@
 import { activityInfo, heartbeat } from "@temporalio/activity";
 import { ApplicationFailure } from "@temporalio/workflow";
-import { type StockNewsInsert } from "@zysk/db";
-import { StockNewsStatus } from "@zysk/db";
+import {
+  type StockNewsInsert,
+  type StockNewsSource,
+  StockNewsStatus,
+} from "@zysk/db";
 import {
   PageLoadError,
   scrapeUrls as scrapeUrlsViaBrowser,
@@ -67,17 +70,10 @@ export async function getOrScrapeNews(
   }[],
 ) {
   const tickerNewsService = resolve(TickerNewsService);
-  const savedNews = uniqBy(
-    (await tickerNewsService.getArticles(news.map((n) => n.url))).map((n) => ({
-      url: n.url,
-      markdown: n.markdown,
-      title: n.title,
-      originalUrl: n.originalUrl,
-      status: n.status,
-      newsDate: n.newsDate,
-    })),
-    (n) => n.url,
-  ) as {
+  const scrappedNews = (await tickerNewsService.getScrappedArticles(
+    news.map((n) => n.url),
+  )) as {
+    id?: string;
     url: string;
     markdown?: string;
     title?: string;
@@ -85,11 +81,12 @@ export async function getOrScrapeNews(
     originalUrl: string;
     status: StockNewsStatus;
     newsDate: Date;
+    tokenSize?: number;
   }[];
 
   const newsByUrl = mapKeys(news, "url");
 
-  const savedNewsByUrl = mapKeys(savedNews, "originalUrl");
+  const savedNewsByUrl = mapKeys(scrappedNews, "originalUrl");
 
   const urlsToScrape = news
     .filter((n) => !(n.url in savedNewsByUrl))
@@ -119,7 +116,7 @@ export async function getOrScrapeNews(
     );
   }
 
-  return savedNews.concat(
+  return scrappedNews.concat(
     result.map((r) => ({
       ...omit(r, "content"),
       markdown: r.content,
@@ -148,7 +145,7 @@ export async function scrapeNews(
 
   const tokenizer = encoding_for_model("gpt-4o");
   const cleanedNews = result.map((r) => {
-    if (r.markdown) {
+    if (r.markdown && !r.tokenSize) {
       const cleanedMarkdown = r.markdown
         .replace(/\[.+\]\(.*?\)/gm, "")
         .replace(/(?:\n\n)+/gm, "\n\n");
@@ -169,7 +166,7 @@ export async function scrapeNews(
     return {
       ...r,
       url: r.url,
-      tokenSize: 0,
+      tokenSize: r.tokenSize ?? 0,
     };
   });
 
@@ -207,7 +204,12 @@ export async function scrapeNews(
 
 export async function scrapeTickerNewsUrlsAndSave(params: {
   symbol?: string;
-  news: { newsDate: Date; url: string; title?: string }[];
+  news: {
+    newsDate: Date;
+    url: string;
+    title?: string;
+    source: StockNewsSource;
+  }[];
 }) {
   const { symbol, news } = params;
   const logger = getLogger();
@@ -227,14 +229,27 @@ export async function scrapeTickerNewsUrlsAndSave(params: {
     })),
   );
 
-  const uniqueNews = uniqBy(result, (n) =>
-    n.mainSymbol ? `${n.mainSymbol}-${n.url}` : n.url,
-  );
+  const savedNews = result
+    .filter((n) => n.id)
+    .map((n) => ({
+      id: n.id!,
+      status: n.status,
+    }));
 
-  return (await saveNews(uniqueNews)).map((n) => ({
-    id: n.id,
-    status: n.status,
-  }));
+  const newsToSave = uniqBy(
+    result.filter((n) => !n.id),
+    "url",
+  );
+  if (newsToSave.length) {
+    return savedNews.concat(
+      (await saveNews(newsToSave)).map((n) => ({
+        id: n.id,
+        status: n.status,
+      })),
+    );
+  }
+
+  return savedNews;
 }
 
 export async function saveNews<T extends StockNewsInsert>(

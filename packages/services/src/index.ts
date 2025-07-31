@@ -1,6 +1,7 @@
 export * from "./alpha-vantage.service";
 export * from "./config";
 export * from "./config/enums";
+export * from "./crawler.service";
 export * from "./di";
 export * from "./experiment.service";
 export * from "./finnhub.service";

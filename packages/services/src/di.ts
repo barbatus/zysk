@@ -5,6 +5,7 @@ import { type Kysely } from "kysely";
 
 import { AlphaVantageService } from "./alpha-vantage.service";
 import { type AppConfig, appConfigSymbol, getAppConfigStatic } from "./config";
+import { CrawlerService } from "./crawler.service";
 import { appDBSymbol, createDb, dataDBSymbol } from "./db";
 import { ExperimentService } from "./experiment.service";
 import { FinnhubService } from "./finnhub.service";
@@ -54,6 +55,7 @@ const services = [
   TickerService,
   PredictionService,
   NewsInsightsService,
+  CrawlerService,
 ] as const;
 
 services.forEach((service) => {

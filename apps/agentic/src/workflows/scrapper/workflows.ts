@@ -1,5 +1,5 @@
 import { ApplicationFailure, proxyActivities } from "@temporalio/workflow";
-import { StockNewsStatus } from "@zysk/db";
+import { type StockNewsSource, StockNewsStatus } from "@zysk/db";
 import { chunk } from "lodash";
 
 import type * as activities from "./activities";
@@ -20,7 +20,12 @@ export async function scrapeUrls(urls: string[]) {
 
 export async function runScrapeTickerNews(params: {
   symbol?: string;
-  news: { url: string; title?: string; newsDate: Date }[];
+  news: {
+    url: string;
+    title?: string;
+    newsDate: Date;
+    source: StockNewsSource;
+  }[];
 }) {
   const { symbol, news } = params;
 

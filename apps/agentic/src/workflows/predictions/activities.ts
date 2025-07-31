@@ -39,7 +39,7 @@ export async function fetchTickerTimeSeries(
   });
 }
 
-export const experimentTasksToTokens = {
+const experimentTasksToTokens = {
   runTickerSentimentPredictionExperiment: getMaxTokens(
     WeeklyTickerSentimentPredictor.modelKey,
   ),

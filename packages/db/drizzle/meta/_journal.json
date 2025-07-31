@@ -43,6 +43,13 @@
       "when": 1753303082356,
       "tag": "0005_update_news",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1753912533042,
+      "tag": "0006_add_source",
+      "breakpoints": true
     }
   ]
 }

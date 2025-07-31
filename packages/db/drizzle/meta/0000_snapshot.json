@@ -333,7 +333,7 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
-          "default": "'{\"maxLevelToCrawl\":10}'::jsonb"
+          "default": "'{\"supported\":false}'::jsonb"
         },
         "created_at": {
           "name": "created_at",

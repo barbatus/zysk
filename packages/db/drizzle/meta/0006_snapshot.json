@@ -1,6 +1,6 @@
 {
-  "id": "3ba0242b-11eb-4489-9e64-6464ad7e7943",
-  "prevId": "7b65068b-75aa-4cd6-b0d2-77d8a77e3eec",
+  "id": "8170022c-68de-4ed6-a378-481c860a88f5",
+  "prevId": "00309327-6791-449b-9649-8eb631586c36",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -233,6 +233,25 @@
           "notNull": false,
           "default": "'neutral'"
         },
+        "long_term": {
+          "name": "long_term",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "news_title": {
+          "name": "news_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "varchar(2048)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "news_id": {
           "name": "news_id",
           "type": "uuid",
@@ -382,11 +401,18 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "symbol": {
-          "name": "symbol",
+        "main_symbol": {
+          "name": "main_symbol",
           "type": "varchar(80)",
           "primaryKey": false,
           "notNull": false
+        },
+        "extracted_symbols": {
+          "name": "extracted_symbols",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
         },
         "url": {
           "name": "url",
@@ -398,7 +424,7 @@
           "name": "original_url",
           "type": "varchar(2048)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "status": {
           "name": "status",
@@ -451,6 +477,18 @@
           "notNull": false,
           "default": "'[]'::jsonb"
         },
+        "experiement_id": {
+          "name": "experiement_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -467,27 +505,6 @@
         }
       },
       "indexes": {
-        "unique_symbol_url": {
-          "name": "unique_symbol_url",
-          "columns": [
-            {
-              "expression": "symbol",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "url",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "insights_gin_idx": {
           "name": "insights_gin_idx",
           "columns": [
@@ -503,11 +520,26 @@
           "method": "gin",
           "with": {}
         },
-        "url_idx": {
-          "name": "url_idx",
+        "extracted_symbols_gin_idx": {
+          "name": "extracted_symbols_gin_idx",
           "columns": [
             {
-              "expression": "url",
+              "expression": "extracted_symbols jsonb_path_ops",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "main_symbol_idx": {
+          "name": "main_symbol_idx",
+          "columns": [
+            {
+              "expression": "main_symbol",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -518,11 +550,26 @@
           "method": "btree",
           "with": {}
         },
-        "original_url_idx": {
-          "name": "original_url_idx",
+        "url_idx": {
+          "name": "url_idx",
           "columns": [
             {
-              "expression": "original_url",
+              "expression": "url",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "experiement_id_idx": {
+          "name": "experiement_id_idx",
+          "columns": [
+            {
+              "expression": "experiement_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -585,7 +632,22 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "stock_news_experiement_id_experiments_id_fk": {
+          "name": "stock_news_experiement_id_experiments_id_fk",
+          "tableFrom": "stock_news",
+          "tableTo": "experiments",
+          "schemaTo": "app_data",
+          "columnsFrom": [
+            "experiement_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },

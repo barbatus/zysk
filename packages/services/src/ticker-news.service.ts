@@ -180,9 +180,12 @@ export class TickerNewsService {
         per_page: 100,
       },
       timeout: 300_000 * taskIds.length,
-      condition: (response) =>
-        response.data.every((r) => r.task.status === "completed") ||
-        response.data.some((r) => r.task.status === "failed"),
+      condition: (response) => {
+        return (
+          response.data.every((r) => r.task.status === "completed") ||
+          response.data.some((r) => r.task.status === "failed")
+        );
+      },
       onPoll,
     });
 
@@ -339,6 +342,7 @@ export class TickerNewsService {
           title: eb.ref("excluded.title"),
           description: eb.ref("excluded.description"),
           status: eb.ref("excluded.status"),
+          source: eb.ref("excluded.source"),
           updatedAt: new Date(),
         })),
       )
@@ -355,6 +359,7 @@ export class TickerNewsService {
       extractedSymbols: string[];
       insights: StockNewsInsight[];
       experimentId: string;
+      newsDate?: Date;
     },
   >(
     newsInsights: Exact<
@@ -368,6 +373,7 @@ export class TickerNewsService {
         extractedSymbols: string[];
         insights: StockNewsInsight[];
         experimentId: string;
+        newsDate?: Date;
       }
     >[],
   ) {
@@ -386,6 +392,9 @@ export class TickerNewsService {
         sql<string>`${JSON.stringify(update.mainSymbol)}`.as("mainSymbol"),
         sql<string>`${update.experimentId}::uuid`.as("experiementId"),
         sql<StockNewsStatus>`${StockNewsStatus.InsightsExtracted}`.as("status"),
+        sql<Date | null>`${update.newsDate ? String(update.newsDate) : "NULL"}::timestamp with time zone`.as(
+          "newsDate",
+        ),
       ];
     };
 
@@ -409,9 +418,12 @@ export class TickerNewsService {
         impact: eb.ref("data_table.impact"),
         extractedSymbols: sql`${eb.ref("app_data.stock_news.extractedSymbols")} || ${eb.ref("data_table.extractedSymbols")}`,
         status: eb.ref("data_table.status"),
-        mainSymbol: sql`COALESCE(${eb.ref("app_data.stock_news.mainSymbol")}, ${eb.ref("data_table.mainSymbol")})`,
+        mainSymbol: sql<
+          string | null
+        >`COALESCE(${eb.ref("app_data.stock_news.mainSymbol")}, ${eb.ref("data_table.mainSymbol")})`,
         experiementId: eb.ref("data_table.experiementId"),
         updatedAt: new Date(),
+        newsDate: sql<Date>`COALESCE(${eb.ref("app_data.stock_news.newsDate")}, ${eb.ref("data_table.newsDate")})`,
       }))
       .whereRef("app_data.stock_news.id", "=", "data_table.id")
       .returningAll();
@@ -505,7 +517,7 @@ export class TickerNewsService {
       : Promise.resolve([]);
   }
 
-  async getArticles(urls: string[]) {
+  async getScrappedArticles(urls: string[]) {
     return this.db
       .selectFrom("app_data.stock_news")
       .selectAll()
@@ -524,17 +536,33 @@ export class TickerNewsService {
     sources: {
       name: string;
       url: string;
+      supported?: boolean;
     }[],
   ) {
     return await this.db
       .insertInto("app_data.news_sources")
-      .values(sources)
+      .values(
+        sources.map((source) => ({
+          name: source.name,
+          url: source.url,
+          settings: sql`${JSON.stringify({ supported: source.supported ?? false })}::jsonb`,
+        })),
+      )
       .onConflict((oc) =>
         oc.columns(["url"]).doUpdateSet((eb) => ({
           name: eb.ref("excluded.name"),
           url: eb.ref("excluded.url"),
+          settings: sql`COALESCE(${eb.ref("app_data.news_sources.settings")}, '{}'::jsonb) || ${eb.ref("excluded.settings")}`,
         })),
       )
+      .execute();
+  }
+
+  async getNewsSources() {
+    return this.db
+      .selectFrom("app_data.news_sources")
+      .selectAll()
+      .where(sql`settings->>'supported'`, "=", "true")
       .execute();
   }
 

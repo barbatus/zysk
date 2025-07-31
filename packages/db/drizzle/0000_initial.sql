@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS "app_data"."news_sources" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"url" varchar(2048) NOT NULL,
-	"settings" jsonb DEFAULT '{"maxLevelToCrawl":10}'::jsonb,
+	"settings" jsonb DEFAULT '{"supported":false}'::jsonb,
 	"created_at" timestamp with time zone DEFAULT current_timestamp NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT current_timestamp NOT NULL
 );

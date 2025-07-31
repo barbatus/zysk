@@ -13,9 +13,7 @@ You are a **financial-news analysis expert** specializing in extracting **compre
 
 ## INPUT STRUCTURE
 
-- Each article begins with
-  \`# ARTICLE FOR: <symbol>, ID: <id>, TITLE: <title> …\`
-  and multiple articles are separated by \`---\`.
+- Each article begins with \`# ARTICLE FOR: <symbol>, ID: <id> …\` and multiple articles are separated by \`---\`.
 - **Important:**
   - The \`<symbol>\` that appears after \`ARTICLE FOR:\` is only a *hint*; it may be **missing, inaccurate, or incomplete**.
   - An article’s true focus could instead be a *different* ticker, an industry sector, or the market in general.

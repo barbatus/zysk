@@ -1,3 +1,4 @@
+import { isValid, parse } from "date-fns";
 import { z, ZodError } from "zod";
 
 import { JsonOutputParser, ParserError } from "./parsers";
@@ -8,6 +9,19 @@ const NewsInsightSchema = z.object({
   description: z.string(),
   mainSymbol: z.string().optional(),
   extractedSymbols: z.array(z.string()).optional().default([]),
+  newsDate: z
+    .string()
+    .nullish()
+    .transform<Date | undefined>((value) => {
+      if (!value) return undefined;
+      try {
+        const parsed = parse(value, "yyyy-MM-dd", new Date());
+        if (!isValid(parsed)) return undefined;
+        return parsed;
+      } catch {
+        return undefined;
+      }
+    }),
   impact: z
     .enum(["positive", "negative", "neutral", "mixed"])
     .optional()
@@ -63,6 +77,7 @@ each array item is a news article with insights.
         "mainSymbol": "main ticker symbol of the news article",
         "impact": "sentiment of the news article, one of: positive, negative, neutral, mixed",
         "extractedSymbols": "list of ticker symbols of the companies mentioned in the article, if any",
+        "newsDate": "date of the news article, if available, in YYYY-MM-DD format",
         "insights": [
           {
             "insight": "description of the insight",

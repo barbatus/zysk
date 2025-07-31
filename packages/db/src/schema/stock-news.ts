@@ -22,6 +22,11 @@ export enum StockNewsStatus {
   Failed = "failed",
 }
 
+export enum StockNewsSource {
+  Finnhub = "finnhub",
+  Octopus = "octopus",
+}
+
 export enum StockNewsSentiment {
   Positive = "positive",
   Negative = "negative",
@@ -37,7 +42,7 @@ export interface StockNewsInsight {
 }
 
 export interface NewsSourceSettings {
-  maxLevelToCrawl: number;
+  supported: boolean;
 }
 
 export const stockNewsTable = mySchema.table(
@@ -59,6 +64,7 @@ export const stockNewsTable = mySchema.table(
     ),
     insights: jsonb("insights").$type<StockNewsInsight[]>().default([]),
     experiementId: uuid("experiement_id").references(() => experimentsTable.id),
+    source: validatedStringEnum("source", StockNewsSource),
     ...auditColumns(),
   },
   (t) => ({
@@ -86,7 +92,7 @@ export const newsSourcesTable = mySchema.table(
     name: varchar("name", { length: 255 }).notNull(),
     url: varchar("url", { length: 2048 }).notNull(),
     settings: jsonb("settings").$type<NewsSourceSettings>().default({
-      maxLevelToCrawl: 10,
+      supported: false,
     }),
     ...auditColumns(),
   },
