@@ -147,7 +147,6 @@ export async function saveNewsInsights(params: {
 }
 
 export async function runNewsInsightsExtractorExperiment(params: {
-  symbol: string;
   newsIds: string[];
   experimentId?: string;
 }) {

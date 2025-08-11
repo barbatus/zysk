@@ -16,10 +16,7 @@ const proxy = proxyActivities<typeof activities>({
   },
 });
 
-export async function runExtractNewsInsights(
-  symbol: string,
-  newsIds: string[],
-) {
+export async function runExtractNewsInsights(newsIds: string[]) {
   const newsBatches = await proxy.runBatchNews({
     newsIds,
     taskName: "runNewsInsightsExtractorExperiment",
@@ -30,7 +27,6 @@ export async function runExtractNewsInsights(
     newsBatches.map(async (newsBatch) => {
       return proxy
         .runNewsInsightsExtractorExperiment({
-          symbol,
           newsIds: newsBatch,
           experimentId,
         })
@@ -50,25 +46,28 @@ export async function scrapeTickerNewsForPeriod(
   endDate?: Date,
 ) {
   const currentNews = await proxy.fetchTickerNews(symbol, startDate, endDate);
-  const scrapedNews = await executeChild(runScrapeTickerNews, {
-    args: [
-      {
-        symbol,
-        news: currentNews.map((n) => ({
-          ...n,
-          source: StockNewsSource.Finnhub,
-        })),
-      },
-    ],
-  });
-  await executeChild(runExtractNewsInsights, {
-    args: [
-      symbol,
-      scrapedNews
-        .filter((n) => n.status === StockNewsStatus.Scraped)
-        .map((n) => n.id),
-    ],
-  });
+
+  for (const batch of chunk(currentNews, 100)) {
+    const scrapedNews = await executeChild(runScrapeTickerNews, {
+      args: [
+        {
+          symbol,
+          news: batch.map((n) => ({
+            ...n,
+            source: StockNewsSource.Finnhub,
+          })),
+        },
+      ],
+      taskQueue: "zysk-scrapper",
+    });
+    await executeChild(runExtractNewsInsights, {
+      args: [
+        scrapedNews
+          .filter((n) => n.status === StockNewsStatus.Scraped)
+          .map((n) => n.id),
+      ],
+    });
+  }
 }
 
 export async function scrapeMarketNewsForPeriod(
@@ -141,7 +140,7 @@ export async function syncAllNewsWeekly(symbols: string[]) {
 }
 
 export async function testInsightsExtract() {
-  const startDate = parse("2025-07-21", "yyyy-MM-dd", new Date());
+  const startDate = parse("2025-08-04", "yyyy-MM-dd", new Date());
   for (const symbols of chunk(
     [
       "NBIS",

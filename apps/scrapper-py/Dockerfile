@@ -1,15 +1,75 @@
-FROM chetan1111/botasaurus:latest
+# syntax=docker/dockerfile:1.6
+# ./Dockerfile
 
-ENV PYTHONUNBUFFERED=1
+FROM python:3.11-slim AS builder
+ARG POETRY_VERSION=2.1.1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-COPY requirements.txt .
+# Build deps for compiling wheels (if needed by your deps)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git ca-certificates build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN python -m pip install -r requirements.txt
+# Install Poetry
+RUN pip install --upgrade pip \
+ && pip install "poetry==${POETRY_VERSION}"
+RUN poetry self add poetry-plugin-export
 
-RUN mkdir app
 WORKDIR /app
-COPY . /app
 
-RUN python run.py install
+# Copy lockfiles first for better Docker layer caching
+COPY pyproject.toml poetry.lock ./
 
-CMD ["python", "run.py"]
+# Export only the "main" dependencies (no dev/test) to a requirements file
+# If you use extras or groups, see notes below.
+RUN poetry export --no-cache --without-hashes --format=requirements.txt -o /tmp/requirements.txt --only main
+
+# Create a lightweight virtualenv and install deps there
+RUN python -m venv /opt/venv \
+ && /opt/venv/bin/pip install --no-cache-dir -r /tmp/requirements.txt
+
+# --- Runtime image ---
+FROM python:3.11-slim AS runtime
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+ARG TARGETARCH
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates gnupg wget xdg-utils \
+      # common runtime libs Chrome needs
+      libnss3 libxss1 libasound2 libgbm1 fonts-liberation libu2f-udev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    if [ "${TARGETARCH:-amd64}" = "amd64" ]; then \
+        apt-get update; \
+        mkdir -p /etc/apt/keyrings; \
+        wget -qO- https://dl.google.com/linux/linux_signing_key.pub \
+          | gpg --dearmor -o /etc/apt/keyrings/google-linux.gpg; \
+        echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/google-linux.gpg] http://dl.google.com/linux/chrome/deb/ stable main' \
+          > /etc/apt/sources.list.d/google-chrome.list; \
+        apt-get update && apt-get install -y --no-install-recommends google-chrome-stable \
+          && rm -rf /var/lib/apt/lists/*; \
+    else \
+        # arm64 path: use Debian Chromium and expose it as "google-chrome"
+        apt-get update && apt-get install -y --no-install-recommends chromium \
+          && rm -rf /var/lib/apt/lists/* \
+          && ln -sf /usr/bin/chromium /usr/bin/google-chrome; \
+    fi
+
+WORKDIR /app
+
+# If your app needs OS libs (e.g., libpq5), apt-get them here.
+# RUN apt-get update && apt-get install -y --no-install-recommends libpq5 && rm -rf /var/lib/apt/lists/*
+
+# Bring in the venv from the builder
+COPY --from=builder /opt/venv /opt/venv
+
+# Now copy the application code
+COPY . .
+
+# Default — API; K8s Deployment overrides for "worker"
+CMD ["python", "run.py", "backend"]

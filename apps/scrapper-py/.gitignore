@@ -1,9 +1,6 @@
-
-
 __pycache__/
 *.py[cod]
 *$py.class
-
 
 .env
 .venv
@@ -12,22 +9,16 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+logs.txt
 
-
-
-build/
-
+build
 /profiles/
-
 /output/
-
 /cache/
-
 /error_logs/
 /task_results/
 
 local_storage.json
-
 db.sqlite3
 
 **/.DS_Store

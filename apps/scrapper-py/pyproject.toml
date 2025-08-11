@@ -3,7 +3,7 @@ name = "scrapper-py"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "alex",email = "alex.borodach@gmail.com"}
+    {name = "alex", email = "alex.borodach@gmail.com"}
 ]
 package-mode = false
 readme = "README.md"
@@ -13,11 +13,9 @@ dependencies = [
     "bs4 (>=0.0.2,<0.0.3)",
     "botasaurus-driver (>=4.0.91,<5.0.0)",
     "markdownify (>=1.1.0,<2.0.0)",
-    "botasaurus @ file:///Users/alex/Documents/projects/zysk/main/packages/botasaurus",
-    "botasaurus-server @ file:///Users/alex/Documents/projects/zysk/main/packages/botasaurus/botasaurus_server",
     "python-dotenv (>=1.1.1,<2.0.0)",
-    "fastapi (>=0.116.0,<0.117.0)",
-    "uvicorn (>=0.35.0,<0.36.0)"
+    "botasaurus (>=4.0.60,<5.0.0)",
+    "botasaurus-server (>=4.0.60,<5.0.0)"
 ]
 
 [build-system]
@@ -35,5 +33,8 @@ select = ["E", "F", "I", "UP"]
 ruff = "^0.12.0"
 
 [tool.poetry.dependencies]
-botasaurus = {develop = true}
-botasaurus-server = {develop = true}
+botasaurus = { git = "https://github.com/barbatus/botasaurus.git@b846b27b6f8cafe23138310b5272863c942dc400", rev = "master" }
+botasaurus-server = { git = "https://github.com/barbatus/botasaurus.git@b846b27b6f8cafe23138310b5272863c942dc400", rev = "master", subdirectory = "botasaurus_server" }
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"

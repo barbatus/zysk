@@ -98,7 +98,6 @@ def get_proxy(
     max_retry=5,
     block_images_and_css=True,
     window_size=(430, 600),
-    parallel=100,
     output=None,
     close_on_crash=True,
     remove_default_browser_check_argument=True,
@@ -114,7 +113,6 @@ def scrape_md(driver: Driver, data):
     log_md = data.get("log_md", False)
 
     driver.enable_human_mode()
-    driver.short_random_sleep()
 
     def get_content(response) -> tuple[str, str]:
         url = response.evaluate("return window.location.href;")
