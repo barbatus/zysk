@@ -106,7 +106,6 @@ def get_proxy(
     headless=True,
     extensions=[Capsolver(api_key=os.getenv("CAPSOLVER_API_KEY"))],
     proxy=get_proxy,
-    cache=True,
 )
 def scrape_md(driver: Driver, data):
     link = data["link"]

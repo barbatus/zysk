@@ -1,0 +1,33 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: celery-worker
+spec:
+  scaleTargetRef:
+    name: celery-worker
+  pollingInterval: 5
+  cooldownPeriod: 1200
+  minReplicaCount: 0
+  maxReplicaCount: 1
+
+  triggers:
+    - type: external
+      name: scaler
+      metadata:
+        scalerAddress: "keda-autoscaler.default.svc.cluster.local:6000"
+        queue: "celery"
+        scaleLoadValue: "5"
+        activationLoadValue: "1"
+      metricType: AverageValue
+
+#     - type: redis
+#       metadata:
+#         addressFromEnv: REDIS_ADDRESS
+#         usernameFromEnv: REDIS_USERNAME
+#         passwordFromEnv: REDIS_PASSWORD
+#         enableTLS: "true"
+#         listName: celery
+#         listLength: "5"
+#         activationListLength: "1"
+#         activationValue: "1"
+#         databaseIndex: "0"

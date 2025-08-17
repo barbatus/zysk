@@ -2,7 +2,7 @@ resources:
   - ../../base
 patches:
   - path: service-patch.yaml
+  - path: keda-patch.yaml
 images:
   - name: IMAGE_PLACEHOLDER
-    newName: octopus
-    newTag: dev1
+    newName: IMAGE_PLACEHOLDER

@@ -120,7 +120,7 @@ export class TickerNewsService {
       });
   }
 
-  private async scrapeUrlsViaBotasaurus(params: {
+  private async scrapeUrlsViaOctopus(params: {
     urls: string[];
     useProxy?: boolean;
     convertToMd?: boolean;
@@ -153,7 +153,7 @@ export class TickerNewsService {
           id: string;
         },
       ]
-    >("http://localhost:8000/api/tasks/create-task-async", data);
+    >(`${this.appConfig.octopusUrl}/api/tasks/create-task-async`, data);
 
     const taskIds = tasks.data.map((task) => task.id);
 
@@ -172,7 +172,7 @@ export class TickerNewsService {
         };
       }[]
     >({
-      url: `http://localhost:8000/api/ui/tasks/results`,
+      url: `${this.appConfig.octopusUrl}/api/ui/tasks/results`,
       body: {
         task_ids: taskIds,
         filters: {},
@@ -276,7 +276,7 @@ export class TickerNewsService {
       onPoll?: () => void;
     }[]
   > {
-    return this.scrapeUrlsViaBotasaurus(params);
+    return this.scrapeUrlsViaOctopus(params);
   }
 
   async getTickerNews(
@@ -392,7 +392,7 @@ export class TickerNewsService {
         sql<string>`${JSON.stringify(update.mainSymbol)}`.as("mainSymbol"),
         sql<string>`${update.experimentId}::uuid`.as("experiementId"),
         sql<StockNewsStatus>`${StockNewsStatus.InsightsExtracted}`.as("status"),
-        sql<Date | null>`${update.newsDate ? String(update.newsDate) : "NULL"}::timestamp with time zone`.as(
+        sql<Date | null>`${update.newsDate ?? null}::timestamptz`.as(
           "newsDate",
         ),
       ];

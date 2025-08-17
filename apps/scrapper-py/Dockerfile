@@ -19,7 +19,7 @@ RUN poetry self add poetry-plugin-export
 WORKDIR /app
 
 # Copy lockfiles first for better Docker layer caching
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml poetry.lock .
 
 # Export only the "main" dependencies (no dev/test) to a requirements file
 # If you use extras or groups, see notes below.
@@ -29,7 +29,6 @@ RUN poetry export --no-cache --without-hashes --format=requirements.txt -o /tmp/
 RUN python -m venv /opt/venv \
  && /opt/venv/bin/pip install --no-cache-dir -r /tmp/requirements.txt
 
-# --- Runtime image ---
 FROM python:3.11-slim AS runtime
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -38,9 +37,11 @@ ENV PATH="/opt/venv/bin:$PATH" \
 ARG TARGETARCH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates gnupg wget xdg-utils \
+      ca-certificates gnupg wget xdg-utils curl \
       # common runtime libs Chrome needs
       libnss3 libxss1 libasound2 libgbm1 fonts-liberation libu2f-udev \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
@@ -62,14 +63,9 @@ RUN set -eux; \
 
 WORKDIR /app
 
-# If your app needs OS libs (e.g., libpq5), apt-get them here.
-# RUN apt-get update && apt-get install -y --no-install-recommends libpq5 && rm -rf /var/lib/apt/lists/*
-
 # Bring in the venv from the builder
 COPY --from=builder /opt/venv /opt/venv
 
-# Now copy the application code
 COPY . .
 
-# Default — API; K8s Deployment overrides for "worker"
 CMD ["python", "run.py", "backend"]

@@ -19,10 +19,13 @@ spec:
               cpu: "2"
               memory: "4Gi"
             limits:
-              cpu: "4"
+              cpu: "3"
               memory: "4Gi"
           securityContext:
             allowPrivilegeEscalation: false
+          envFrom:
+            - configMapRef:
+                name: app-config
       securityContext:
         runAsUser: 0
         runAsGroup: 0

@@ -183,6 +183,7 @@ export const AppConfigEnvVariablesSchema = z.object({
       ),
     )
     .optional(),
+  OCTOPUS_URL: z.string(),
 });
 
 export type AppConfigEnvVariables = z.infer<typeof AppConfigEnvVariablesSchema>;
@@ -250,6 +251,7 @@ export interface AppConfig {
     modelConfigs: BaseModelConfig[];
   };
   modelProviders?: Partial<Record<ModelKeyEnum, ModelProviderEnum>>;
+  octopusUrl: string;
 }
 
 function getPostgresConfig(
@@ -342,6 +344,7 @@ export function validate(config: Record<string, unknown>) {
           modelConfigs: appConfigValidated.GOOGLE_MODEL_CONFIGS!,
         }
       : undefined,
+    octopusUrl: appConfigValidated.OCTOPUS_URL,
   };
 
   return { config: appConfig };
