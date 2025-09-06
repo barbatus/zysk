@@ -1,0 +1,24 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: worker
+spec:
+  scaleTargetRef:
+    name: worker
+  pollingInterval: 5
+  cooldownPeriod: 1200
+  minReplicaCount: 1
+  maxReplicaCount: 1
+
+  triggers:
+    - type: temporal
+      metadata:
+        namespace: "zysk-dev.m0uvz"
+        taskQueue: "scraper-tasks"
+        targetQueueSize: "5"
+        activationTargetQueueSize: "0"
+        endpointFromEnv: TEMPORAL_URL
+        apiKeyFromEnv: TEMPORAL_API_KEY
+        queueTypes: "workflow,activity"
+        minConnectTimeout: "5"
+        unsafeSsl: "false"

@@ -1,9 +1,0 @@
-namespace: app
-resources:
-  - namespace.yaml
-  - api-deployment.yaml
-  - api-service.yaml
-  - worker-deployment.yaml
-  - keda-celery-autoscaler.yaml
-  - autoscaler-service.yaml
-  - keda/scaledobject-celery-worker.yaml

@@ -1,8 +1,0 @@
-resources:
-  - ../../base
-patches:
-  - path: service-patch.yaml
-images:
-  - name: IMAGE_PLACEHOLDER
-    newName: octopus
-    newTag: dev1

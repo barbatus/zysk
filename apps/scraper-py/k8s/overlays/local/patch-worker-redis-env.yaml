@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: app
+spec:
+  template:
+    spec:
+      containers:
+        - name: worker
+          env:
+            - name: REDIS_ADDRESS
+              value: "host.minikube.internal:6379"

@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keda-autoscaler
+  labels:
+    component: keda-autoscaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: keda-autoscaler
+  template:
+    metadata:
+      labels:
+        component: keda-autoscaler
+    spec:
+      containers:
+        - name: keda-autoscaler
+          image: "jerbob92/keda-celery-scaler:latest"
+          env:
+            - name: KCS_LOG_LEVEL
+              value: "info"
+            - name: KCS_WORKER_STALE_TIME
+              value: "10"
+            - name: KCS_WORKER_CLEANUP_INTERVAL
+              value: "5"
+            - name: KCS_WORKER_QUEUE_MAP
+              value: "worker:celery"
+            - name: KCS_REDIS_TYPE
+              value: "standalone"
+          ports:
+            - containerPort: 6000
+              name: keda-autoscaler
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

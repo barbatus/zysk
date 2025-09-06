@@ -1,0 +1,64 @@
+[project]
+name = "scraper-py"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "alex", email = "alex.borodach@gmail.com"}
+]
+package-mode = false
+readme = "README.md"
+requires-python = ">=3.11,<4"
+dependencies = [
+    "capsolver-extension-python (>=1.0.3,<2.0.0)",
+    "bs4 (>=0.0.2,<0.0.3)",
+    "markdownify (>=1.1.0,<2.0.0)",
+    "python-dotenv (>=1.1.1,<2.0.0)",
+    "hrequests[all] (>=0.9.2,<0.10.0)",
+    "requests (>=2.31,<3.0.0)",
+    "fastapi (>=0.112,<1.0.0)",
+    "uvicorn[standard] (>=0.30,<1.0.0)",
+    "pydantic (>=2.7,<3.0.0)",
+    "pydantic-settings (>=2.2,<3.0.0)",
+    "SQLAlchemy (>=2.0,<3.0.0)",
+    "temporalio (>=1.9,<2.0.0)",
+    "celery[redis] (>=5.3,<6.0.0)",
+    "lxml (>=5.1,<6.0.0)",
+    "asyncpg (>=0.29,<1.0.0)",
+    "aiosqlite (>=0.20,<1.0.0)",
+    "gevent (>=24.0,<25.0.0)",
+    "playwright (>=1.55.0,<2.0.0)",
+    "geventhttpclient (>=2.3.4,<3.0.0)",
+    "httpx (>=0.28.1,<0.29.0)"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.11.13"
+poethepoet = "^0.36.0"
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+fix = true
+include = ["app/**/*.py", "tests/**/*.py"]
+target-version = "py313"
+exclude = ["__pycache__"]
+lint.select = [
+  "E",  # pycodestyle
+  "F",  # pyflakes
+  "I",  # isort
+  "B",  # bugbear
+  "UP", # pyupgrade
+  "S",  # bandit-like security
+]
+lint.ignore = ["B011", "E501"]  # Allow assert statements in test files, allow long lines in multiline strings
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
+poethepoet = { version = "~0.36.0", extras = ["poetry_plugin"]}

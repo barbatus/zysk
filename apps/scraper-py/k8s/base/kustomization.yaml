@@ -1,0 +1,7 @@
+namespace: app
+resources:
+  - namespace.yaml
+  - api-deployment.yaml
+  - api-service.yaml
+  - worker-deployment.yaml
+  - keda/scaledobject-worker.yaml
