@@ -2,7 +2,7 @@ import asyncio
 from collections.abc import Awaitable, Coroutine, Sequence
 from dataclasses import dataclass
 from time import monotonic
-from typing import Any, TypeVar
+from typing import Any
 
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
@@ -19,10 +19,7 @@ def convert_to_markdown(html: str, remove_ul: bool = True) -> str:
     return md(str(soup))
 
 
-TaskResultT = TypeVar("TaskResultT")
-
-
-async def execute_concurrently(
+async def execute_concurrently[TaskResultT](
     awaitables: Sequence[Awaitable[TaskResultT]],
     raise_on_error: bool = False,
 ) -> tuple[dict[int, TaskResultT], dict[int, Exception]]:
@@ -56,7 +53,7 @@ class GatherStats:
         self.total_time_sec = round(self.total_time_sec, 2)
 
 
-async def execute_concurrently_stat(
+async def execute_concurrently_stat[TaskResultT](
     coroutines: Sequence[Coroutine[Any, Any, TaskResultT]],
     results_list: bool = False,
     *,

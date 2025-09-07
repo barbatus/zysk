@@ -1,13 +1,11 @@
-import asyncio
 import json
 from datetime import UTC, datetime
 from hashlib import sha256
-from time import sleep
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
-from .db_setup import AsyncSessionMaker, Session
+from .db_setup import get_async_session
 from .models import (
     Task,
     TaskStatus,
@@ -35,26 +33,15 @@ def extract_task_data(json_data):
 
 
 async def perform_create_tasks(tasks) -> list[str]:
-    async with AsyncSessionMaker() as session:
+    async with get_async_session() as session:
         session.add_all(tasks)
         await session.commit()
         return serialize(tasks)
 
 
-def is_task_done(task_id):
-    with Session() as session:
-        x = TaskHelper.is_task_completed_or_failed(session, task_id)
-    return x
-
-
-def create_task_query(ets, session):
-    return session.query(Task).with_entities(*ets)
-
-
-def queryTasks(ets, with_results, page=None, per_page=None, serializer=serialize_task):
-    with Session() as session:
-        tasks_query = create_task_query(ets, session)
-        total_count = tasks_query.count()
+async def queryTasks(with_results, page=None, per_page=None, serializer=serialize_task):
+    async with get_async_session() as session:
+        total_count = await session.scalar(select(func.count()).select_from(Task))
 
         if per_page is None:
             per_page = 1 if total_count == 0 else total_count
@@ -65,12 +52,12 @@ def queryTasks(ets, with_results, page=None, per_page=None, serializer=serialize
         total_pages = max((total_count + per_page - 1) // per_page, 1)
         page = int(page)
         page = max(min(page, total_pages), 1)
-        tasks_query = create_task_query(ets, session).order_by(Task.sort_id.desc())
+        tasks_query = select(Task).order_by(Task.sort_id.desc())
         if per_page is not None:
             per_page = int(per_page)
             start = (page - 1) * per_page
             tasks_query = tasks_query.limit(per_page).offset(start)
-        tasks = tasks_query.all()
+        tasks = (await session.scalars(tasks_query)).all()
         current_page = page if page is not None else 1
         next_page = current_page + 1 if (current_page * per_page) < total_count else None
         previous_page = current_page - 1 if current_page > 1 else None
@@ -84,7 +71,7 @@ def queryTasks(ets, with_results, page=None, per_page=None, serializer=serialize
 
 
 async def get_task_from_db(task_id):
-    async with AsyncSessionMaker() as session:
+    async with get_async_session() as session:
         task = await TaskHelper.get_task(session, task_id)
         if task:
             return serialize(task)
@@ -148,10 +135,10 @@ async def create_tasks(scraper, data, metadata, is_sync):
             ls.append({"key": key, "task_data": t})
             cache_keys.append(key)
         cache_map: dict[str, Any] = {}
-        async with AsyncSessionMaker() as session:
+        async with get_async_session() as session:
             query = select(Task).where(
                 Task.cached_key.in_(cache_keys),
-                Task.status.in_([TaskStatus.COMPLETED, TaskStatus.PENDING]),
+                Task.status.in_([TaskStatus.COMPLETED]),
             )
             result = (await session.scalars(query)).all()
             cache_map = {row.cached_key: row for row in result}
@@ -184,61 +171,6 @@ async def create_tasks(scraper, data, metadata, is_sync):
     return tasks
 
 
-def execute_sync_task(json_data):
-    scraper_name, data, metadata = extract_task_data(json_data)
-    tasks = asyncio.get_event_loop().run_until_complete(
-        create_tasks(REGISTRY.get_scraper(scraper_name), data, metadata, True)
-    )
-    for task in tasks:
-        task_id = task["id"]
-        while True:
-            if is_task_done(task_id):
-                break
-            sleep(0.1)
-    return asyncio.get_event_loop().run_until_complete(get_task_from_db(tasks[0]["id"]))
-
-
-def execute_sync_tasks(json_data):
-    validated_data_items = [extract_task_data(item) for item in json_data]
-    task_groups = []
-    for validated_data_item in validated_data_items:
-        scraper_name, data, metadata = validated_data_item
-        tasks = asyncio.get_event_loop().run_until_complete(
-            create_tasks(REGISTRY.get_scraper(scraper_name), data, metadata, True)
-        )
-        task_groups.append(tasks)
-    for group in task_groups:
-        for task in group:
-            task_id = task["id"]
-            while True:
-                if is_task_done(task_id):
-                    break
-                sleep(0.1)
-    results = []
-    for group in task_groups:
-        results.append(
-            asyncio.get_event_loop().run_until_complete(get_task_from_db(group[0]["id"]))
-        )
-    return results
-
-
-def get_ets(with_results):
-    return [
-        Task.id,
-        Task.status,
-        Task.scraper_name,
-        Task.result_count,
-        Task.is_sync,
-        Task.parent_task_id,
-        Task.data,
-        Task.meta_data,
-        Task.finished_at,
-        Task.started_at,
-        Task.created_at,
-        Task.updated_at,
-    ]
-
-
 def create_page_url(page, per_page, with_results):
     query_params = {}
     if page:
@@ -251,7 +183,7 @@ def create_page_url(page, per_page, with_results):
         return query_params
 
 
-def execute_get_tasks(query_params):
+async def execute_get_tasks(query_params):
     with_results = query_params.get("with_results", "true").lower() == "true"
     page = query_params.get("page")
     per_page = query_params.get("per_page")
@@ -259,11 +191,11 @@ def execute_get_tasks(query_params):
     page = int(page) if page is not None else 1
     per_page = int(per_page) if per_page is not None else None
 
-    return queryTasks(get_ets(with_results), with_results, page, per_page)
+    return await queryTasks(with_results, page, per_page)
 
 
 async def perform_get_task_results(task_id):
-    async with AsyncSessionMaker() as session:
+    async with get_async_session() as session:
         tasks = await TaskHelper.get_tasks_with_entities(
             session,
             [task_id],
@@ -288,7 +220,7 @@ async def execute_get_task_results(task_id):
 
 
 async def perform_get_tasks_results(task_ids):
-    async with AsyncSessionMaker() as session:
+    async with get_async_session() as session:
         tasks = await TaskHelper.get_tasks_with_entities(
             session,
             task_ids,
@@ -317,7 +249,7 @@ async def perform_get_tasks_results(task_ids):
 
 
 async def perform_patch_task(action, task_id):
-    async with AsyncSessionMaker() as session:
+    async with get_async_session() as session:
         query = select(
             Task.id,
             Task.parent_task_id,
@@ -328,10 +260,10 @@ async def perform_patch_task(action, task_id):
     if task:
         task = task[0:3]
         if action == "delete":
-            async with AsyncSessionMaker() as session:
+            async with get_async_session() as session:
                 await TaskHelper.delete_task(session, task[0])
                 await session.commit()
         elif action == "abort":
-            async with AsyncSessionMaker() as session:
+            async with get_async_session() as session:
                 await TaskHelper.abort_task(session, task[0])
                 await session.commit()

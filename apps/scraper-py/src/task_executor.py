@@ -5,17 +5,17 @@ from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import and_, or_, select, update
+from sqlalchemy import JSON, and_, bindparam, case, or_, select, update
 
 from .db_setup import get_async_session
 from .models import Task, TaskStatus
 from .registry import REGISTRY
 from .scrapers import ScraperConfig
-from .task_helper import TaskHelper
+from .task_helper import db_retry
 
 
 class TaskExecutor:
-    async def process_tasks(self, task_ids: list[int], on_heatbeat: Callable | None = None):
+    async def process_tasks(self, task_ids: list[int], on_heartbeat: Callable | None = None):
         tasks_json: list[dict[str, Any]] = []
         async with get_async_session() as session:
             stmt = (
@@ -74,106 +74,95 @@ class TaskExecutor:
                 tasks_json.append(task_dict)
             await session.commit()
 
-        await asyncio.gather(*(self.run_task(task_json, on_heatbeat) for task_json in tasks_json))
+        await asyncio.gather(
+            *(self.run_task(task_json, on_heartbeat=on_heartbeat) for task_json in tasks_json)
+        )
 
-    async def run_task(self, task, on_heatbeat: Callable | None):
+    async def run_task(self, task, on_heartbeat: Callable | None):
         task_id = task["id"]
         scraper_name = task["scraper_name"]
-        parent_task_id = task["parent_task_id"]
-        metadata = {"metadata": task["metadata"]} if task["metadata"] != {} else {}
         task_data = task["data"]
 
         fn = REGISTRY.get_scraping_function(scraper_name)
         exception_log = None
 
         try:
+            loop = asyncio.get_running_loop()
+
+            def on_heartbeat_threadsafe():
+                if on_heartbeat:
+                    loop.call_soon_threadsafe(on_heartbeat)
+
             result = await asyncio.to_thread(
                 fn,
                 config=ScraperConfig(**task_data),
-                **metadata,
+                on_heartbeat=on_heartbeat_threadsafe,
             )
             if is_dataclass(result):
                 result = asdict(result)
             if not isinstance(result, list):
                 result = [result]
-            await self.mark_task_as_success(
-                task_id,
-                result,
+            await self.mark_tasks_as_success(
+                [task_id],
+                [result],
             )
         except Exception:
             exception_log = traceback.format_exc()
             traceback.print_exc()
-            await self.mark_task_as_failure(task_id, exception_log)
-        finally:
-            if parent_task_id:
-                if exception_log:
-                    await self.update_parent_task(task_id, [])
-                else:
-                    await self.update_parent_task(task_id, result)
+            await self.mark_tasks_as_failure([task_id], [exception_log])
 
-    async def update_parent_task(self, task_id, result):
+    @db_retry
+    async def mark_tasks_as_failure(self, task_ids: list[int], exception_logs: list[str]):
+        if not task_ids:
+            return
+        if len(task_ids) != len(exception_logs):
+            raise ValueError("task_ids and exception_logs must have the same length")
         async with get_async_session() as session:
-            task_to_update = await session.get(Task, task_id)
-            parent_id = task_to_update.parent_task_id
-        if parent_id:
-            await self.complete_parent_task_if_possible(
-                parent_id,
-                result,
-            )
-
-    async def complete_parent_task_if_possible(self, parent_id, result):
-        async with get_async_session() as session:
-            parent_task = await TaskHelper.get_task(
-                session,
-                parent_id,
-                [TaskStatus.PENDING, TaskStatus.IN_PROGRESS],
-            )
-            if parent_task:
-                await TaskHelper.update_parent_task_results(
-                    session,
-                    parent_id,
-                    result,
+            mapping = {
+                tid: bindparam(f"result_{tid}", {"error": log}, type_=JSON)
+                for tid, log in zip(task_ids, exception_logs, strict=False)
+            }
+            result_case = case(mapping, value=Task.id, else_=Task.result)
+            await session.execute(
+                update(Task)
+                .where(Task.id.in_(task_ids))
+                .values(
+                    {
+                        "status": TaskStatus.FAILED,
+                        "finished_at": datetime.now(),
+                        "result": result_case,
+                    }
                 )
-                is_done = await TaskHelper.are_all_child_task_done(
-                    session,
-                    parent_id,
-                )
-                if is_done:
-                    await TaskHelper.update_task(
-                        session,
-                        parent_id,
-                        {
-                            "status": TaskStatus.COMPLETED,
-                            "finished_at": datetime.now(),
-                        },
-                    )
-                    await session.commit()
-
-    async def mark_task_as_failure(self, task_id, exception_log):
-        async with get_async_session() as session:
-            await TaskHelper.update_task(
-                session,
-                task_id,
-                {
-                    "status": TaskStatus.FAILED,
-                    "finished_at": datetime.now(),
-                    "result": exception_log,
-                },
-                [TaskStatus.IN_PROGRESS],
             )
             await session.commit()
 
-    async def mark_task_as_success(self, task_id, result):
+    @db_retry
+    async def mark_tasks_as_success(self, task_ids: list[int], results: list[list[Any]]):
+        if not task_ids:
+            return
+        if len(task_ids) != len(results):
+            raise ValueError("task_ids and results must have the same length")
         async with get_async_session() as session:
-            await TaskHelper.update_task(
-                session,
-                task_id,
-                {
-                    "result_count": len(result),
-                    "status": TaskStatus.COMPLETED,
-                    "finished_at": datetime.now(),
-                    "result": result,
-                },
-                [TaskStatus.IN_PROGRESS],
+            result_mapping = {
+                tid: bindparam(f"result_{tid}", res, type_=JSON)
+                for tid, res in zip(task_ids, results, strict=False)
+            }
+            count_mapping = {tid: len(res) for tid, res in zip(task_ids, results, strict=False)}
+            result_case = case(result_mapping, value=Task.id, else_=Task.result)
+            result_count_case = case(count_mapping, value=Task.id, else_=Task.result_count)
+            await session.execute(
+                update(Task)
+                .where(
+                    Task.id.in_(task_ids),
+                    Task.status.in_([TaskStatus.IN_PROGRESS]),
+                )
+                .values(
+                    {
+                        "result_count": result_count_case,
+                        "status": TaskStatus.COMPLETED,
+                        "finished_at": datetime.now(),
+                        "result": result_case,
+                    }
+                )
             )
             await session.commit()

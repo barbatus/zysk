@@ -8,6 +8,16 @@ from hrequests.proxies import evomi
 _browser_engine = BrowserEngine()
 
 
+class CamoufoxSession(BrowserSession):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def goto(self, url, *, timeout: float = 180_000, wait_until: str = "domcontentloaded"):
+        resp = self.page.goto(url, timeout=timeout, wait_until=wait_until)
+        self.status_code = resp.status
+        return resp
+
+
 class ProxyAuth(TypedDict):
     username: str
     key: str
@@ -24,7 +34,7 @@ def get_camoufox_session(*, proxy_auth: ProxyAuth | None = None) -> BrowserSessi
         else None,
     )
     headless = "virtual" if platform.system() == "Linux" else False
-    return BrowserSession(
+    return CamoufoxSession(
         engine=_browser_engine,
         session=session,
         mock_human=True,

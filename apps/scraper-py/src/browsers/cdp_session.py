@@ -58,7 +58,7 @@ class CDPSession:
         session: hrequests.session.TLSSession | None = None,
         resp: hrequests.response.Response | None = None,
         endpoint_url: str,
-        engine: Optional['BrowserEngine'] = None,
+        engine: Optional["BrowserEngine"] = None,
         **launch_options,
     ) -> None:
         # Remember session and resp to clone cookies back to when closing
@@ -88,7 +88,7 @@ class CDPSession:
 
         # Launch options
         self.launch_options: dict = launch_options
-        self.launch_options['endpoint_url'] = endpoint_url
+        self.launch_options["endpoint_url"] = endpoint_url
 
         # Start the browser
         self.start()
@@ -114,7 +114,7 @@ class CDPSession:
         if self.temp_engine:
             self.engine.stop()
 
-    def __enter__(self) -> 'CDPSession':
+    def __enter__(self) -> "CDPSession":
         return self
 
     def __exit__(self, *_) -> None:
@@ -124,20 +124,20 @@ class CDPSession:
     Common public functions
     """
 
-    def goto(self, url):
-        '''Navigate to a URL'''
-        resp = self.page.goto(url)
+    def goto(self, url, timeout: float = 180_000, wait_until: str = "domcontentloaded"):
+        """Navigate to a URL"""
+        resp = self.page.goto(url, timeout=timeout, wait_until=wait_until)
         self.status_code = resp.status
         return resp
 
     def awaitSelector(self, selector, *, timeout: float = 30):
-        '''
+        """
         Wait for a selector to exist
 
         Parameters:
             selector (str): Selector to wait for
             timeout (float, optional): Timeout in seconds. Defaults to 30.
-        '''
+        """
         self.page.wait_for_function(
             "selector => !!document.querySelector(selector)",
             arg=selector,
@@ -145,75 +145,75 @@ class CDPSession:
         )
 
     def getContent(self):
-        '''Get the page content'''
+        """Get the page content"""
         return self.page.content()
 
     def getCookies(self) -> RequestsCookieJar:
-        '''Get the page cookies'''
+        """Get the page cookies"""
         browser_cookies: list = self.context.cookies()
         return list_to_cookiejar(browser_cookies)
 
     def evaluate(self, script: str, arg: str | None = None):
-        '''
+        """
         Evaluate and return javascript
 
         Parameters:
             script (str): Javascript to evaluate in the page
             arg (str, optional): Argument to pass into the javascript function
-        '''
+        """
         try:
             return self.page.evaluate(script, arg=arg)
         except ERROR as e:
-            raise JavascriptException('Javascript eval exception') from e
+            raise JavascriptException("Javascript eval exception") from e
 
     @property
     def url(self) -> str:
-        '''Get the page url'''
+        """Get the page url"""
         return self.page.url
 
     @url.setter
     def url(self, url: str):
-        '''Go to page url'''
+        """Go to page url"""
         self.goto(url)
 
     @property
     def headers(self) -> CaseInsensitiveDict:
-        '''Get the page headers'''
+        """Get the page headers"""
         if self._headers:
             return CaseInsensitiveDict(self._headers)
 
         # Extract User-Agent
-        ua = self.evaluate('navigator.userAgent')
-        return CaseInsensitiveDict({'User-Agent': ua})
+        ua = self.evaluate("navigator.userAgent")
+        return CaseInsensitiveDict({"User-Agent": ua})
 
     @headers.setter
     def headers(self, headers: dict | CaseInsensitiveDict):
-        '''Set headers'''
+        """Set headers"""
         self.setHeaders(headers)
 
     @property
     def content(self) -> str:
-        '''Get the page url'''
+        """Get the page url"""
         return self.getContent()
 
     @property
     def cookies(self) -> RequestsCookieJar:
-        '''Get the context cookies'''
+        """Get the context cookies"""
         return self.getCookies()
 
     @cookies.setter
     def cookies(self, cookiejar: RequestsCookieJar):
-        '''Set the context cookies'''
+        """Set the context cookies"""
         self.setCookies(cookiejar)
 
     @property
-    def html(self) -> 'hrequests.parser.HTML':
-        '''Get the page html as an HTML object'''
+    def html(self) -> "hrequests.parser.HTML":
+        """Get the page html as an HTML object"""
         return hrequests.parser.HTML(session=self, url=self.url, html=self.content)
 
     @property
     def text(self) -> str:
-        '''Get the page text'''
+        """Get the page text"""
         return self.getContent()
 
     @property
@@ -230,23 +230,23 @@ class CDPSession:
             return status_codes[self.status_code]
 
     def setHeaders(self, headers: dict | CaseInsensitiveDict):
-        '''
+        """
         Set the browser headers
 
         Parameters:
             headers (Union[dict, CaseInsensitiveDict]): Headers to set
-        '''
+        """
         self._headers = {
             **headers,
             # convert lists to comma separated
-            **{k: ', '.join(v) for k, v in headers.items() if isinstance(v, list)},
+            **{k: ", ".join(v) for k, v in headers.items() if isinstance(v, list)},
         }
         self.context.set_extra_http_headers(self._headers)
 
     def loadText(self, text):
         # load content into page
         self.page.set_content(text)
-        self.page.wait_for_load_state('domcontentloaded')
+        self.page.wait_for_load_state("domcontentloaded")
 
     def setCookies(self, cookiejar: RequestsCookieJar):
         # convert cookiejar to list of dicts
@@ -270,7 +270,7 @@ class CDPSession:
             return
         # Context never started #66
         if self.context is None:
-            raise RuntimeError('Browser context was not initialized')
+            raise RuntimeError("Browser context was not initialized")
         cookiejar = self.getCookies()
         # Update session if provided
         if self.session:
@@ -296,9 +296,9 @@ def render(
     session: hrequests.session.TLSSession | None = None,
     **kwargs,
 ):
-    assert any(
-        (url, session, response is not None)
-    ), 'Must provide a url or an existing session, response'
+    assert any((url, session, response is not None)), (
+        "Must provide a url or an existing session, response"
+    )
 
     render_session = CDPSession(
         session=session,

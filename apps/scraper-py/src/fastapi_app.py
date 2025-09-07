@@ -15,8 +15,6 @@ from .routes_db_logic import (
     execute_async_tasks,
     execute_get_task_results,
     execute_get_tasks,
-    execute_sync_task,
-    execute_sync_tasks,
     get_task_from_db,
     perform_get_tasks_results,
     perform_patch_task,
@@ -87,17 +85,6 @@ async def create_task_async(task_request: TaskRequest | list[TaskRequest]):
     return result
 
 
-@app.post("/api/tasks/create-task-sync", response_model=TaskResponse | list[TaskResponse])
-async def create_task_sync(task_request: TaskRequest | list[TaskRequest]):
-    if isinstance(task_request, list):
-        json_data = [req.model_dump() for req in task_request]
-        result = execute_sync_tasks(json_data)
-    else:
-        json_data = task_request.model_dump()
-        result = execute_sync_task(json_data)
-    return result
-
-
 @app.get("/api/tasks")
 async def get_tasks(
     page: int = Query(1, ge=1),
@@ -109,7 +96,7 @@ async def get_tasks(
         "per_page": str(per_page) if per_page else None,
         "with_results": "true" if with_results else "false",
     }
-    result = execute_get_tasks(query_dict)
+    result = await execute_get_tasks(query_dict)
     return result
 
 
