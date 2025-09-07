@@ -2,7 +2,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import {
   DEEPSEEK_MODEL_KEYS,
-  getConfig,
+  getAgenticConfig,
   GOOGLE_MODEL_KEYS,
   type GoogleModelKey,
   META_MODEL_KEYS,
@@ -63,29 +63,29 @@ const isModelKeyEnum = (
 export function getMaxTokens(
   modelKey: ModelKeyEnum | ModelKeyEnumWithFallback,
 ) {
-  const appConfig = getConfig();
-  const config = MODEL_TO_MAX_TOKENS[modelKey];
+  const appConfig = getAgenticConfig();
+  const modelConfig = MODEL_TO_MAX_TOKENS[modelKey];
   if (
-    isObject(config) &&
+    isObject(modelConfig) &&
     isModelKeyEnum(modelKey) &&
     appConfig.modelProviders?.[modelKey] &&
-    config[appConfig.modelProviders[modelKey]]
+    modelConfig[appConfig.modelProviders[modelKey]]
   ) {
-    return config[appConfig.modelProviders[modelKey]];
+    return modelConfig[appConfig.modelProviders[modelKey]];
   }
-  return config as number;
+  return modelConfig as number;
 }
 
 function createSequentialModelContainer(
   modelKey: ModelKeyEnum,
   providers?: Partial<Record<ModelKeyEnum, ModelProviderEnum>>,
 ) {
-  const appConfig = getConfig();
-  const ratelimit = appConfig.upstash
+  const config = getAgenticConfig();
+  const ratelimit = config.upstash
     ? new Ratelimit({
         redis: new Redis({
-          url: appConfig.upstash.redisRestUrl,
-          token: appConfig.upstash.redisRestToken,
+          url: config.upstash.redisRestUrl,
+          token: config.upstash.redisRestToken,
         }),
         limiter: Ratelimit.fixedWindow(200_000, "60s"),
       })
@@ -129,11 +129,11 @@ const models = new Proxy(
   {} as Record<ModelKeyEnum, SequentialModelContainer | undefined>,
   {
     get: (target, prop: string) => {
-      const config = getConfig();
+      const appConfig = getAgenticConfig();
       const modelKey = prop as ModelKeyEnum;
       const model =
         target[modelKey] ??
-        createSequentialModelContainer(modelKey, config.modelProviders);
+        createSequentialModelContainer(modelKey, appConfig.modelProviders);
       target[modelKey] = model;
       return model;
     },

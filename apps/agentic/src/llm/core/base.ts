@@ -3,7 +3,7 @@ import { type AIMessage } from "@langchain/core/messages";
 import { type RunnableConfig } from "@langchain/core/runnables";
 import { type Ratelimit } from "@upstash/ratelimit";
 import {
-  getConfig,
+  getAgenticConfig,
   getLogger,
   type ModelKeyEnum,
   type ModelOwnerEnum,
@@ -27,7 +27,6 @@ import {
 } from "./exceptions";
 import { type ExecutionResult } from "./schemas";
 
-const appConfig = getConfig();
 const logger = getLogger();
 
 export type AnyLLMModelType = BaseChatModel;
@@ -70,6 +69,7 @@ export abstract class BaseLLMRunner implements AbstractRunner {
     message: string,
     config?: RunnableConfig,
   ): Promise<AIMessage | string> {
+    const appConfig = getAgenticConfig();
     const timeout =
       (config?.metadata?.timeout as number | undefined) ??
       appConfig.llmResponseTimeoutSec;

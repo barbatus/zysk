@@ -1,14 +1,14 @@
 import Redis, { type RedisOptions } from "ioredis";
 
-import { getAppConfigStatic, NodeEnvironment } from "./config";
+import { getAgenticConfigStatic, NodeEnvironment } from "./config";
 
-const config = getAppConfigStatic();
+const config = getAgenticConfigStatic();
 
 const redisOptions: RedisOptions = {
-  host: config.upstash?.redisRestUrl,
+  host: config.redis.host,
   port: 6379,
-  username: "default",
-  password: config.upstash?.redisRestToken,
+  username: config.redis.username,
+  password: config.redis.password,
   family: 6,
   maxRetriesPerRequest: null,
   tls: {},

@@ -3,11 +3,13 @@ import { startOfDay } from "date-fns";
 import { inject, injectable } from "inversify";
 import { omit } from "lodash";
 
-import { type AppConfig, appConfigSymbol } from "./config";
+import { AgenticConfig, agenticConfigSymbol } from "./config";
 
 @injectable()
 export class StockNewsApiService {
-  constructor(@inject(appConfigSymbol) private readonly appConfig: AppConfig) {}
+  constructor(
+    @inject(agenticConfigSymbol) private readonly appConfig: AgenticConfig,
+  ) {}
 
   async getTickerNews({
     symbol,

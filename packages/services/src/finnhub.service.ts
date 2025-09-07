@@ -2,13 +2,15 @@ import axios from "axios";
 import { format } from "date-fns";
 import { inject, injectable } from "inversify";
 
-import { type AppConfig, appConfigSymbol } from "./config";
+import { type AgenticConfig, agenticConfigSymbol } from "./config";
 
 const finnhubApiUrl = "https://finnhub.io/api/v1";
 
 @injectable()
 export class FinnhubService {
-  constructor(@inject(appConfigSymbol) private readonly appConfig: AppConfig) {}
+  constructor(
+    @inject(agenticConfigSymbol) private readonly appConfig: AgenticConfig,
+  ) {}
 
   async fetchUSTickers(symbols: string[]) {
     const response = await axios.get<

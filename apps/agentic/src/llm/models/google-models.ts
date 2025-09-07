@@ -1,6 +1,6 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import {
-  getConfig,
+  getAgenticConfig,
   type GoogleModelKey,
   ModelOwnerEnum,
   ModelProviderEnum,
@@ -39,7 +39,7 @@ export function getGoogleContainers(
   modelKey: GoogleModelKey,
   _provider: ModelProviderEnum,
 ) {
-  const appConfig = getConfig();
+  const appConfig = getAgenticConfig();
   if (!appConfig.google) {
     throw new Error("Google config not found");
   }

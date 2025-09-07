@@ -1,6 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai";
 import {
-  getConfig,
+  getAgenticConfig,
   type MetaModelKey,
   ModelOwnerEnum,
   ModelProviderEnum,
@@ -41,7 +41,7 @@ export function getMetaContainers(
   modelKey: MetaModelKey,
   _provider: ModelProviderEnum,
 ) {
-  const appConfig = getConfig();
+  const appConfig = getAgenticConfig();
   if (!appConfig.nebius) {
     throw new Error("Nebius config not found");
   }

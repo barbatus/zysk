@@ -4,7 +4,14 @@ import Redis from "ioredis";
 import { type Kysely } from "kysely";
 
 import { AlphaVantageService } from "./alpha-vantage.service";
-import { type AppConfig, appConfigSymbol, getAppConfigStatic } from "./config";
+import {
+  type AgenticConfig,
+  agenticConfigSymbol,
+  type AppConfig,
+  appConfigSymbol,
+  getAgenticConfigStatic,
+  getAppConfigStatic,
+} from "./config";
 import { CrawlerService } from "./crawler.service";
 import { appDBSymbol, createDb, dataDBSymbol } from "./db";
 import { ExperimentService } from "./experiment.service";
@@ -24,6 +31,9 @@ import { WatchlistService } from "./watchlist.service";
 export const container = new Container();
 
 container.bind(appConfigSymbol).toResolvedValue(() => getAppConfigStatic());
+container
+  .bind(agenticConfigSymbol)
+  .toResolvedValue(() => getAgenticConfigStatic());
 
 container.bind(redisClientSymbol).toResolvedValue(() => getRedisClient());
 
@@ -74,6 +84,10 @@ export function resolve<T extends (typeof services)[number] | typeof Redis>(
 
 export function getConfig(): AppConfig {
   return container.get<AppConfig>(appConfigSymbol);
+}
+
+export function getAgenticConfig(): AgenticConfig {
+  return container.get<AgenticConfig>(agenticConfigSymbol);
 }
 
 export function getLogger(): Logger {

@@ -2,7 +2,7 @@ import { AzureChatOpenAI } from "@langchain/openai";
 import {
   type AzureOpenAIDeploymentConfig,
   type AzureOpenAIServiceConfig,
-  getConfig,
+  getAgenticConfig,
   ModelKeyEnum,
   ModelOwnerEnum,
   ModelProviderEnum,
@@ -91,7 +91,7 @@ function getOpenaiContainers(config: AzureOpenAIModelConfig[]) {
 }
 
 export function getAzureLLMContainers(modelKey: OpenAIModelKey) {
-  const appConfig = getConfig();
+  const appConfig = getAgenticConfig();
   if (!appConfig.azureOpenAI) {
     throw new Error("Azure OpenAI config not found");
   }

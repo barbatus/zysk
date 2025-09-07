@@ -1,6 +1,6 @@
 import { ChatDeepSeek } from "@langchain/deepseek";
 import {
-  getConfig,
+  getAgenticConfig,
   type ModelKeyEnum,
   ModelOwnerEnum,
   ModelProviderEnum,
@@ -61,7 +61,7 @@ function getNebiusContainer(
 }
 
 function getModelConfig(modelKey: ModelKeyEnum, provider?: ModelProviderEnum) {
-  const appConfig = getConfig();
+  const appConfig = getAgenticConfig();
   const modelConfigs =
     provider === ModelProviderEnum.Nebius
       ? appConfig.nebius

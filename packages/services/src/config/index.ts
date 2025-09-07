@@ -99,34 +99,12 @@ export const AppConfigEnvVariablesSchema = z.object({
     .enum(["trace", "debug", "info", "warn", "error", "fatal"])
     .optional(),
   SENTRY_DSN: z.string().optional(),
-  ...appPostgresEnvVars.zodSchema,
-  UPSTASH_REDIS_REST_URL: z.string().nonempty().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().nonempty().optional(),
-  // REDIS_HOST: z.string().nonempty(),
-  // REDIS_PORT: z.preprocess(Number, z.number().positive()).default(6379),
-  // REDIS_PASSWORD: z.string().optional(),
-  // REDIS_TLS: z.preprocess((s) => Boolean(Number(s || "0")), z.boolean()),
   MAILGUN_API_KEY: z.string().optional(),
   MAILGUN_DOMAIN: z.string().optional(),
   MAILGUN_LOCAL_MAILER_HOSTNAME: z.string().optional(),
+
+  ...appPostgresEnvVars.zodSchema,
   // DRIZZLE_LOG_SQL: z.preprocess((s) => Boolean(Number(s || "0")), z.boolean()),
-  LLM_RESPONSE_TIMEOUT_SEC: z.number({ coerce: true }).default(300),
-  FINNHUB_API_KEY: z.string(),
-  AZURE_OPENAI_DEPLOYMENTS: z
-    .preprocess(
-      (val) => JSON.parse(val as string),
-      z.array(AzureOpenAIDeploymentConfigSchema),
-    )
-    .optional(),
-  AZURE_OPENAI_SERVICES: z
-    .preprocess(
-      (val) => JSON.parse(val as string),
-      z.array(AzureOpenAIServiceConfigSchema),
-    )
-    .optional(),
-  STOCK_NEWS_API_KEY: z.string(),
-  FIRECRAWL_API_KEY: z.string(),
-  ALPHA_VANTAGE_API_KEY: z.string(),
   OPENAI_API_KEY: z.string(),
   OPENAI_MODEL_CONFIGS: z
     .preprocess(
@@ -134,57 +112,85 @@ export const AppConfigEnvVariablesSchema = z.object({
       z.array(OpenAIModelConfigSchema),
     )
     .optional(),
-  DEEPSEEK_API_KEY: z.string().optional(),
-  DEEPSEEK_MODEL_CONFIGS: z
-    .preprocess(
-      (val) => JSON.parse(val as string),
-      z.array(
-        z.object({
-          providerModelName: z.string().optional(),
-          modelName: z.enum([ModelKeyEnum.DeepSeekReasoner]),
-          temperature: z.number(),
-        }),
-      ),
-    )
-    .optional(),
-  NEBIUS_API_KEY: z.string().optional(),
-  NEBIUS_MODEL_CONFIGS: z
-    .preprocess(
-      (val) => JSON.parse(val as string),
-      z.array(
-        z.object({
-          providerModelName: z.string().optional(),
-          modelName: z.enum([
-            ModelKeyEnum.DeepSeekReasoner,
-            ModelKeyEnum.Llama33,
-            ModelKeyEnum.DeepSeekLlama,
-          ]),
-          temperature: z.number(),
-        }),
-      ),
-    )
-    .optional(),
-  MODEL_PROVIDERS: z
-    .preprocess(
-      (val) => JSON.parse(val as string),
-      z.record(z.enum(MODEL_KEYS), z.enum(MODEL_PROVIDERS)),
-    )
-    .optional(),
-  GOOGLE_API_KEY: z.string().optional(),
-  GOOGLE_MODEL_CONFIGS: z
-    .preprocess(
-      (val) => JSON.parse(val as string),
-      z.array(
-        z.object({
-          providerModelName: z.string().optional(),
-          modelName: z.enum([ModelKeyEnum.GeminiFlash25]),
-          temperature: z.number(),
-        }),
-      ),
-    )
-    .optional(),
-  OCTOPUS_URL: z.string(),
 });
+
+export const AgenticConfigEnvVariablesSchema =
+  AppConfigEnvVariablesSchema.extend({
+    UPSTASH_REDIS_REST_URL: z.string().nonempty().optional(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().nonempty().optional(),
+    REDIS_HOST: z.string().nonempty(),
+    REDIS_PORT: z.preprocess(Number, z.number().positive()).default(6379),
+    REDIS_PASSWORD: z.string().optional(),
+    REDIS_USERNAME: z.string().optional(),
+    REDIS_TLS: z.preprocess((s) => Boolean(Number(s || "0")), z.boolean()),
+    LLM_RESPONSE_TIMEOUT_SEC: z.number({ coerce: true }).default(300),
+    FINNHUB_API_KEY: z.string(),
+    AZURE_OPENAI_DEPLOYMENTS: z
+      .preprocess(
+        (val) => JSON.parse(val as string),
+        z.array(AzureOpenAIDeploymentConfigSchema),
+      )
+      .optional(),
+    AZURE_OPENAI_SERVICES: z
+      .preprocess(
+        (val) => JSON.parse(val as string),
+        z.array(AzureOpenAIServiceConfigSchema),
+      )
+      .optional(),
+    STOCK_NEWS_API_KEY: z.string(),
+    FIRECRAWL_API_KEY: z.string(),
+    ALPHA_VANTAGE_API_KEY: z.string(),
+    DEEPSEEK_API_KEY: z.string().optional(),
+    DEEPSEEK_MODEL_CONFIGS: z
+      .preprocess(
+        (val) => JSON.parse(val as string),
+        z.array(
+          z.object({
+            providerModelName: z.string().optional(),
+            modelName: z.enum([ModelKeyEnum.DeepSeekReasoner]),
+            temperature: z.number(),
+          }),
+        ),
+      )
+      .optional(),
+    NEBIUS_API_KEY: z.string().optional(),
+    NEBIUS_MODEL_CONFIGS: z
+      .preprocess(
+        (val) => JSON.parse(val as string),
+        z.array(
+          z.object({
+            providerModelName: z.string().optional(),
+            modelName: z.enum([
+              ModelKeyEnum.DeepSeekReasoner,
+              ModelKeyEnum.Llama33,
+              ModelKeyEnum.DeepSeekLlama,
+            ]),
+            temperature: z.number(),
+          }),
+        ),
+      )
+      .optional(),
+    MODEL_PROVIDERS: z
+      .preprocess(
+        (val) => JSON.parse(val as string),
+        z.record(z.enum(MODEL_KEYS), z.enum(MODEL_PROVIDERS)),
+      )
+      .optional(),
+    GOOGLE_API_KEY: z.string().optional(),
+    GOOGLE_MODEL_CONFIGS: z
+      .preprocess(
+        (val) => JSON.parse(val as string),
+        z.array(
+          z.object({
+            providerModelName: z.string().optional(),
+            modelName: z.enum([ModelKeyEnum.GeminiFlash25]),
+            temperature: z.number(),
+          }),
+        ),
+      )
+      .optional(),
+    OCTOPUS_URL: z.string(),
+  });
 
 export type AppConfigEnvVariables = z.infer<typeof AppConfigEnvVariablesSchema>;
 
@@ -207,16 +213,6 @@ export interface AppConfig {
     dsn?: string;
   };
   postgres: PostgresConfig;
-  // redis: {
-  //   host: string;
-  //   port: number;
-  //   password?: string;
-  //   tls: boolean;
-  // };
-  upstash?: {
-    redisRestUrl: string;
-    redisRestToken: string;
-  };
   mailgun: {
     apiKey?: string;
     domain?: string;
@@ -225,6 +221,24 @@ export interface AppConfig {
   // drizzle: {
   //   logSql: boolean;
   // };
+  openAI?: {
+    apiKey: string;
+    modelConfigs: OpenAIModelConfig[];
+  };
+}
+
+export interface AgenticConfig extends AppConfig {
+  redis: {
+    host: string;
+    port: number;
+    username?: string;
+    password?: string;
+    tls: boolean;
+  };
+  upstash?: {
+    redisRestUrl: string;
+    redisRestToken: string;
+  };
   llmResponseTimeoutSec: number;
   finnhubApiKey: string;
   stockNewsApiKey: string;
@@ -275,11 +289,40 @@ function getPostgresConfig(
   };
 }
 
-export function validate(config: Record<string, unknown>) {
+export function validateAppConfig(config: Record<string, unknown>) {
   const appConfigValidated = AppConfigEnvVariablesSchema.parse(config);
 
   const nodeEnv = appConfigValidated.NODE_ENV;
   const appConfig: AppConfig = {
+    nodeEnv,
+    logLevel: appConfigValidated.LOG_LEVEL,
+    sentry: {
+      dsn: appConfigValidated.SENTRY_DSN,
+    },
+    postgres: {
+      ...getPostgresConfig(appConfigValidated, appPostgresEnvVars),
+    },
+    mailgun: {
+      apiKey: appConfigValidated.MAILGUN_API_KEY,
+      domain: appConfigValidated.MAILGUN_DOMAIN,
+      localMailerHostname: appConfigValidated.MAILGUN_LOCAL_MAILER_HOSTNAME,
+    },
+    openAI: appConfigValidated.OPENAI_API_KEY
+      ? {
+          apiKey: appConfigValidated.OPENAI_API_KEY,
+          modelConfigs: appConfigValidated.OPENAI_MODEL_CONFIGS!,
+        }
+      : undefined,
+  };
+
+  return { config: appConfig };
+}
+
+export function validateAgenticConfig(config: Record<string, unknown>) {
+  const appConfigValidated = AgenticConfigEnvVariablesSchema.parse(config);
+
+  const nodeEnv = appConfigValidated.NODE_ENV;
+  const appConfig: AgenticConfig = {
     nodeEnv,
     logLevel: appConfigValidated.LOG_LEVEL,
     sentry: {
@@ -294,12 +337,13 @@ export function validate(config: Record<string, unknown>) {
           redisRestToken: appConfigValidated.UPSTASH_REDIS_REST_TOKEN!,
         }
       : undefined,
-    // redis: {
-    //   host: appConfigValidated.REDIS_HOST,
-    //   port: appConfigValidated.REDIS_PORT,
-    //   password: appConfigValidated.REDIS_PASSWORD,
-    //   tls: appConfigValidated.REDIS_TLS,
-    // },
+    redis: {
+      host: appConfigValidated.REDIS_HOST,
+      port: appConfigValidated.REDIS_PORT,
+      password: appConfigValidated.REDIS_PASSWORD,
+      tls: appConfigValidated.REDIS_TLS,
+      username: appConfigValidated.REDIS_USERNAME,
+    },
     mailgun: {
       apiKey: appConfigValidated.MAILGUN_API_KEY,
       domain: appConfigValidated.MAILGUN_DOMAIN,
@@ -351,15 +395,28 @@ export function validate(config: Record<string, unknown>) {
 }
 
 let appConfigStatic: AppConfig | undefined;
+let agenticConfigStatic: AgenticConfig | undefined;
 
 export function getAppConfigStatic() {
   if (appConfigStatic !== undefined) {
     return appConfigStatic;
   }
 
-  const parsedAppConfig = validate(process.env);
+  const parsedAppConfig = validateAppConfig(process.env);
   appConfigStatic = parsedAppConfig.config;
   return appConfigStatic;
 }
 
+export function getAgenticConfigStatic() {
+  if (agenticConfigStatic !== undefined) {
+    return agenticConfigStatic;
+  }
+
+  const parsedAppConfig = validateAgenticConfig(process.env);
+  agenticConfigStatic = parsedAppConfig.config;
+  return agenticConfigStatic;
+}
+
 export const appConfigSymbol: symbol = Symbol.for("AppConfig");
+
+export const agenticConfigSymbol: symbol = Symbol.for("AgenticConfig");

@@ -3,7 +3,7 @@ import { subYears } from "date-fns";
 import { inject, injectable } from "inversify";
 import { isEmpty } from "lodash";
 
-import { type AppConfig, appConfigSymbol } from "#/config";
+import { type AgenticConfig, agenticConfigSymbol } from "#/config";
 import { RateLimitExceededError } from "#/utils/exceptions";
 
 function processResponse<
@@ -36,7 +36,9 @@ function processResponse<
 
 @injectable()
 export class AlphaVantageService {
-  constructor(@inject(appConfigSymbol) private readonly appConfig: AppConfig) {}
+  constructor(
+    @inject(agenticConfigSymbol) private readonly appConfig: AgenticConfig,
+  ) {}
 
   async fetchCompanyOverview(symbol: string) {
     const response = await axios.get<
