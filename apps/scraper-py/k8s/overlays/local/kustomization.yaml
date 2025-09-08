@@ -5,4 +5,4 @@ patches:
 images:
   - name: IMAGE_PLACEHOLDER
     newName: octopus
-    newTag: dev6
+    newTag: dev

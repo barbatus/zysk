@@ -7,15 +7,15 @@ import {
   StockNewsStatus,
 } from "@zysk/db";
 import axios, { AxiosError } from "axios";
-import axiosRetry from "axios-retry";
 import { startOfDay } from "date-fns";
 import { inject, injectable } from "inversify";
 import { type Kysely, NotNull, sql } from "kysely";
 import { keyBy } from "lodash";
 
-import { AppConfig, appConfigSymbol } from "./config";
+import { AgenticConfig, agenticConfigSymbol } from "./config";
 import { dataDBSymbol } from "./db";
 import { FinnhubService } from "./finnhub.service";
+import { apiWithRetry } from "./utils/axios";
 import {
   RateLimitExceededError,
   RequestTimeoutError,
@@ -23,20 +23,11 @@ import {
 import { type Logger, loggerSymbol } from "./utils/logger";
 import { Exact } from "./utils/types";
 
-const apiWithRetry = axios.create();
-axiosRetry(apiWithRetry, {
-  retries: 3,
-  retryDelay: axiosRetry.exponentialDelay.bind(axiosRetry),
-  retryCondition: (err) =>
-    axiosRetry.isNetworkOrIdempotentRequestError(err) ||
-    err.response?.statusText === "ECONNREFUSED",
-});
-
 @injectable()
 export class TickerNewsService {
   private readonly firecrawlApp: FirecrawlApp;
   constructor(
-    @inject(appConfigSymbol) private readonly appConfig: AppConfig,
+    @inject(agenticConfigSymbol) private readonly appConfig: AgenticConfig,
     @inject(dataDBSymbol) private readonly db: Kysely<DataDatabase>,
     @inject(loggerSymbol) private readonly logger: Logger,
     private readonly finnhubService: FinnhubService,
@@ -137,14 +128,8 @@ export class TickerNewsService {
     }[]
   > {
     const { urls, onPoll } = params;
-    const data = urls.map((link) => ({
-      data: {
-        link,
-        use_proxy: params.useProxy,
-        convert_to_md: params.convertToMd,
-        wait_for: params.waitFor,
-        timeout: params.timeout,
-      },
+    const data = urls.map((url) => ({
+      data: { url },
       scraper_name: "scrape_md",
     }));
     const tasks = await apiWithRetry.post<
@@ -153,37 +138,33 @@ export class TickerNewsService {
           id: string;
         },
       ]
-    >(`${this.appConfig.octopusUrl}/api/tasks/create-task-async`, data);
+    >(`${this.appConfig.octopusUrl}/api/tasks/create-task-async`, data, {
+      timeout: 60_000,
+    });
 
     const taskIds = tasks.data.map((task) => task.id);
 
     const results = await this.pollUntilCondition<
       {
+        id: string;
+        status: "completed" | "failed" | "pending" | "in_progress";
         results?: {
           url: string;
           markdown: string;
-          status: number;
           title?: string;
           description?: string;
         }[];
-        task: {
-          id: string;
-          status: "completed" | "failed" | "pending" | "in_progress";
-        };
       }[]
     >({
-      url: `${this.appConfig.octopusUrl}/api/ui/tasks/results`,
+      url: `${this.appConfig.octopusUrl}/api/tasks/results`,
       body: {
         task_ids: taskIds,
-        filters: {},
-        page: 1,
-        per_page: 100,
       },
       timeout: 300_000 * taskIds.length,
       condition: (response) => {
         return (
-          response.data.every((r) => r.task.status === "completed") ||
-          response.data.some((r) => r.task.status === "failed")
+          response.data.every((r) => r.status === "completed") ||
+          response.data.some((r) => r.status === "failed")
         );
       },
       onPoll,
@@ -191,7 +172,7 @@ export class TickerNewsService {
 
     return results.map((r, index) => {
       const result = r.results?.[0];
-      if (r.task.status === "failed" || !result || result.status !== 200) {
+      if (r.status === "failed" || !result) {
         return {
           url: urls[index],
           error: result

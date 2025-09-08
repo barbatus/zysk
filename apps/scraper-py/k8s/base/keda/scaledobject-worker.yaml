@@ -7,8 +7,8 @@ spec:
     name: worker
   pollingInterval: 5
   cooldownPeriod: 1200
-  minReplicaCount: 1
-  maxReplicaCount: 1
+  minReplicaCount: 0
+  maxReplicaCount: 10
 
   triggers:
     - type: temporal

@@ -8,6 +8,7 @@ import type * as activities from "./activities";
 
 const proxy = proxyActivities<typeof activities>({
   startToCloseTimeout: "1 hour",
+  heartbeatTimeout: "5 minute",
   retry: {
     nonRetryableErrorTypes: ["NonRetryable"],
     maximumAttempts: 3,

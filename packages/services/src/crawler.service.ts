@@ -1,5 +1,7 @@
-import axios from "axios";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
+
+import { AgenticConfig, agenticConfigSymbol } from "./config";
+import { apiWithRetry } from "./utils/axios";
 
 interface Filter {
   segment: string;
@@ -14,17 +16,40 @@ interface SitemapFilters {
 
 @injectable()
 export class CrawlerService {
-  async sitemapLinks(domain: string, filters: SitemapFilters) {
-    const links = await this.sitemapLinksViaBotasaurus(domain, filters);
+  constructor(
+    @inject(agenticConfigSymbol) private readonly appConfig: AgenticConfig,
+  ) {}
+
+  async sitemapLinks(params: {
+    domain: string;
+    filters: SitemapFilters[];
+    from?: Date;
+    to?: Date;
+  }) {
+    const { domain, filters, from, to } = params;
+    const links = await this.sitemapLinksViaOctopus({
+      domain,
+      filters,
+      from,
+      to,
+    });
     return links;
   }
 
-  async sitemapLinksViaBotasaurus(domain: string, filters: SitemapFilters) {
-    const links = await axios.post<string[]>(
-      "http://localhost:8000/api/sitemaps/links",
+  async sitemapLinksViaOctopus(params: {
+    domain: string;
+    filters: SitemapFilters[];
+    from?: Date;
+    to?: Date;
+  }) {
+    const { domain, filters, from, to } = params;
+    const links = await apiWithRetry.post<string[]>(
+      `${this.appConfig.octopusUrl}/api/sitemaps/links`,
       {
         domain,
-        ...filters,
+        filters,
+        from,
+        to,
       },
     );
     return links.data;

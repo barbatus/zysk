@@ -12,9 +12,9 @@ export const SUPPORTED_TICKERS = [
 
 export const NEWS_SOURCES = [
   { name: "Yahoo Finance", url: "finance.yahoo.com", supported: true },
-  { name: "Seeking Alpha", url: "seekingalpha.com" },
+  { name: "Seeking Alpha", url: "seekingalpha.com", supported: true },
   { name: "Fool.com", url: "fool.com" },
-  { name: "MarketWatch", url: "marketwatch.com" },
+  { name: "MarketWatch", url: "marketwatch.com", supported: true },
   { name: "CNBC", url: "cnbc.com" },
   { name: "Barron's", url: "barrons.com" },
   { name: "Barchart", url: "barchart.com" },
