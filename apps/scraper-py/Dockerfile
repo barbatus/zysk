@@ -49,4 +49,7 @@ COPY --from=builder /opt/venv /opt/venv
 
 COPY . .
 
+# # Camoufox fetch (downloads its Firefox build & data)
+RUN /opt/venv/bin/python -m camoufox fetch
+
 CMD ["python", "run.py", "backend"]

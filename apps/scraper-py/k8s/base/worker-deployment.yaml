@@ -10,6 +10,9 @@ spec:
     metadata:
       labels: { app: worker }
     spec:
+      hostAliases:
+        - ip: "127.0.0.1"
+          hostnames: ["localhost"]
       containers:
         - name: worker
           image: IMAGE_PLACEHOLDER

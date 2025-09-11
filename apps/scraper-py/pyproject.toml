@@ -13,7 +13,6 @@ dependencies = [
     "bs4 (>=0.0.2,<0.0.3)",
     "markdownify (>=1.1.0,<2.0.0)",
     "python-dotenv (>=1.1.1,<2.0.0)",
-    "hrequests[all] (>=0.9.2,<0.10.0)",
     "requests (>=2.31,<3.0.0)",
     "fastapi (>=0.112,<1.0.0)",
     "pydantic (>=2.7,<3.0.0)",
@@ -29,8 +28,10 @@ dependencies = [
     "geventhttpclient (>=2.3.4,<3.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
     "uvicorn (>=0.35.0,<0.36.0)",
-    "retrying-async (>=2.0.0,<3.0.0)",
-    "retrying (>=1.4.2,<2.0.0)"
+    "retrying (>=1.4.2,<2.0.0)",
+    "hrequests (>=0.9.2,<0.10.0)",
+    "camoufox (>=0.4.11,<0.5.0)",
+    "patchright (>=1.55.1,<2.0.0)"
 ]
 
 [build-system]
@@ -40,6 +41,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.11.13"
 poethepoet = "^0.36.0"
+hrequests = { git = "https://github.com/barbatus/hrequests", rev = "9956cf23f97444c977bfdd5bf3fa6cfe617dcc92" }
 
 [tool.ruff]
 line-length = 100

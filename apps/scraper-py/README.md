@@ -66,4 +66,6 @@ Check current env vars: `kubectl exec -n app <pod-name> -- printenv`.
 
 ### GKE Setup
 
+Switch to GKE context `gcloud container clusters get-credentials zysk-dev --region europe-central2 --project zysk-dev`
+
 To deploy to GKE `zysk-dev` cluster: `./k8s_gke.sh`.

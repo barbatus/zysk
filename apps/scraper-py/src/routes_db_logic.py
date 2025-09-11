@@ -1,4 +1,6 @@
+import asyncio
 import json
+from collections import defaultdict
 from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Any
@@ -29,7 +31,7 @@ def extract_task_data(json_data):
     data = json_data.get("data", {})
     metadata = {}
     validate_scraper_name(scraper_name)  # Still validate scraper exists
-    return scraper_name, data, metadata
+    return scraper_name, {"data": data, "metadata": metadata}
 
 
 async def perform_create_tasks(tasks) -> list[str]:
@@ -82,41 +84,34 @@ async def get_task_from_db(task_id):
 OK_MESSAGE = {"message": "OK"}
 
 
-async def create_async_task(validated_data) -> Task:
-    scraper_name, data, metadata = validated_data
-    tasks = await create_tasks(REGISTRY.get_scraper(scraper_name), data, metadata, False)
-    return tasks[0]
-
-
-async def execute_async_task(json_data):
-    result = await create_async_task(extract_task_data(json_data))
-    if result["status"] != TaskStatus.COMPLETED:
-        await run_scrape_workflow([result["id"]])
-    return result
-
-
 async def execute_async_tasks(json_data):
     validated_data_items = [extract_task_data(item) for item in json_data]
+    scraper_data = defaultdict(list)
+    for scraper_name, data in validated_data_items:
+        scraper_data[scraper_name].append(data)
+
     tasks = [
-        await create_async_task(validated_data_item) for validated_data_item in validated_data_items
+        create_tasks(REGISTRY.get_scraper(scraper_name), data)
+        for scraper_name, data in scraper_data.items()
     ]
+    responses = await asyncio.gather(*tasks)
+    tasks = [item for sublist in responses for item in sublist]
     await run_scrape_workflow(
         [task["id"] for task in tasks if task["status"] != TaskStatus.COMPLETED]
     )
     return tasks
 
 
-async def create_tasks(scraper, data, metadata, is_sync):
+async def create_tasks(scraper, tasks_data):
     scraper_name = scraper["scraper_name"]
 
     all_task_sort_id = int(datetime.now(UTC).timestamp())
-    tasks_data = [data]
 
-    def create_task(task_data, cached_key: str, sort_id: int):
+    def create_task(task_data, cached_key: str, metadata: dict, sort_id: int):
         return Task(
             status=TaskStatus.PENDING,
             scraper_name=scraper_name,
-            is_sync=is_sync,
+            is_sync=False,
             parent_task_id=None,
             data=task_data,
             meta_data=metadata,
@@ -128,11 +123,11 @@ async def create_tasks(scraper, data, metadata, is_sync):
         return scraper_name + "-" + sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
     async def create_cached_tasks():
-        ls: dict[str, Any] = []
+        ls: list[dict[str, Any]] = []
         cache_keys: list[str] = []
         for t in tasks_data:
-            key = create_cache_key(scraper_name, t)
-            ls.append({"key": key, "task_data": t})
+            key = create_cache_key(scraper_name, t["data"])
+            ls.append({"key": key, **t})
             cache_keys.append(key)
         cache_map: dict[str, Any] = {}
         async with get_async_session() as session:
@@ -151,7 +146,7 @@ async def create_tasks(scraper, data, metadata, is_sync):
                 cached_tasks.append(cached_task)
             else:
                 sort_id = all_task_sort_id - (idx + 1)
-                tasks.append(create_task(item["task_data"], item["key"], sort_id))
+                tasks.append(create_task(item["data"], item["key"], item["metadata"], sort_id))
         return tasks, cached_tasks
 
     if settings.cache_enabled:

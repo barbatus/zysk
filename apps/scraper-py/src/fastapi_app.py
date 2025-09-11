@@ -11,7 +11,6 @@ from pydantic import BaseModel, Field
 from .links import Filters
 from .routes_db_logic import (
     OK_MESSAGE,
-    execute_async_task,
     execute_async_tasks,
     execute_get_task_results,
     execute_get_tasks,
@@ -76,12 +75,12 @@ def api_root() -> dict[str, str]:
 
 @app.post("/api/tasks/create-task-async", response_model=TaskResponse | list[TaskResponse])
 async def create_task_async(task_request: TaskRequest | list[TaskRequest]):
-    if isinstance(task_request, list):
-        json_data = [req.model_dump() for req in task_request]
-        result = await execute_async_tasks(json_data)
-    else:
-        json_data = task_request.model_dump()
-        result = await execute_async_task(json_data)
+    json_data = (
+        [req.model_dump() for req in task_request]
+        if isinstance(task_request, list)
+        else [task_request.model_dump()]
+    )
+    result = await execute_async_tasks(json_data)
     return result
 
 

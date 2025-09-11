@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass
+from time import monotonic
 from urllib.parse import urlparse
 
 from hrequests import BrowserSession
@@ -33,6 +34,9 @@ def scrape_md(
         if on_heartbeat:
             on_heartbeat()
 
+        print(f"Scraping {config.url}")
+        time = monotonic()
+
         domain = urlparse(config.url).netloc.replace("www.", "")
         page = get_session(use_proxy=config.use_proxy, use_cdp=config.use_cdp)
 
@@ -51,12 +55,14 @@ def scrape_md(
             on_heartbeat()
 
         markdown = convert_to_markdown(page.content, remove_ul=config.remove_ul)
+
         if check_bot_is_detected(page) or len(markdown) <= 100:
+            page.close()
             raise BotDetectedException(config.url)
 
         page.close()
 
-        print(f"{config.url} is scraped successfully")
+        print(f"{config.url} is scraped successfully in {round(monotonic() - time, 2)} seconds")
 
         return ScrapeResult(
             url=url,
@@ -73,9 +79,6 @@ def scrape_md(
         use_proxy = is_bot_detected
 
         use_cdp = config.use_proxy and is_bot_detected
-
-        if page:
-            page.close()
 
         return scrape_md(
             config=ScraperConfig(
