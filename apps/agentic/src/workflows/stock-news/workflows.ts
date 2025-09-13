@@ -1,5 +1,5 @@
 import { executeChild, proxyActivities, uuid4 } from "@temporalio/workflow";
-import { StockNewsSource, StockNewsStatus } from "@zysk/db";
+import { StockNewsSource, StockNewsStatus } from "@zysk/shared";
 import { addDays, parse } from "date-fns";
 import { chunk } from "lodash";
 
@@ -48,7 +48,7 @@ export async function scrapeTickerNewsForPeriod(
   const currentNews = await proxy.fetchTickerNews(symbol, startDate, endDate);
 
   for (const batch of chunk(currentNews, 100)) {
-    const scrapedNews = await executeChild(runScrapeTickerNews, {
+    const scrapedNews = (await executeChild(runScrapeTickerNews, {
       args: [
         {
           symbol,
@@ -59,7 +59,10 @@ export async function scrapeTickerNewsForPeriod(
         },
       ],
       taskQueue: "zysk-scrapper",
-    });
+    })) as {
+      status: StockNewsStatus;
+      id: string;
+    }[];
     await executeChild(runExtractNewsInsights, {
       args: [
         scrapedNews
@@ -140,7 +143,7 @@ export async function syncAllNewsWeekly(symbols: string[]) {
 }
 
 export async function testInsightsExtract() {
-  const startDate = parse("2025-08-04", "yyyy-MM-dd", new Date());
+  const startDate = parse("2025-08-11", "yyyy-MM-dd", new Date());
   for (const symbols of chunk(
     [
       "NBIS",

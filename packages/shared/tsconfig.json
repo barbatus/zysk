@@ -1,0 +1,13 @@
+{
+  "extends": "@zysk/typescript-config/node.json",
+  "display": "shared",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "#/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "reset.d.ts"]
+}

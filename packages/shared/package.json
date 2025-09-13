@@ -1,0 +1,25 @@
+{
+  "name": "@zysk/shared",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "build": "tsc && tsc-alias",
+    "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
+    "lint": "eslint . --ext .ts --color",
+    "lint:fix": "pnpm lint --fix"
+  },
+  "devDependencies": {
+    "@zysk/eslint-config": "workspace:*",
+    "@zysk/typescript-config": "workspace:*",
+    "@total-typescript/ts-reset": "^0.6.1",
+    "concurrently": "^9.1.2",
+    "tsc-alias": "^1.8.16",
+    "typescript": "catalog:typescript"
+  }
+}

@@ -12,8 +12,10 @@
     "build": "tsc && tsc-alias",
     "temporal": "temporal server start-dev",
     "dev:build": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
-    "dev": "npm-run-all --parallel dev:build start:worker",
-    "start:worker": "nodemon dist/worker",
+    "dev": "tsx watch --clear-screen=false --include src/workflows src/worker.ts -- --main --scrapper",
+    "dev:main": "tsx watch --clear-screen=false --include src/workflows src/worker.ts --main",
+    "dev:scrapper": "tsx watch --clear-screen=false --include src/workflows src/worker.ts --scrapper",
+    "start:worker": "node dist/worker",
     "lint": "eslint . --ext .ts --color",
     "lint:fix": "pnpm lint --fix",
     "test": "tsx src/test.ts"
@@ -33,9 +35,11 @@
     "@zysk/db": "workspace:*",
     "@zysk/scrapper": "workspace:*",
     "@zysk/services": "workspace:*",
+    "@zysk/shared": "workspace:*",
     "@zysk/ts-rest": "workspace:*",
     "axios": "catalog:axios",
     "axios-retry": "^4.5.0",
+    "commander": "^12.1.0",
     "date-fns": "^4.1.0",
     "dedent": "^1.6.0",
     "dotenv": "^16.4.5",
@@ -62,6 +66,7 @@
     "npm-run-all": "^4.1.5",
     "tsc-alias": "^1.8.16",
     "tsx": "^4.19.4",
-    "typescript": "catalog:typescript"
+    "typescript": "catalog:typescript",
+    "webpack": "5.96.1"
   }
 }

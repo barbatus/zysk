@@ -1,5 +1,5 @@
 import { ApplicationFailure, proxyActivities } from "@temporalio/workflow";
-import { type StockNewsSource, StockNewsStatus } from "@zysk/db";
+import { type StockNewsSource, StockNewsStatus } from "@zysk/shared";
 import { chunk } from "lodash";
 
 import type * as activities from "./activities";
@@ -29,7 +29,12 @@ export async function runScrapeTickerNews(params: {
 }) {
   const { symbol, news } = params;
 
-  const attemptedNews = (
+  const attemptedNews: PromiseSettledResult<
+    {
+      id: string;
+      status: StockNewsStatus;
+    }[]
+  >[] = (
     await Promise.allSettled(
       chunk(news, 30).map((batch) =>
         proxy.scrapeTickerNewsUrlsAndSave({ symbol, news: batch }),
@@ -59,10 +64,9 @@ export async function runScrapeTickerNews(params: {
 }
 
 export async function testScrapeNews() {
-  const news = await proxy.scrapeUrls({
+  await proxy.scrapeUrls({
     urls: [
       `https://finnhub.io/api/news?id=dd2e6faf9bf2138b2904793cf03d3257d77b07d316db23734569622086e255b6`,
     ],
   });
-  console.log(news);
 }
