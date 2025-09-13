@@ -1,4 +1,4 @@
-import { scrapeUrls } from "@zysk/scrapper";
+import { scrapeUrls } from "@zysk/scraper";
 
 async function main() {
   const content = await scrapeUrls({

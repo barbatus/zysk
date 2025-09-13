@@ -3,7 +3,7 @@ import { StockNewsSource, StockNewsStatus } from "@zysk/shared";
 import { addDays, parse } from "date-fns";
 import { chunk } from "lodash";
 
-import { runScrapeTickerNews } from "#/workflows/scrapper/workflows";
+import { runScrapeTickerNews } from "#/workflows/scraper/workflows";
 
 import type * as activities from "./activities";
 
@@ -58,7 +58,7 @@ export async function scrapeTickerNewsForPeriod(
           })),
         },
       ],
-      taskQueue: "zysk-scrapper",
+      taskQueue: "zysk-scraper",
     })) as {
       status: StockNewsStatus;
       id: string;

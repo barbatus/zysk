@@ -1,4 +1,4 @@
-import { PageLoadError, scrapeUrls } from "@zysk/scrapper";
+import { PageLoadError, scrapeUrls } from "@zysk/scraper";
 import { getRedisClient } from "@zysk/services";
 import { Queue, Worker } from "bullmq";
 

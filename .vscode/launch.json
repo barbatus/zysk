@@ -20,10 +20,10 @@
         "command": "pnpm run dev:web"
       },
       {
-        "name": "Scrapper",
+        "name": "Scraper",
         "type": "node-terminal",
         "request": "launch",
-        "command": "pnpm run dev:scrapper"
+        "command": "pnpm run dev:scraper"
       }
   ],
   "compounds": [

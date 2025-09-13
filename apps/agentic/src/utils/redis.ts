@@ -2,7 +2,7 @@ import { resolve } from "@zysk/services";
 import Redis from "ioredis";
 import { keyBy } from "lodash";
 
-export async function memoizeScrapperUrls(
+export async function memoizeScraperUrls(
   urls: string[],
   format: "md" | "html",
   callback: (urls: string[]) => Promise<
@@ -17,7 +17,7 @@ export async function memoizeScrapperUrls(
   const cachedUrls = keyBy(
     (
       await Promise.allSettled(
-        urls.map((url) => redis.get(`scrapper:urls:format:${format}:${url}`)),
+        urls.map((url) => redis.get(`scraper:urls:format:${format}:${url}`)),
       )
     )
       .map((r, index) => {
@@ -51,7 +51,7 @@ export async function memoizeScrapperUrls(
   await Promise.allSettled(
     contentToCache.map((r) =>
       redis.set(
-        `scrapper:urls:format:${format}:${r.url}`,
+        `scraper:urls:format:${format}:${r.url}`,
         r.content,
         "EX",
         "5 minutes",

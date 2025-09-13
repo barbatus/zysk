@@ -1,5 +1,5 @@
 {
-  "name": "@zysk/scrapper-api",
+  "name": "@zysk/scraper",
   "version": "0.1.0",
   "private": true,
   "main": "./dist/index.js",
@@ -10,23 +10,21 @@
   ],
   "scripts": {
     "build": "tsc && tsc-alias",
-    "dev:build": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
-    "dev": "npm-run-all --parallel dev:build start",
-    "start": "nodemon dist/server.js --watch",
+    "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
     "lint": "eslint . --ext .ts --color",
     "lint:fix": "pnpm lint --fix"
   },
   "dependencies": {
-    "@bull-board/api": "^6.9.6",
-    "@bull-board/fastify": "^6.9.6",
-    "@zysk/services": "workspace:*",
-    "bullmq": "^5.53.1",
     "dotenv": "^16.4.5",
-    "fastify": "^5.3.1",
-    "ioredis": "^5.6.1",
+    "puppeteer": "^24.10.0",
+    "puppeteer-core": "^22.3.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-recaptcha": "^3.6.8",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "turndown": "^7.1.2",
+    "user-agents": "^1.0.1444",
     "zod": "catalog:zod",
-    "@zysk/scrapper": "workspace:*"
+    "@zysk/services": "workspace:*"
   },
   "devDependencies": {
     "@types/turndown": "^5.0.4",

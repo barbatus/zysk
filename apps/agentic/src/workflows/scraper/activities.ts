@@ -8,7 +8,7 @@ import {
 import {
   PageLoadError,
   scrapeUrls as scrapeUrlsViaBrowser,
-} from "@zysk/scrapper";
+} from "@zysk/scraper";
 import {
   type Exact,
   getLogger,
@@ -19,7 +19,7 @@ import { mapKeys, omit, uniqBy } from "lodash";
 // eslint-disable-next-line camelcase
 import { encoding_for_model } from "tiktoken";
 
-import { memoizeScrapperUrls } from "../../utils/redis";
+import { memoizeScraperUrls } from "../../utils/redis";
 
 export async function scrapeUrls(params: {
   urls: string[];
@@ -40,7 +40,7 @@ export async function scrapeUrls(params: {
 
   const format = convertToMd ? "md" : "html";
 
-  return await memoizeScrapperUrls(
+  return await memoizeScraperUrls(
     urls,
     format,
     async (urlsToScrape: string[]) => {

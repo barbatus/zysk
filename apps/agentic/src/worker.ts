@@ -6,11 +6,11 @@ import type { Configuration as WebpackConfiguration } from "webpack";
 
 import * as activities from "./activities";
 import * as crawlerActivities from "./workflows/crawler/activities";
-import * as scrapperActivities from "./workflows/scrapper/activities";
+import * as scraperActivities from "./workflows/scraper/activities";
 
 interface RunOptions {
   runMain: boolean;
-  runScrapper: boolean;
+  runScraper: boolean;
 }
 
 async function run(options: RunOptions) {
@@ -48,13 +48,13 @@ async function run(options: RunOptions) {
     runs.push(workerMain.run());
   }
 
-  if (options.runScrapper) {
-    const workerScrapper = await Worker.create({
+  if (options.runScraper) {
+    const workerScraper = await Worker.create({
       connection,
-      taskQueue: "zysk-scrapper",
-      workflowsPath: require.resolve("./workflows/scrapper-workflows"),
+      taskQueue: "zysk-scraper",
+      workflowsPath: require.resolve("./workflows/scraper-workflows"),
       activities: {
-        ...scrapperActivities,
+        ...scraperActivities,
         ...crawlerActivities,
       },
       // 30 activities per minute
@@ -62,12 +62,12 @@ async function run(options: RunOptions) {
       maxConcurrentActivityTaskExecutions: 20,
       bundlerOptions,
     });
-    runs.push(workerScrapper.run());
+    runs.push(workerScraper.run());
   }
 
   if (runs.length === 0) {
     console.warn(
-      "No workers selected to run. Use --main and/or --scrapper flags, " +
+      "No workers selected to run. Use --main and/or --scraper flags, " +
         "or run without flags to start both.",
     );
     return;
@@ -81,18 +81,18 @@ program
   .name("agentic-worker")
   .description("Temporal workers for Zysk")
   .option("--main", "Run main worker (taskQueue: zysk-data)")
-  .option("--scrapper", "Run scrapper worker (taskQueue: zysk-scrapper)");
+  .option("--scraper", "Run scraper worker (taskQueue: zysk-scraper)");
 
 program.parse(process.argv);
 const opts = program.opts<{
   main?: boolean;
-  scrapper?: boolean;
+  scraper?: boolean;
 }>();
 
 const runMain = Boolean(opts.main);
-const runScrapper = Boolean(opts.scrapper);
+const runScraper = Boolean(opts.scraper);
 
-run({ runMain, runScrapper }).catch((error: unknown) => {
+run({ runMain, runScraper }).catch((error: unknown) => {
   if (error instanceof Error) {
     console.error(error.message);
     if (error.stack) console.error(error.stack);

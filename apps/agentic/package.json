@@ -12,9 +12,9 @@
     "build": "tsc && tsc-alias",
     "temporal": "temporal server start-dev",
     "dev:build": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
-    "dev": "tsx watch --clear-screen=false --include src/workflows src/worker.ts -- --main --scrapper",
+    "dev": "tsx watch --clear-screen=false --include src/workflows src/worker.ts -- --main --scraper",
     "dev:main": "tsx watch --clear-screen=false --include src/workflows src/worker.ts --main",
-    "dev:scrapper": "tsx watch --clear-screen=false --include src/workflows src/worker.ts --scrapper",
+    "dev:scraper": "tsx watch --clear-screen=false --include src/workflows src/worker.ts --scraper",
     "start:worker": "node dist/worker",
     "lint": "eslint . --ext .ts --color",
     "lint:fix": "pnpm lint --fix",
@@ -33,7 +33,7 @@
     "@upstash/ratelimit": "^2.0.5",
     "@upstash/redis": "^1.34.9",
     "@zysk/db": "workspace:*",
-    "@zysk/scrapper": "workspace:*",
+    "@zysk/scraper": "workspace:*",
     "@zysk/services": "workspace:*",
     "@zysk/shared": "workspace:*",
     "@zysk/ts-rest": "workspace:*",
@@ -67,6 +67,6 @@
     "tsc-alias": "^1.8.16",
     "tsx": "^4.19.4",
     "typescript": "catalog:typescript",
-    "webpack": "5.96.1"
+    "webpack": "catalog:webpack"
   }
 }
