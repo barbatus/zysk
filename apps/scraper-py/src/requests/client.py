@@ -266,7 +266,7 @@ class TLSClient:
             del self.proxies
 
         # http client for local go server
-        self.server: HTTPClient = HTTPClient(
+        self.server = HTTPClient(
             "127.0.0.1",
             library.PORT,
             ssl=False,
@@ -319,7 +319,7 @@ class TLSClient:
         # Data has priority. JSON is only used if data is None.
         if data is None and json is not None:
             if type(json) in (dict, list):
-                json = dumps(json).decode("utf-8")
+                json = dumps(json)
             request_body = json
             content_type = "application/json"
         elif data is not None and type(data) not in (str, bytes):
@@ -366,7 +366,7 @@ class TLSClient:
             verify_proxy(proxy)
 
         # Request
-        is_byte_request = isinstance(request_body, (bytes, bytearray))
+        is_byte_request = isinstance(request_body, (bytes | bytearray))
         request_payload = {
             "sessionId": self._session_id,
             "followRedirects": allow_redirects,

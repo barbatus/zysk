@@ -8,7 +8,7 @@ spec:
   pollingInterval: 5
   cooldownPeriod: 1200
   minReplicaCount: 0
-  maxReplicaCount: 10
+  maxReplicaCount: 1
 
   triggers:
     - type: temporal

@@ -16,14 +16,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    database_url: str = Field(
-        default="sqlite:///./db.sqlite3",
-        validation_alias=AliasChoices("POSTGRES_URL", "DATABASE_URL"),
+    db_url: str = Field(
+        validation_alias=AliasChoices("POSTGRES_URL", "DB_URL"),
     )
-
-    db_pool_size: int = Field(default=0, alias="DB_POOL_SIZE")
-    db_max_overflow: int = Field(default=0, alias="DB_MAX_OVERFLOW")
-    db_pool_pre_ping: bool = Field(default=True, alias="DB_POOL_PRE_PING")
 
     cache_enabled: bool = Field(default=True, alias="CACHE")
 
@@ -46,6 +41,10 @@ class Settings(BaseSettings):
             api_key=self.temporal_api_key,
             tls=self.temporal_tls,
         )
+
+    @property
+    def async_db_url(self) -> str:
+        return self.db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 
 settings = Settings()

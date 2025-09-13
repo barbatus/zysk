@@ -56,6 +56,8 @@ def scrape_md(
 
         markdown = convert_to_markdown(page.content, remove_ul=config.remove_ul)
 
+        print(markdown)
+
         if check_bot_is_detected(page) or len(markdown) <= 100:
             page.close()
             raise BotDetectedException(config.url)
@@ -78,7 +80,7 @@ def scrape_md(
         is_bot_detected = isinstance(e, BotDetectedException)
         use_proxy = is_bot_detected
 
-        use_cdp = config.use_proxy and is_bot_detected
+        use_cdp = config.use_cdp or (retry_attempt >= 3 and config.use_proxy and is_bot_detected)
 
         return scrape_md(
             config=ScraperConfig(

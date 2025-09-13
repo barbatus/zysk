@@ -2,6 +2,7 @@ import asyncio
 from collections.abc import Callable
 from http.client import responses as status_codes
 from typing import Optional
+from urllib.parse import urlparse
 
 import hrequests
 from hrequests.browser.browser import ERROR, BrowserEngine, BrowserObjectWrapper
@@ -9,10 +10,11 @@ from hrequests.browser.engine import AbstractBrowserClient
 from hrequests.client import CaseInsensitiveDict
 from hrequests.cookies import RequestsCookieJar, cookiejar_to_list, list_to_cookiejar
 from hrequests.exceptions import JavascriptException
+from playwright.async_api import BrowserContext
 
 
 class ChromeBrowserClient(AbstractBrowserClient):
-    async def _start_context(self, **launch_args):
+    async def _start_context(self, **launch_args) -> BrowserContext:
         """
         Create a new CDP browser context
         """
@@ -75,6 +77,8 @@ class CDPSession:
 
         self._headers: dict | None = None
         self.context: BrowserObjectWrapper | None = None
+        self._allowed_script_host: str | None = None
+        self._routes_installed: bool = False
 
         # Browser config
         self.status_code: int | None
@@ -104,6 +108,7 @@ class CDPSession:
         )
         # Save the context
         self.context = self.client.context
+        self._install_blocking_routes()
         # Create a new page
         self.page = self.client.new_page()
 
@@ -126,6 +131,7 @@ class CDPSession:
 
     def goto(self, url, timeout: float = 180_000, wait_until: str = "domcontentloaded"):
         """Navigate to a URL"""
+        self._allowed_script_host = urlparse(url).hostname or ""
         resp = self.page.goto(url, timeout=timeout, wait_until=wait_until)
         self.status_code = resp.status
         return resp
@@ -286,6 +292,24 @@ class CDPSession:
 
     def __del__(self):
         self.close()
+
+    def _install_blocking_routes(self) -> None:
+        if self._routes_installed:
+            return
+
+        async def _global_block_handler(route, request):
+            rtype = request.resource_type
+            if rtype in ("image", "media"):
+                return await route.abort()
+            if rtype == "script" and self._allowed_script_host:
+                req_host = urlparse(request.url).hostname or ""
+                allowed_host = self._allowed_script_host
+                if req_host != allowed_host:
+                    return await route.abort()
+            return await route.continue_()
+
+        self.context.route("**/*", _global_block_handler)
+        self._routes_installed = True
 
 
 def render(

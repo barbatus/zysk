@@ -4,4 +4,4 @@ metadata:
   name: worker
   namespace: app
 spec:
-  maxReplicaCount: 10
+  maxReplicaCount: 20
