@@ -1,4 +1,5 @@
 import { PromptTemplate } from "@langchain/core/prompts";
+import { type RunnableConfig } from "@langchain/core/runnables";
 import { type Experiment, ExperimentTaskStatus } from "@zysk/db";
 import {
   ExperimentService,
@@ -57,10 +58,11 @@ export abstract class StatefulModelRunner<
 
   async arun(
     promptValues: Record<string, string>,
+    config?: RunnableConfig,
   ): Promise<AgentExecutionResult<AResult>> {
     const promptString = await this.prompt.format(promptValues);
 
-    const result = await this.model.arun(promptString);
+    const result = await this.model.arun(promptString, config);
 
     return {
       response: await this.prompt.parseResponse(result.response),
@@ -70,13 +72,13 @@ export abstract class StatefulModelRunner<
 
   abstract setSuccess(result: AgentExecutionResult<AResult>): Promise<TResult>;
 
-  async run(): Promise<TResult> {
+  async run(config?: RunnableConfig): Promise<TResult> {
     const promptValues = await this.mapPromptValues();
 
     try {
       const retrier = new AsyncRetrier<TResult>(
         async () => {
-          const response = await this.arun(promptValues);
+          const response = await this.arun(promptValues, config);
           const result = await this.setSuccess(response);
           await this.onComplete();
           return result;

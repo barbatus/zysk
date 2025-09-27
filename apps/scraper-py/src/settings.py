@@ -11,7 +11,7 @@ class TemporalSettings(BaseModel):
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=[".env", ".env.local"],
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -22,16 +22,18 @@ class Settings(BaseSettings):
 
     cache_enabled: bool = Field(default=True, alias="CACHE")
 
-    proxy_url: str | None = Field(default=None, alias="PROXY_URL")
+    proxy_url: str | None
+    proxy_username: str | None
+    proxy_pwd: str | None
 
-    temporal_url: str = Field(default="", alias="TEMPORAL_URL")
-    temporal_namespace: str = Field(default="default", alias="TEMPORAL_NAMESPACE")
-    temporal_api_key: str | None = Field(default=None, alias="TEMPORAL_API_KEY")
-    temporal_tls: bool = Field(default=False, alias="TEMPORAL_TLS")
+    cdp_url: str | None
 
-    redis_url: str | None = Field(default=None, alias="REDIS_URL")
+    temporal_url: str
+    temporal_namespace: str = "default"
+    temporal_api_key: str | None = None
+    temporal_tls: bool = False
 
-    cdp_url: str | None = Field(default=None, alias="CDP_URL")
+    redis_url: str | None = None
 
     @property
     def temporal(self) -> TemporalSettings:

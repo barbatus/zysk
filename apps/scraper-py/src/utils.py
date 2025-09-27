@@ -8,15 +8,19 @@ from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 
 
-def convert_to_markdown(html: str, remove_ul: bool = True) -> str:
-    soup = BeautifulSoup(html, "html.parser")
+def convert_to_markdown(html: str, remove_ul: bool = True, css_selector: str | None = None) -> str:
+    soup = BeautifulSoup(html, "lxml")
+    tags = soup.select(css_selector) if css_selector else [soup]
     tags_to_remove = ["a", "img"] + (["ul", "ol", "li"] if remove_ul else [])
-    for element in soup.find_all(tags_to_remove):
-        if element.name == "a":
-            element.replace_with(element.get_text())
-        else:
-            element.decompose()
-    return md(str(soup))
+    result = ""
+    for tag in tags:
+        for element in tag.find_all(tags_to_remove):
+            if element.name == "a":
+                element.replace_with(element.get_text())
+            else:
+                element.decompose()
+        result += str(tag)
+    return md(result)
 
 
 async def execute_concurrently[TaskResultT](

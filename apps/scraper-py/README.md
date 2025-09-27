@@ -47,22 +47,20 @@ Some useful commands:
 - Check if KEDA HPA is created `kubectl -n app get hpa`.
 - Checking autoscaler logs: `kubectl -n app logs -f <POD>  -c keda-autoscaler`
 
-### Env
+### Environment Variables
 Env variables are applied via a config map `app-config`, which is created from `.env` file.
 If you've removed a variable from `.env` file, make sure to do in the deployments:
 `kubectl -n app get deploy -o name | xargs -I{} kubectl -n app set env {} <name>-`.
-
-### Other useful commands
-- Checking if API running: `curl -v http://34.118.104.61:80`.
-- Delete POD competely: `kubectl delete deploy <pod-name> -n app`.
-
-### Environment Variables
 
 If `.env` got cached locally in the container, change the environment variables by setting explicitly:
 - `kubectl set env -n app deployment/<deploy-name> FOO=bar`
 - `kubectl -n app rollout restart deploy/worker deploy/api`
 
 Check current env vars: `kubectl exec -n app <pod-name> -- printenv`.
+
+### Other useful commands
+- Checking if API running: `curl -v http://34.118.104.61:80`.
+- Delete POD competely: `kubectl delete deploy <pod-name> -n app`.
 
 ### GKE Setup
 

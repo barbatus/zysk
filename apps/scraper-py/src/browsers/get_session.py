@@ -11,7 +11,11 @@ def get_session(use_proxy: bool = False, use_cdp: bool = False) -> BrowserSessio
         return get_cdp_session(endpoint_url=settings.cdp_url)
     else:
         print(f"Using Camoufox session {'with proxy' if use_proxy else 'without proxy'}")
-        return get_camoufox_session(proxy_auth=ProxyAuth(
-            username="alexborod6",
-            key="1XZuFmgybAb2D5KtmpoR",
-        ) if use_proxy else None)
+        return get_camoufox_session(
+            proxy_auth=ProxyAuth(
+                username=settings.proxy_username,
+                key=settings.proxy_pwd,
+            )
+            if use_proxy
+            else None
+        )

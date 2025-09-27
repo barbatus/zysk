@@ -1,6 +1,7 @@
 import FirecrawlApp, { type FirecrawlError } from "@mendable/firecrawl-js";
 import {
   type DataDatabase,
+  type ScraperSettings,
   type StockNewsInsert,
   StockNewsInsight,
   StockNewsSentiment,
@@ -112,11 +113,10 @@ export class TickerNewsService {
   }
 
   private async scrapeUrlsViaOctopus(params: {
-    urls: string[];
-    useProxy?: boolean;
-    convertToMd?: boolean;
-    waitFor?: number;
-    timeout?: number;
+    requests: {
+      url: string;
+      settings?: ScraperSettings;
+    }[];
     onPoll?: () => void;
   }): Promise<
     {
@@ -127,9 +127,12 @@ export class TickerNewsService {
       description?: string;
     }[]
   > {
-    const { urls, onPoll } = params;
-    const data = urls.map((url) => ({
-      data: { url },
+    const { requests, onPoll } = params;
+    const data = requests.map((req) => ({
+      data: { url: req.url },
+      metadata: {
+        settings: req.settings,
+      },
       scraper_name: "scrape_md",
     }));
     const tasks = await apiWithRetry.post<
@@ -174,7 +177,7 @@ export class TickerNewsService {
       const result = r.results?.[0];
       if (r.status === "failed" || !result) {
         return {
-          url: urls[index],
+          url: requests[index].url,
           error: result
             ? new Error(result.markdown)
             : new Error("Failed to scrape URL"),
@@ -257,7 +260,46 @@ export class TickerNewsService {
       onPoll?: () => void;
     }[]
   > {
-    return this.scrapeUrlsViaOctopus(params);
+    const scraperSettings = await this.loadSourceSettings();
+    const resolvedUrls = await Promise.all(
+      params.urls.map((u) => this.resolveFirstRedirectIfFinnhub(u)),
+    );
+
+    return this.scrapeUrlsViaOctopus({
+      requests: resolvedUrls.map((url) => {
+        return {
+          url,
+          settings: scraperSettings(url) ?? undefined,
+        };
+      }),
+      onPoll: params.onPoll,
+    });
+  }
+
+  private async resolveFirstRedirectIfFinnhub(url: string): Promise<string> {
+    try {
+      const hostname = new URL(url).hostname;
+      if (!hostname.endsWith("finnhub.io")) return url;
+
+      const response = await axios.get(url, {
+        maxRedirects: 0,
+        timeout: 10_000,
+        // Accept 3xx without throwing
+        validateStatus: (status) => status >= 200 && status < 400,
+        headers: {
+          // Prevent gzip/deflate to avoid decompression errors on redirect responses
+          "Accept-Encoding": "identity",
+        },
+      });
+
+      const location = response.headers.location as string | undefined;
+      if (!location) return url;
+
+      const resolved = new URL(location, url).toString();
+      return resolved;
+    } catch (err) {
+      return url;
+    }
   }
 
   async getTickerNews(
@@ -583,5 +625,27 @@ export class TickerNewsService {
         setTimeout(resolve, interval);
       });
     }
+  }
+
+  private async loadSourceSettings(): Promise<
+    (url: string) => ScraperSettings | undefined
+  > {
+    const result = await this.db
+      .selectFrom("app_data.news_sources")
+      .selectAll()
+      .execute();
+    const scraperSettings = keyBy(result, "url") as Record<
+      string,
+      (typeof result)[number] | undefined
+    >;
+    return (url: string) => {
+      const domain = new URL(url).hostname;
+      for (const key in scraperSettings) {
+        if (domain.includes(key)) {
+          return scraperSettings[key]?.scraperSettings ?? undefined;
+        }
+      }
+      return undefined;
+    };
   }
 }

@@ -164,7 +164,11 @@ export async function runNewsInsightsExtractorExperiment(params: {
     experimentId,
     sectors: sectors.map((s) => s.symbol),
   });
-  const result = await runner.run();
+  const result = await runner.run({
+    metadata: {
+      timeoutSec: 60 * 10,
+    },
+  });
   return result;
 }
 

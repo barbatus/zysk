@@ -71,7 +71,7 @@ export abstract class BaseLLMRunner implements AbstractRunner {
   ): Promise<AIMessage | string> {
     const appConfig = getAgenticConfig();
     const timeout =
-      (config?.metadata?.timeout as number | undefined) ??
+      (config?.metadata?.timeoutSec as number | undefined) ??
       appConfig.llmResponseTimeoutSec;
     try {
       const startTime = Date.now();

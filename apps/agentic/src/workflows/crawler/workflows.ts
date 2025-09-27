@@ -1,8 +1,9 @@
 import { executeChild, proxyActivities } from "@temporalio/workflow";
-import { type StockNewsSource, StockNewsStatus } from "@zysk/db";
+import { type StockNewsSource } from "@zysk/shared";
+import { StockNewsStatus } from "@zysk/shared";
 import { chunk } from "lodash";
 
-import { runScrapeTickerNews } from "../scrapper/workflows";
+import { runScrapeTickerNews } from "../scraper/workflows";
 import { runExtractNewsInsights } from "../stock-news/workflows";
 import type * as activities from "./activities";
 
@@ -13,7 +14,7 @@ const proxy = proxyActivities<typeof activities>({
     nonRetryableErrorTypes: ["NonRetryable"],
     maximumAttempts: 3,
   },
-  taskQueue: "zysk-scrapper",
+  taskQueue: "zysk-scraper",
 });
 
 export async function crawlNewsDomainBatch(

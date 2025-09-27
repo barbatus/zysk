@@ -1,0 +1,1 @@
+ALTER TABLE "app_data"."news_sources" ADD COLUMN "scraper_settings" jsonb DEFAULT '{}'::jsonb;

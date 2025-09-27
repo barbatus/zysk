@@ -50,6 +50,13 @@
       "when": 1753912533042,
       "tag": "0006_add_source",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1758658095854,
+      "tag": "0007_add_scraper_settings",
+      "breakpoints": true
     }
   ]
 }

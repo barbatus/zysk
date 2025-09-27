@@ -190,7 +190,7 @@ export async function scrapeNews(
   }
 
   const attempt = activityInfo().attempt;
-  if (attempt <= 5) {
+  if (attempt <= 3) {
     throw ApplicationFailure.create({
       type: "ScrapeError",
       message: `Success rate of the scraping is ${successRate}% lower than 85%`,

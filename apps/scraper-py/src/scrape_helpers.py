@@ -13,7 +13,7 @@ ACCEPT_RE = re.compile(r"accept\s+all", re.I)
 PRESS_AND_HOLD_RE = re.compile(r"Press & Hold", re.I)
 CHECK_BOT_RE = re.compile(
     (
-        r"(access|bot).+?(denied|blocked|detected)"
+        r"\b(?:access|bot)\b(?:\s+\S+){0,5}\s+\b(?:denied|blocked|detected)\b"
         r"|verification(\s+is\s+|\s+)required"
     ),
     re.I | re.DOTALL,
@@ -58,4 +58,5 @@ def check_captcha(page: BrowserSession, *, domain: str):
 
 domain_handlers = {
     "finance.yahoo.com": [accept_all_cookies],
+    "consent.yahoo.com": [accept_all_cookies],
 }

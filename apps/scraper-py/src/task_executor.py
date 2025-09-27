@@ -31,10 +31,9 @@ class TaskExecutor:
                 return
 
             valid_scraper_names = REGISTRY.get_scrapers_names()
-            valid_scraper_names_set = set(valid_scraper_names)
 
             for task in tasks:
-                if task.scraper_name not in valid_scraper_names_set:
+                if task.scraper_name not in set(valid_scraper_names):
                     raise Exception(
                         f"Invalid scraper '{task.scraper_name}'. "
                         f"Valid: {', '.join(valid_scraper_names)}"
@@ -82,6 +81,7 @@ class TaskExecutor:
         task_id = task["id"]
         scraper_name = task["scraper_name"]
         task_data = task["data"]
+        task_metadata = task["metadata"]
 
         fn = REGISTRY.get_scraping_function(scraper_name)
         exception_log = None
@@ -95,7 +95,7 @@ class TaskExecutor:
 
             result = await asyncio.to_thread(
                 fn,
-                config=ScraperConfig(**task_data),
+                config=ScraperConfig(url=task_data["url"], **(task_metadata or {})),
                 on_heartbeat=on_heartbeat_threadsafe,
             )
             if is_dataclass(result):

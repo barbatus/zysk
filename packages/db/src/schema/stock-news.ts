@@ -45,6 +45,10 @@ export interface NewsSourceSettings {
   supported: boolean;
 }
 
+export interface ScraperSettings {
+  selectors?: Record<string, string>;
+}
+
 export const stockNewsTable = mySchema.table(
   "stock_news",
   {
@@ -94,6 +98,9 @@ export const newsSourcesTable = mySchema.table(
     settings: jsonb("settings").$type<NewsSourceSettings>().default({
       supported: false,
     }),
+    scraperSettings: jsonb("scraper_settings")
+      .$type<ScraperSettings>()
+      .default({}),
     ...auditColumns(),
   },
   (t) => ({

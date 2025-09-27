@@ -25,9 +25,18 @@ class TaskData(BaseModel):
     url: str
 
 
+class ScraperSettings(BaseModel):
+    selectors: dict[str, str] | None = None
+
+
+class TaskMetadata(BaseModel):
+    settings: ScraperSettings | None = None
+
+
 class TaskRequest(BaseModel):
     scraper_name: str
     data: TaskData
+    metadata: TaskMetadata | None = None
 
 
 class TaskResponse(BaseModel):

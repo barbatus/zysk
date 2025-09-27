@@ -12,7 +12,7 @@
     "build": "tsc && tsc-alias",
     "temporal": "temporal server start-dev",
     "dev:build": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
-    "dev": "tsx watch --clear-screen=false --include src/workflows src/worker.ts -- --main --scraper",
+    "dev": "tsx watch --clear-screen=false --include src/workflows src/worker.ts --main --scraper",
     "dev:main": "tsx watch --clear-screen=false --include src/workflows src/worker.ts --main",
     "dev:scraper": "tsx watch --clear-screen=false --include src/workflows src/worker.ts --scraper",
     "start:worker": "node dist/worker",

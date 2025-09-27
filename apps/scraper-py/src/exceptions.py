@@ -21,3 +21,8 @@ class NotLoggedInException(ScaperException):
 class ChromeErrorException(ScaperException):
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class CssSelectorNotFoundException(ScaperException):
+    def __init__(self, url: str, css_selector: str) -> None:
+        super().__init__(f"Selector {css_selector} not found on {url}")

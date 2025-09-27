@@ -25,15 +25,6 @@ from .validation import (
 )
 
 
-def extract_task_data(json_data):
-    """Extract task data from JSON - validation is done by FastAPI"""
-    scraper_name = json_data.get("scraper_name")
-    data = json_data.get("data", {})
-    metadata = {}
-    validate_scraper_name(scraper_name)  # Still validate scraper exists
-    return scraper_name, {"data": data, "metadata": metadata}
-
-
 async def perform_create_tasks(tasks) -> list[str]:
     async with get_async_session() as session:
         session.add_all(tasks)
@@ -84,15 +75,16 @@ async def get_task_from_db(task_id):
 OK_MESSAGE = {"message": "OK"}
 
 
-async def execute_async_tasks(json_data):
-    validated_data_items = [extract_task_data(item) for item in json_data]
+async def execute_async_tasks(tasks: list[dict[str, Any]]):
     scraper_data = defaultdict(list)
-    for scraper_name, data in validated_data_items:
-        scraper_data[scraper_name].append(data)
+    for task in tasks:
+        scraper_name = task["scraper_name"]
+        validate_scraper_name(scraper_name)
+        scraper_data[scraper_name].append(task)
 
     tasks = [
-        create_tasks(REGISTRY.get_scraper(scraper_name), data)
-        for scraper_name, data in scraper_data.items()
+        create_tasks(REGISTRY.get_scraper(scraper_name), task)
+        for scraper_name, task in scraper_data.items()
     ]
     responses = await asyncio.gather(*tasks)
     tasks = [item for sublist in responses for item in sublist]
@@ -156,9 +148,10 @@ async def create_tasks(scraper, tasks_data):
         ]
     else:
         tasks, cached_tasks = [], []
-        for idx, task_data in enumerate(tasks_data):
+        for idx, item in enumerate(tasks_data):
             sort_id = all_task_sort_id - (idx + 1)
-            tasks.append(create_task(task_data, "", sort_id))
+            key = create_cache_key(scraper_name, item["data"])
+            tasks.append(create_task(item["data"], key, item["metadata"], sort_id))
         tasks = await perform_create_tasks(tasks)
 
     if cached_tasks:
