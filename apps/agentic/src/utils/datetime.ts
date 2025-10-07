@@ -2,6 +2,7 @@ import {
   addMinutes,
   endOfWeek,
   isMonday,
+  parse,
   startOfWeek as startOfWeek_,
   subDays,
 } from "date-fns";
@@ -34,4 +35,8 @@ export const getUpcomingWeekDate = (currentDate: Date) => {
   const endOfWeekDate = endOfWeek(currentDate);
   const finalDate = addMinutes(endOfWeekDate, 1);
   return toUtcDate(finalDate);
+};
+
+export const parseUtcDate = (dateStr: string) => {
+  return toUtcDate(parse(dateStr, "yyyy-MM-dd", new Date()));
 };

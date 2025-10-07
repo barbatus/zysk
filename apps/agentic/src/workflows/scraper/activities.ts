@@ -99,23 +99,6 @@ export async function getOrScrapeNews(
     newsDate: newsByUrl[urlsToScrape[index]].newsDate,
   }));
 
-  const failedNews = result.filter((n) => Boolean(n.error));
-  const logger = getLogger();
-
-  if (failedNews.length) {
-    logger.error(
-      {
-        failedNews: failedNews.map(
-          (n) =>
-            `${n.url} with status ${
-              n.error instanceof PageLoadError ? n.error.status : 500
-            }`,
-        ),
-      },
-      "Failed to scrape news",
-    );
-  }
-
   return scrappedNews.concat(
     result.map((r) => ({
       ...omit(r, "content"),
@@ -172,14 +155,30 @@ export async function scrapeNews(
 
   tokenizer.free();
 
-  const successfulUrls = cleanedNews.filter((n) => !n.error).length;
+  const successfulUrls = cleanedNews.filter((n) => !n.error);
+  const failedUrls = cleanedNews.filter((n) => n.error);
   const total = cleanedNews.length;
-  const successRate = Math.round((successfulUrls / total) * 100);
+  const successRate = Math.round((successfulUrls.length / total) * 100);
   const logger = getLogger();
+
+  if (failedUrls.length) {
+    logger.error(
+      {
+        failedUrls: failedUrls.map(
+          (n) =>
+            `${n.url} with status ${
+              n.error instanceof PageLoadError ? n.error.status : 500
+            }`,
+        ),
+      },
+      "[scrapeNews] Failed to scrape news",
+    );
+  }
 
   logger.info(
     {
-      successfulUrls,
+      success: successfulUrls.length,
+      failed: failedUrls.length,
       total,
     },
     "[scrapeNews] Result",

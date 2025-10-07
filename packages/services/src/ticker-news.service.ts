@@ -3,17 +3,18 @@ import {
   type DataDatabase,
   type ScraperSettings,
   type StockNewsInsert,
-  StockNewsInsight,
-  StockNewsSentiment,
+  type StockNewsInsight,
+  type StockNewsSentiment,
   StockNewsStatus,
 } from "@zysk/db";
+import { StockNewsSource } from "@zysk/shared";
 import axios, { AxiosError } from "axios";
 import { startOfDay } from "date-fns";
 import { inject, injectable } from "inversify";
-import { type Kysely, NotNull, sql } from "kysely";
+import { type Kysely, type NotNull, sql } from "kysely";
 import { keyBy } from "lodash";
 
-import { AgenticConfig, agenticConfigSymbol } from "./config";
+import { type AgenticConfig, agenticConfigSymbol } from "./config";
 import { dataDBSymbol } from "./db";
 import { FinnhubService } from "./finnhub.service";
 import { apiWithRetry } from "./utils/axios";
@@ -22,7 +23,7 @@ import {
   RequestTimeoutError,
 } from "./utils/exceptions";
 import { type Logger, loggerSymbol } from "./utils/logger";
-import { Exact } from "./utils/types";
+import { type Exact } from "./utils/types";
 
 @injectable()
 export class TickerNewsService {
@@ -306,16 +307,26 @@ export class TickerNewsService {
     symbol: string,
     startDate: Date,
     endDate?: Date,
-  ): Promise<{ url: string; title: string; newsDate: Date }[]> {
-    return this.finnhubService.fetchTickerNews({ symbol, startDate, endDate });
+  ): Promise<
+    { url: string; title: string; newsDate: Date; source: StockNewsSource }[]
+  > {
+    return this.finnhubService
+      .fetchTickerNews({ symbol, startDate, endDate })
+      .then((news) =>
+        news.map((n) => ({ ...n, source: StockNewsSource.Finnhub })),
+      );
   }
 
   async getGeneralNews(startDate: Date, endDate?: Date) {
-    return this.finnhubService.fetchTickerNews({
-      symbol: "general",
-      startDate,
-      endDate,
-    });
+    return this.finnhubService
+      .fetchTickerNews({
+        symbol: "general",
+        startDate,
+        endDate,
+      })
+      .then((news) =>
+        news.map((n) => ({ ...n, source: StockNewsSource.Finnhub })),
+      );
   }
 
   async getTodayNews(symbol: string) {

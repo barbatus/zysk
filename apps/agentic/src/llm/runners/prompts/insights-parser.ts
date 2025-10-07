@@ -35,7 +35,7 @@ const NewsInsightSchema = z.object({
         .default("neutral"),
       symbols: z.array(z.string()).optional().default([]),
       sectors: z.array(z.string()).optional().default([]),
-      longTerm: z.boolean().optional().default(false),
+      longTerm: z.coerce.boolean().optional().default(false),
     }),
   ),
 });

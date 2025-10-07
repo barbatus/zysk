@@ -624,6 +624,9 @@ importers:
       '@zysk/db':
         specifier: workspace:*
         version: link:../db
+      '@zysk/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@zysk/ts-rest':
         specifier: workspace:*
         version: link:../ts-rest

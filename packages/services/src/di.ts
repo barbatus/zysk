@@ -1,3 +1,5 @@
+import "reflect-metadata";
+
 import { type Database, type DataDatabase } from "@zysk/db";
 import { Container } from "inversify";
 import Redis from "ioredis";
@@ -55,8 +57,8 @@ container
 const services = [
   AlphaVantageService,
   TickerDataService,
-  TickerNewsService,
   FinnhubService,
+  TickerNewsService,
   ExperimentService,
   PortfolioService,
   MetricsService,

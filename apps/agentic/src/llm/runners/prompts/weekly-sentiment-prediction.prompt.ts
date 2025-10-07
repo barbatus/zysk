@@ -26,7 +26,7 @@ CURRENT DATE: {currentDate}
 ---
 
 # YOUR TASK
-1. Read each article's insights about {symbol} (in the NEWS ARTICLES section) and identify any that may have a meaningful impact on the ticker price in the short term.
+1. Read each article's insights about {symbol} (in the NEWS INSIGHTS section) and identify any that may have a meaningful impact on the ticker price in the short term.
 2. Take into account that the prediction should be made for the **following week**, i.e. all the factors that could affect the price in the short term should be weighted more.
 3. Produce your conclusions and insights as a structured **JSON response**, **strictly** following the format in the **Output Format** section.
 4. Consider {symbol}'s price trend for the last few weeks in the TICKER PRICES section.
@@ -65,7 +65,9 @@ CURRENT DATE: {currentDate}
 - Output must be valid **JSON only**, using the format in the OUTPUT FORMAT section.
   **No additional text or explanation outside the JSON.**
 - Do your best to include **a few insights** in the output for better analysis.
-- **Do not mention** in the \`reasoning\` output field how negative signals are weighted and any other details of the instructions.
+- **Do not mention** in the \`reasoning\` output and \`counterSignal\` fields how signals are weighted exactly, for example, avoid:
+    - "due to market negative sentiment with 80% confidence ...",
+    - "negative signals are weighted 1.5x as per instructions ..."
 
 ---
 
@@ -105,7 +107,7 @@ export const WeeklyGeneralMarketSentimentPredictionPrompt =
   new ExperimentPrompt<Prediction>({
     template: dedent`
 You are an expert in analyzing stock market news insights that can affect stock market condition.
-You have been given a set of insights extracted from recent news articles about stocket market from the **past 7 days**.
+You have been given a set of insights (in the NEWS INSIGHTS section) extracted from recent news articles about stocket market from the **past 7 days**.
 Please review these insights to determine how each could influence market conditions the **following week** (either negatively or positively).
 
 CURRENT DATE: {currentDate}

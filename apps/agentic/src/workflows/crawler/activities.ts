@@ -103,9 +103,9 @@ const domainToNewsLinksApi = {
   "seekingalpha.com": getSeekingAlphaNews,
 } as Record<string, (from: Date, to?: Date) => Promise<string[]>>;
 
-export async function getNewsLinks(domain: string) {
+export async function getNewsLinks(domain: string, date?: Date) {
   const logger = getLogger();
-  const from = startOfDay(new Date());
+  const from = date ? startOfDay(date) : startOfDay(new Date());
   if (domain in domainToNewsLinksApi) {
     const links = await domainToNewsLinksApi[domain](from);
     logger.info(

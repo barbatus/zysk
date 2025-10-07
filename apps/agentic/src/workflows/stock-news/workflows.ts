@@ -46,31 +46,26 @@ export async function scrapeTickerNewsForPeriod(
   endDate?: Date,
 ) {
   const currentNews = await proxy.fetchTickerNews(symbol, startDate, endDate);
+  const scrapedNews = (await executeChild(runScrapeTickerNews, {
+    args: [
+      {
+        symbol,
+        news: currentNews,
+      },
+    ],
+    taskQueue: "zysk-scraper",
+  })) as {
+    status: StockNewsStatus;
+    id: string;
+  }[];
 
-  for (const batch of chunk(currentNews, 100)) {
-    const scrapedNews = (await executeChild(runScrapeTickerNews, {
-      args: [
-        {
-          symbol,
-          news: batch.map((n) => ({
-            ...n,
-            source: StockNewsSource.Finnhub,
-          })),
-        },
-      ],
-      taskQueue: "zysk-scraper",
-    })) as {
-      status: StockNewsStatus;
-      id: string;
-    }[];
-    await executeChild(runExtractNewsInsights, {
-      args: [
-        scrapedNews
-          .filter((n) => n.status === StockNewsStatus.Scraped)
-          .map((n) => n.id),
-      ],
-    });
-  }
+  await executeChild(runExtractNewsInsights, {
+    args: [
+      scrapedNews
+        .filter((n) => n.status === StockNewsStatus.Scraped)
+        .map((n) => n.id),
+    ],
+  });
 }
 
 export async function scrapeMarketNewsForPeriod(
