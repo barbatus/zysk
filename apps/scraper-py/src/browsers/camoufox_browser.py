@@ -26,12 +26,6 @@ class ProxyAuth(TypedDict):
 def get_camoufox_session(*, proxy_auth: ProxyAuth | None = None) -> BrowserSession:
     session = hrequests.firefox.Session(
         timeout=30,
-        proxy=evomi.ResidentialProxy(
-            username=proxy_auth["username"],
-            key=proxy_auth["key"],
-        )
-        if proxy_auth
-        else None,
     )
     headless = "virtual" if platform.system() == "Linux" else False
     return CamoufoxSession(
@@ -43,4 +37,10 @@ def get_camoufox_session(*, proxy_auth: ProxyAuth | None = None) -> BrowserSessi
         locale=["en-US"],
         enable_cache=True,
         block_images=True,
+        proxy=evomi.ResidentialProxy(
+            username=proxy_auth["username"],
+            key=proxy_auth["key"],
+        )
+        if proxy_auth
+        else None,
     )

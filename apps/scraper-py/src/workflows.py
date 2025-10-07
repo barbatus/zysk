@@ -6,6 +6,7 @@ from temporalio.exceptions import ApplicationError
 
 with workflow.unsafe.imports_passed_through():
     from .activities import mark_tasks_as_failed, run_scraper
+    from .logging_setup import get_logger
     from .utils import execute_concurrently_stat
 
 
@@ -27,6 +28,8 @@ workflow_retry_policy = common.RetryPolicy(
 class ScrapeWorkflow:
     @workflow.run
     async def run(self, task_ids: list[int]) -> None:
+        logger = get_logger(__name__).bind(workflow="runScrapeTasks", task_count=len(task_ids))
+        logger.info("workflow.start")
         activities: workflow.ActivityHandle[None] = []
         for task_id in task_ids:
             activities.append(
@@ -44,6 +47,7 @@ class ScrapeWorkflow:
             for index, error in errors.items()
         ]
         if failed_tasks:
+            logger.warning("workflow.failures", failed_task_count=len(failed_tasks))
             await workflow.execute_activity(
                 mark_tasks_as_failed,
                 args=[
@@ -52,6 +56,7 @@ class ScrapeWorkflow:
                 start_to_close_timeout=activity_timeout,
                 retry_policy=retry_policy,
             )
+        logger.info("workflow.success")
 
 
 scraper_workflows = [ScrapeWorkflow]

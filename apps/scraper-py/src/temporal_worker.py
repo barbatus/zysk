@@ -1,8 +1,12 @@
 from temporalio.worker import Worker
 
 from .activities import scraper_activities
+from .logging_setup import get_logger, setup_logging
 from .temporal_client import get_temporal_client
 from .workflows import scraper_workflows
+
+setup_logging()
+logger = get_logger(__name__)
 
 
 async def run_worker():
@@ -14,6 +18,6 @@ async def run_worker():
         activities=scraper_activities,
         max_concurrent_activities=5,
     )
-    print("Worker started")
+    logger.info("worker.started", task_queue="scraper-tasks")
     await worker.run()
-    print("Worker finished")
+    logger.info("worker.stopped")

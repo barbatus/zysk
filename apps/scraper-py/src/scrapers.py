@@ -8,14 +8,24 @@ from pydantic import BaseModel, Field, field_validator
 
 from .browsers import get_session
 from .exceptions import BotDetectedException, CssSelectorNotFoundException
-from .scrape_helpers import check_bot_is_detected, domain_handlers
+from .logging_setup import get_logger
+from .scrape_helpers import check_bot_is_detected, check_press_and_hold, domain_handlers
 from .utils import convert_to_markdown
+
+
+@dataclass
+class ScrapeStats:
+    duration_sec: float
+    proxy_used: bool
+    cdp_used: bool
 
 
 @dataclass
 class ScrapeResult:
     url: str
     markdown: str
+
+    stats: ScrapeStats
 
 
 class ScraperSettings(BaseModel):
@@ -54,6 +64,9 @@ def search_settings(domain: str, settings: dict[str, ScraperSettings]) -> Scrape
     return None
 
 
+logger = get_logger(__name__)
+
+
 def scrape_md(
     *, config: ScraperConfig, retry_attempt: int = 0, on_heartbeat: Callable | None = lambda: None
 ) -> ScrapeResult:
@@ -62,7 +75,7 @@ def scrape_md(
         if on_heartbeat:
             on_heartbeat()
 
-        print(f"Scraping {config.url}")
+        logger.info("scrape.start", url=config.url, retry_attempt=retry_attempt)
         now = monotonic()
 
         page = get_session(use_proxy=config.use_proxy, use_cdp=config.use_cdp)
@@ -88,9 +101,17 @@ def scrape_md(
             page.content, remove_ul=config.remove_ul, css_selector=css_selector
         )
 
-        if len(markdown) < 100 or check_bot_is_detected(page):
+        if len(markdown) < 100:
             page.close()
-            raise BotDetectedException(config.url)
+            raise BotDetectedException(config.url, "No markdown found")
+
+        if bot_detected := check_bot_is_detected(page):
+            page.close()
+            raise BotDetectedException(config.url, f"Bot detected on page: {bot_detected}")
+
+        if check_press_and_hold(page):
+            page.close()
+            raise BotDetectedException(config.url, "Press and hold detected on page")
 
         if not markdown and css_selector:
             page.close()
@@ -98,18 +119,25 @@ def scrape_md(
 
         page.close()
 
-        print(f"{url} is scraped successfully in {round(monotonic() - now, 2)} seconds")
+        duration = round(monotonic() - now, 2)
+        logger.info("scrape.success", url=url, duration_sec=duration)
 
         return ScrapeResult(
             url=url,
             markdown=markdown,
+            stats=ScrapeStats(
+                duration_sec=duration,
+                proxy_used=config.use_proxy,
+                cdp_used=config.use_cdp,
+            ),
         )
 
     except Exception as e:
         if retry_attempt >= config.max_retry:
+            logger.exception(
+                "scrape.error", url=config.url, retry_attempt=retry_attempt, error=str(e)
+            )
             raise e
-
-        print(f"Failed to scrape with error: {e}, retrying...")
 
         is_bot_detected = isinstance(e, BotDetectedException)
         is_css_selector_not_found = config.settings.selectors and isinstance(
@@ -131,6 +159,12 @@ def scrape_md(
                 "use_cdp": use_cdp,
                 "settings": new_settings,
             }
+        )
+        logger.warning(
+            "scrape.retry",
+            url=config.url,
+            retry_attempt=retry_attempt + 1,
+            error=str(e),
         )
         return scrape_md(
             config=new_config,

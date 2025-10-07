@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Any
 
-from .scrapers import SCRAPERS_REGISTRY
+from .scrapers import SCRAPERS_REGISTRY, ScraperConfig, ScrapeResult
 
 
 class Registry:
@@ -14,7 +14,7 @@ class Registry:
                 "scraper_name": name,
             }
 
-    def get_scraping_function(self, scraper_name: str) -> Callable:
+    def get_scraping_function(self, scraper_name: str) -> Callable[[ScraperConfig], ScrapeResult]:
         return self.scrapers[scraper_name]["function"]
 
     def get_scrapers_names(self) -> list[str]:

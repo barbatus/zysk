@@ -44,15 +44,12 @@ class TaskResponse(BaseModel):
     status: str
     scraper_name: str
     is_sync: bool
-    parent_task_id: int | None
-    duration: int | None
     started_at: str | None
     finished_at: str | None
     data: dict[str, Any]
     metadata: dict[str, Any]
     cached_key: str
     result: Any | None
-    result_count: int
     created_at: str
     updated_at: str
 

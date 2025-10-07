@@ -1,17 +1,20 @@
 import asyncio
 import traceback
 from collections.abc import Callable
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, and_, bindparam, case, or_, select, update
+from sqlalchemy import JSON, bindparam, case, select, update
 
 from .db_setup import get_async_session
+from .logging_setup import get_logger
 from .models import Task, TaskStatus
 from .registry import REGISTRY
 from .scrapers import ScraperConfig
 from .task_helper import db_retry
+
+logger = get_logger(__name__)
 
 
 class TaskExecutor:
@@ -40,18 +43,9 @@ class TaskExecutor:
                     )
 
             task_ids = [task.id for task in tasks]
-            parent_ids = list({task.parent_task_id for task in tasks if task.parent_task_id})
             await session.execute(
                 update(Task)
-                .where(
-                    or_(
-                        Task.id.in_(task_ids),
-                        and_(
-                            Task.id.in_(parent_ids),
-                            Task.started_at.is_(None),
-                        ),
-                    ),
-                )
+                .where(Task.id.in_(task_ids))
                 .values(
                     {
                         "status": TaskStatus.IN_PROGRESS,
@@ -65,19 +59,19 @@ class TaskExecutor:
                     "id": task.id,
                     "status": task.status,
                     "scraper_name": task.scraper_name,
-                    "is_sync": task.is_sync,
-                    "parent_task_id": task.parent_task_id,
                     "data": task.data,
                     "metadata": task.meta_data,
                 }
                 tasks_json.append(task_dict)
             await session.commit()
 
+        logger.info("executor.process.start", task_ids=task_ids)
         await asyncio.gather(
             *(self.run_task(task_json, on_heartbeat=on_heartbeat) for task_json in tasks_json)
         )
+        logger.info("executor.process.finished", task_count=len(task_ids))
 
-    async def run_task(self, task, on_heartbeat: Callable | None):
+    async def run_task(self, task: dict[str, Any], on_heartbeat: Callable | None):
         task_id = task["id"]
         scraper_name = task["scraper_name"]
         task_data = task["data"]
@@ -93,22 +87,23 @@ class TaskExecutor:
                 if on_heartbeat:
                     loop.call_soon_threadsafe(on_heartbeat)
 
+            logger.info("executor.task.start", task_id=task_id, scraper_name=scraper_name)
             result = await asyncio.to_thread(
                 fn,
                 config=ScraperConfig(url=task_data["url"], **(task_metadata or {})),
                 on_heartbeat=on_heartbeat_threadsafe,
             )
-            if is_dataclass(result):
-                result = asdict(result)
-            if not isinstance(result, list):
-                result = [result]
+            result_dict = asdict(result)
+            stats_dict = result_dict.pop("stats")
             await self.mark_tasks_as_success(
-                [task_id],
-                [result],
+                task_ids=[task_id],
+                results=[result_dict],
+                stats=[stats_dict],
             )
+            logger.info("executor.task.success", task_id=task_id)
         except Exception:
             exception_log = traceback.format_exc()
-            traceback.print_exc()
+            logger.exception("executor.task.error", task_id=task_id)
             await self.mark_tasks_as_failure([task_id], [exception_log])
 
     @db_retry
@@ -137,7 +132,9 @@ class TaskExecutor:
             await session.commit()
 
     @db_retry
-    async def mark_tasks_as_success(self, task_ids: list[int], results: list[list[Any]]):
+    async def mark_tasks_as_success(
+        self, task_ids: list[int], results: list[list[dict]], stats: list[dict]
+    ):
         if not task_ids:
             return
         if len(task_ids) != len(results):
@@ -145,11 +142,14 @@ class TaskExecutor:
         async with get_async_session() as session:
             result_mapping = {
                 tid: bindparam(f"result_{tid}", res, type_=JSON)
-                for tid, res in zip(task_ids, results, strict=False)
+                for tid, res, stat in zip(task_ids, results, stats, strict=False)
             }
-            count_mapping = {tid: len(res) for tid, res in zip(task_ids, results, strict=False)}
+            stats_mapping = {
+                tid: bindparam(f"stats_{tid}", stat, type_=JSON)
+                for tid, stat in zip(task_ids, stats, strict=False)
+            }
             result_case = case(result_mapping, value=Task.id, else_=Task.result)
-            result_count_case = case(count_mapping, value=Task.id, else_=Task.result_count)
+            stats_case = case(stats_mapping, value=Task.id, else_=Task.stats)
             await session.execute(
                 update(Task)
                 .where(
@@ -158,10 +158,10 @@ class TaskExecutor:
                 )
                 .values(
                     {
-                        "result_count": result_count_case,
                         "status": TaskStatus.COMPLETED,
                         "finished_at": datetime.now(),
                         "result": result_case,
+                        "stats": stats_case,
                     }
                 )
             )

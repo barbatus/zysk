@@ -9,8 +9,8 @@ class ScaperException(Exception):
 
 
 class BotDetectedException(ScaperException):
-    def __init__(self, url: str) -> None:
-        super().__init__(f"Bot detected on {url}")
+    def __init__(self, url: str, reason: str) -> None:
+        super().__init__(f"Bot detected on {url}: {reason}")
 
 
 class NotLoggedInException(ScaperException):

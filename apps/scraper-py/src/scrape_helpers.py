@@ -5,10 +5,10 @@ from dataclasses import dataclass
 from dotenv import load_dotenv
 from hrequests.browser import BrowserSession
 
+from .logging_setup import get_logger
 from .utils import convert_to_markdown
 
 load_dotenv()
-
 ACCEPT_RE = re.compile(r"accept\s+all", re.I)
 PRESS_AND_HOLD_RE = re.compile(r"Press & Hold", re.I)
 CHECK_BOT_RE = re.compile(
@@ -19,6 +19,8 @@ CHECK_BOT_RE = re.compile(
     re.I | re.DOTALL,
 )
 CHECK_CAPTCHA_RE = re.compile(r"captcha", re.I)
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -48,7 +50,7 @@ def check_press_and_hold(page: BrowserSession):
 
 def check_bot_is_detected(page: BrowserSession):
     md = convert_to_markdown(page.content)
-    return CHECK_BOT_RE.search(md) or check_press_and_hold(page)
+    return CHECK_BOT_RE.search(md)
 
 
 def check_captcha(page: BrowserSession, *, domain: str):

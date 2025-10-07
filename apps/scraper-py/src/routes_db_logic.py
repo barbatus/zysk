@@ -59,7 +59,7 @@ async def queryTasks(with_results, page=None, per_page=None, serializer=serializ
             "total_pages": total_pages,
             "next": next_page,
             "previous": previous_page,
-            "results": [serializer(task, with_results) for task in tasks],
+            "results": [serializer(task) for task in tasks],
         }
 
 
@@ -104,7 +104,6 @@ async def create_tasks(scraper, tasks_data):
             status=TaskStatus.PENDING,
             scraper_name=scraper_name,
             is_sync=False,
-            parent_task_id=None,
             data=task_data,
             meta_data=metadata,
             sort_id=sort_id,
@@ -187,19 +186,18 @@ async def perform_get_task_results(task_id):
         tasks = await TaskHelper.get_tasks_with_entities(
             session,
             [task_id],
-            [Task.scraper_name, Task.result_count, Task.data],
+            [Task.scraper_name, Task.data],
         )
         task = tasks[0] if tasks else None
         if not task:
             raise create_task_not_found_error(task_id)
-    return task.scraper_name, task.data, task.result_count
+    return task.scraper_name, task.data
 
 
 async def execute_get_task_results(task_id):
-    scraper_name, task_data, result_count = await perform_get_task_results(task_id)
+    scraper_name, task_data = await perform_get_task_results(task_id)
     validate_scraper_name(scraper_name)
     return {
-        "count": result_count,
         "total_pages": 1,
         "next": None,
         "previous": None,
@@ -215,7 +213,6 @@ async def perform_get_tasks_results(task_ids):
             [
                 Task.id,
                 Task.scraper_name,
-                Task.result_count,
                 Task.data,
                 Task.updated_at,
                 Task.status,
@@ -226,11 +223,10 @@ async def perform_get_tasks_results(task_ids):
             {
                 "scraper_name": task.scraper_name,
                 "task_data": task.data,
-                "result_count": task.result_count,
                 "task_id": task.id,
                 "status": task.status,
                 "updated_at": isoformat(task.updated_at),
-                "results": task.result,
+                "results": [task.result],
             }
             for task in tasks
         ]
@@ -240,7 +236,6 @@ async def perform_patch_task(action, task_id):
     async with get_async_session() as session:
         query = select(
             Task.id,
-            Task.parent_task_id,
             Task.scraper_name,
         ).where(Task.id == task_id)
         result = await session.execute(query)

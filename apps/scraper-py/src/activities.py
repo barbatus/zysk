@@ -4,6 +4,7 @@ from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
 from .exceptions import BotDetectedException
+from .logging_setup import get_logger
 from .task_executor import TaskExecutor
 
 
@@ -22,13 +23,18 @@ executor = TaskExecutor()
 
 @activity.defn(name="run_scraper")
 async def run_scraper(task_id: int) -> None:
+    logger = get_logger(__name__)
     try:
+        logger.info("activity.start")
         await executor.process_tasks([task_id], on_heartbeat=lambda: activity.heartbeat())
+        logger.info("activity.success")
     except Exception as e:
         activity.heartbeat()
         if isinstance(e, BotDetectedException):
+            logger.warning("activity.non_retryable", error=str(e))
             await mark_tasks_as_failed([(task_id, str(e))])
             raise NonRetryableError(message=str(e)) from e
+        logger.exception("activity.error", error=str(e))
         raise e
 
 
@@ -39,7 +45,8 @@ async def mark_tasks_as_failed(failed_tasks: list[tuple[int, str]]) -> None:
     task_ids = [task_id for task_id, _ in failed_tasks]
     errors = [error for _, error in failed_tasks]
     await executor.mark_tasks_as_failure(task_ids, errors)
-    print(f"Set tasks as failed: {failed_tasks}")
+    logger = get_logger(__name__)
+    logger.info("activity.mark_tasks_as_failed", task_ids=task_ids)
 
 
 scraper_activities = [run_scraper, mark_tasks_as_failed]

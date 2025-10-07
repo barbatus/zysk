@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from retrying import retry
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, select, update
 
 from .db_setup import AsyncSession
 from .models import Task, TaskStatus
@@ -14,56 +14,6 @@ def db_retry(func=None, *, attempts: int = 3, delay: float = 10.0):
 
 
 class TaskHelper:
-    @staticmethod
-    @db_retry
-    async def are_all_child_task_done(session: AsyncSession, parent_id: int):
-        done_children_count = await TaskHelper.get_done_children_count(
-            session,
-            parent_id,
-        )
-        child_count = await TaskHelper.get_all_children_count(
-            session,
-            parent_id,
-        )
-        return done_children_count == child_count
-
-    @staticmethod
-    @db_retry
-    async def get_all_children_count(
-        session: AsyncSession,
-        parent_id: int,
-        except_task_id: int | None = None,
-    ):
-        query = select(func.count()).select_from(Task).where(Task.parent_task_id == parent_id)
-        if except_task_id:
-            query = query.where(Task.id != except_task_id)
-        return await session.scalar(query)
-
-    @staticmethod
-    @db_retry
-    async def get_done_children_count(
-        session: AsyncSession,
-        parent_id: int,
-        except_task_id: int | None = None,
-    ):
-        query = (
-            select(func.count())
-            .select_from(Task)
-            .where(
-                Task.parent_task_id == parent_id,
-                Task.status.in_(
-                    [
-                        TaskStatus.COMPLETED,
-                        TaskStatus.FAILED,
-                        TaskStatus.ABORTED,
-                    ]
-                ),
-            )
-        )
-        if except_task_id:
-            query = query.where(Task.id != except_task_id)
-        return await session.scalar(query)
-
     @staticmethod
     @retry(attempts=3, delay=1)
     async def get_task(
@@ -138,19 +88,3 @@ class TaskHelper:
         await session.execute(
             delete(Task).where(Task.id == task_id),
         )
-
-    @staticmethod
-    @db_retry
-    async def update_parent_task_results(session: AsyncSession, parent_id, result):
-        from sqlalchemy import text
-
-        await session.execute(
-            update(Task)
-            .where(Task.id == parent_id)
-            .values(
-                result_count=Task.result_count + len(result),
-                result=text("COALESCE(result, '[]'::json) || :new_result::json"),
-            ),
-            {"new_result": result},
-        )
-        await session.commit()
