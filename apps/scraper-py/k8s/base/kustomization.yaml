@@ -1,4 +1,4 @@
-namespace: app
+namespace: scraper
 resources:
   - namespace.yaml
   - api-deployment.yaml

@@ -2,6 +2,6 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: worker
-  namespace: app
+  namespace: scraper
 spec:
   maxReplicaCount: 30

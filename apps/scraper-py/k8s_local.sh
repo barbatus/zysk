@@ -22,7 +22,7 @@ echo "Loading Docker image into minikube..."
 minikube image load octopus:dev
 
 echo "Create configmap from .env file..."
-kubectl create configmap app-config -n app \
+kubectl create configmap app-config -n scraper \
   --from-env-file=.env \
   --dry-run=client -o yaml | kubectl apply -f -
 
@@ -30,14 +30,14 @@ echo "Applying local overlay..."
 kubectl apply -k k8s/overlays/local
 
 echo "Set env vars from configmap..."
-kubectl set env -n app deployment/worker --from=configmap/app-config
-kubectl set env -n app deployment/api --from=configmap/app-config
+kubectl set env -n scraper deployment/worker --from=configmap/app-config
+kubectl set env -n scraper deployment/api --from=configmap/app-config
 
-echo "Deleting all pods in app namespace..."
-kubectl -n app rollout restart deploy/worker deploy/api
+echo "Deleting all pods in scraper namespace..."
+kubectl -n scraper rollout restart deploy/worker deploy/api
 
 echo "Waiting 30 seconds for pods to terminate..."
 sleep 30
 
 echo "Port-forwarding API service..."
-kubectl -n app port-forward svc/api 8000:80
+kubectl -n scraper port-forward svc/api 8000:80

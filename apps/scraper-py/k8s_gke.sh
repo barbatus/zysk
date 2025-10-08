@@ -13,7 +13,7 @@ IMAGE_NAME="${IMAGE_NAME:-octopus}"
 CLUSTER="${CLUSTER:-zysk-dev}"
 REGION="${REGION:-europe-central2}"
 ZONE="${ZONE:-}"
-NAMESPACE="${NAMESPACE:-app}"
+NAMESPACE="${NAMESPACE:-scraper}"
 OVERLAY="${OVERLAY:-k8s/overlays/gke}"
 DEPLOYMENTS="${DEPLOYMENTS:-api worker}"
 TAG="${TAG:-$(date +%Y%m%d-%H%M%S)}"
@@ -153,7 +153,7 @@ fi
 # fi
 
 echo "Create configmap from .env file..."
-kubectl create configmap app-config -n app \
+kubectl create configmap app-config -n "${NAMESPACE}" \
   --from-env-file=.env \
   --dry-run=client -o yaml | kubectl apply -f -
 
@@ -161,9 +161,9 @@ echo "🚀 Applying manifest..."
 kubectl apply -n "${NAMESPACE}" -f "$RENDERED_MANIFEST"
 
 echo "Set env vars from configmap..."
-kubectl set env -n app deployment/worker --from=configmap/app-config
-kubectl set env -n app deployment/api --from=configmap/app-config
-# kubectl set env -n app deployment/keda-autoscaler --from=configmap/app-config
+kubectl set env -n "${NAMESPACE}" deployment/worker --from=configmap/app-config
+kubectl set env -n "${NAMESPACE}" deployment/api --from=configmap/app-config
+# kubectl set env -n "${NAMESPACE}" deployment/keda-autoscaler --from=configmap/app-config
 
 echo "⏳ Waiting for rollouts..."
 for d in $DEPLOYMENTS; do

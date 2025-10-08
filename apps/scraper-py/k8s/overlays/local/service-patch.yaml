@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: api
-  namespace: app
+  namespace: scraper
 spec:
   type: NodePort
   ports:
