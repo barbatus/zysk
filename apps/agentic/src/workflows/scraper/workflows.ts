@@ -11,7 +11,6 @@ const proxy = proxyActivities<typeof activities>({
     nonRetryableErrorTypes: ["NonRetryable"],
     maximumAttempts: 5,
   },
-  taskQueue: "zysk-scraper",
 });
 
 export async function scrapeUrls(urls: string[]) {

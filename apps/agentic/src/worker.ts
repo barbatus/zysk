@@ -3,31 +3,34 @@ import "reflect-metadata";
 import path from "node:path";
 
 import { NativeConnection, Worker } from "@temporalio/worker";
-import { Command } from "commander";
+import { getAgenticConfigStatic } from "@zysk/services";
 import type { Configuration as WebpackConfiguration } from "webpack";
 
 import * as activities from "./activities";
-import * as crawlerActivities from "./workflows/crawler/activities";
-import * as scraperActivities from "./workflows/scraper/activities";
 
-interface RunOptions {
-  runMain: boolean;
-  runScraper: boolean;
-}
+async function run() {
+  const config = getAgenticConfigStatic();
 
-async function run(options: RunOptions) {
-  const connection = await NativeConnection.connect({
-    address: "localhost:7233",
-  });
+  const connectionOptions: Parameters<typeof NativeConnection.connect>[0] = {
+    address: config.temporal.address,
+  };
 
-  const runs: Promise<void>[] = [];
+  if (config.temporal.tls) {
+    connectionOptions.tls = true;
+  }
+
+  if (config.temporal.apiKey) {
+    connectionOptions.apiKey = config.temporal.apiKey;
+  }
+
+  const connection = await NativeConnection.connect(connectionOptions);
 
   const bundlerOptions = {
-    webpackConfigHook: (config: WebpackConfiguration) => {
-      const existingResolve = config.resolve ?? {};
+    webpackConfigHook: (webpackConfig: WebpackConfiguration) => {
+      const existingResolve = webpackConfig.resolve ?? {};
       const existingAlias = existingResolve.alias ?? {};
       return {
-        ...config,
+        ...webpackConfig,
         resolve: {
           ...existingResolve,
           alias: {
@@ -39,62 +42,19 @@ async function run(options: RunOptions) {
     },
   };
 
-  if (options.runMain) {
-    const workerMain = await Worker.create({
-      connection,
-      taskQueue: "zysk-data",
-      workflowsPath: require.resolve("./workflows/index"),
-      activities,
-      bundlerOptions,
-    });
-    runs.push(workerMain.run());
-  }
+  const worker = await Worker.create({
+    connection,
+    namespace: config.temporal.namespace,
+    taskQueue: config.temporal.taskQueue,
+    workflowsPath: require.resolve("./workflows/index"),
+    activities,
+    bundlerOptions,
+  });
 
-  if (options.runScraper) {
-    const workerScraper = await Worker.create({
-      connection,
-      taskQueue: "zysk-scraper",
-      workflowsPath: require.resolve("./workflows/scraper-workflows"),
-      activities: {
-        ...scraperActivities,
-        ...crawlerActivities,
-      },
-      // 30 activities per minute
-      maxActivitiesPerSecond: 0.5,
-      maxConcurrentActivityTaskExecutions: 20,
-      bundlerOptions,
-    });
-    runs.push(workerScraper.run());
-  }
-
-  if (runs.length === 0) {
-    console.warn(
-      "No workers selected to run. Use --main and/or --scraper flags, " +
-        "or run without flags to start both.",
-    );
-    return;
-  }
-
-  await Promise.all(runs);
+  await worker.run();
 }
 
-const program = new Command();
-program
-  .name("agentic-worker")
-  .description("Temporal workers for Zysk")
-  .option("--main", "Run main worker (taskQueue: zysk-data)")
-  .option("--scraper", "Run scraper worker (taskQueue: zysk-scraper)");
-
-program.parse(process.argv);
-const opts = program.opts<{
-  main?: boolean;
-  scraper?: boolean;
-}>();
-
-const runMain = Boolean(opts.main);
-const runScraper = Boolean(opts.scraper);
-
-run({ runMain, runScraper }).catch((error: unknown) => {
+run().catch((error: unknown) => {
   if (error instanceof Error) {
     console.error(error.message);
     if (error.stack) console.error(error.stack);

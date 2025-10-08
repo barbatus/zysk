@@ -16,7 +16,6 @@ const proxy = proxyActivities<typeof activities>({
     nonRetryableErrorTypes: ["NonRetryable"],
     maximumAttempts: 3,
   },
-  taskQueue: "zysk-scraper",
 });
 
 export async function crawlNewsDomainBatch(

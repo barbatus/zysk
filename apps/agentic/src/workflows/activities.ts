@@ -1,3 +1,4 @@
+export * from "./crawler/activities";
 export * from "./predictions/activities";
 export * from "./scraper/activities";
 export * from "./stock-news/activities";

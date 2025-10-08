@@ -7,5 +7,6 @@ dist
 
 .env
 .env.development
+.env.local
 suchmuchai
 attuned

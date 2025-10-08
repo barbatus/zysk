@@ -116,6 +116,13 @@ export const AppConfigEnvVariablesSchema = z.object({
 
 export const AgenticConfigEnvVariablesSchema =
   AppConfigEnvVariablesSchema.extend({
+    TEMPORAL_ADDRESS: z.string().default("localhost:7233"),
+    TEMPORAL_NAMESPACE: z.string().default("default"),
+    TEMPORAL_TASK_QUEUE: z.string().default("zysk-data"),
+    TEMPORAL_API_KEY: z.string().optional(),
+    TEMPORAL_TLS: z
+      .preprocess((s) => Boolean(Number(s || "0")), z.boolean())
+      .default(false),
     UPSTASH_REDIS_REST_URL: z.string().nonempty().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().nonempty().optional(),
     REDIS_HOST: z.string().nonempty(),
@@ -228,6 +235,13 @@ export interface AppConfig {
 }
 
 export interface AgenticConfig extends AppConfig {
+  temporal: {
+    address: string;
+    namespace: string;
+    taskQueue: string;
+    apiKey?: string;
+    tls: boolean;
+  };
   redis: {
     host: string;
     port: number;
@@ -330,6 +344,13 @@ export function validateAgenticConfig(config: Record<string, unknown>) {
     },
     postgres: {
       ...getPostgresConfig(appConfigValidated, appPostgresEnvVars),
+    },
+    temporal: {
+      address: appConfigValidated.TEMPORAL_ADDRESS,
+      namespace: appConfigValidated.TEMPORAL_NAMESPACE,
+      taskQueue: appConfigValidated.TEMPORAL_TASK_QUEUE,
+      apiKey: appConfigValidated.TEMPORAL_API_KEY,
+      tls: appConfigValidated.TEMPORAL_TLS,
     },
     upstash: appConfigValidated.UPSTASH_REDIS_REST_URL
       ? {

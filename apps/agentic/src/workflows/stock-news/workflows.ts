@@ -53,7 +53,6 @@ export async function scrapeTickerNewsForPeriod(
         news: currentNews,
       },
     ],
-    taskQueue: "zysk-scraper",
   })) as {
     status: StockNewsStatus;
     id: string;
