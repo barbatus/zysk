@@ -1,3 +1,6 @@
+from .scrape_helpers import ScrapeStats
+
+
 class ScaperException(Exception):
     def __init__(self, msg: str = None) -> None:
         super().__init__()
@@ -9,8 +12,9 @@ class ScaperException(Exception):
 
 
 class BotDetectedException(ScaperException):
-    def __init__(self, url: str, reason: str) -> None:
+    def __init__(self, url: str, reason: str, stats: ScrapeStats | None = None) -> None:
         super().__init__(f"Bot detected on {url}: {reason}")
+        self.stats = stats
 
 
 class NotLoggedInException(ScaperException):
@@ -19,8 +23,8 @@ class NotLoggedInException(ScaperException):
 
 
 class ChromeErrorException(ScaperException):
-    def __init__(self, message: str) -> None:
-        super().__init__(message)
+    def __init__(self, msg: str) -> None:
+        super().__init__(msg)
 
 
 class CssSelectorNotFoundException(ScaperException):

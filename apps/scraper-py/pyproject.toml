@@ -42,6 +42,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.11.13"
+mypy = "^1.11.0"
 poethepoet = "^0.36.0"
 hrequests = { git = "https://github.com/barbatus/hrequests", rev = "9956cf23f97444c977bfdd5bf3fa6cfe617dcc92" }
 
@@ -64,6 +65,53 @@ lint.ignore = ["B011", "E501"]  # Allow assert statements in test files, allow l
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+pretty = true
+show_error_context = true
+show_column_numbers = true
+show_error_codes = true
+exclude = [
+    "^__pycache__/",
+    "^cache/",
+    "^output/",
+    "^task_results/",
+    "^error_logs/",
+    "^src/requests/",
+]
+
+# Ignore missing imports for third-party libraries without type stubs
+[[tool.mypy.overrides]]
+module = [
+    "camoufox.*",
+    "patchright.*",
+    "hrequests.*",
+    "capsolver_extension_python.*",
+    "gevent.*",
+    "geventhttpclient.*",
+    "retrying.*",
+    "structlog.*",
+]
+ignore_missing_imports = true
+
+# Skip type checking for vendored src/requests module
+[[tool.mypy.overrides]]
+module = "src.requests.*"
+follow_imports = "skip"
+ignore_errors = true
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"

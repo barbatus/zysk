@@ -74,8 +74,8 @@ def home() -> RedirectResponse:
     return RedirectResponse(url="/api")
 
 
-@app.get("/api", response_model=dict[str, str])
-def api_root() -> dict[str, str]:
+@app.get("/api")
+def api_root() -> JSONResponse:
     return JSONResponse(content=OK_MESSAGE)
 
 
@@ -112,8 +112,7 @@ async def get_task(task_id: int):
 
 @app.post("/api/tasks/{task_id}/results")
 async def get_task_results(task_id: int, request: Request):
-    json_data = await request.json()
-    result = await execute_get_task_results(task_id, json_data)
+    result = await execute_get_task_results(task_id)
     return jsonify(result)
 
 

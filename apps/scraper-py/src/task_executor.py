@@ -8,10 +8,10 @@ from typing import Any
 from sqlalchemy import JSON, bindparam, case, select, update
 
 from .db_setup import get_async_session
+from .exceptions import BotDetectedException
 from .logging_setup import get_logger
 from .models import Task, TaskStatus
-from .registry import REGISTRY
-from .scrapers import ScraperConfig
+from .scrapers import SCRAPERS, ScraperConfig
 from .task_helper import db_retry
 
 logger = get_logger(__name__)
@@ -33,7 +33,7 @@ class TaskExecutor:
             if not tasks:
                 return
 
-            valid_scraper_names = REGISTRY.get_scrapers_names()
+            valid_scraper_names = SCRAPERS.keys()
 
             for task in tasks:
                 if task.scraper_name not in set(valid_scraper_names):
@@ -77,9 +77,7 @@ class TaskExecutor:
         task_data = task["data"]
         task_metadata = task["metadata"]
 
-        fn = REGISTRY.get_scraping_function(scraper_name)
-        exception_log = None
-
+        fn = SCRAPERS[scraper_name]
         try:
             loop = asyncio.get_running_loop()
 
@@ -101,13 +99,16 @@ class TaskExecutor:
                 stats=[stats_dict],
             )
             logger.info("executor.task.success", task_id=task_id)
-        except Exception:
+        except Exception as ex:
             exception_log = traceback.format_exc()
             logger.exception("executor.task.error", task_id=task_id)
-            await self.mark_tasks_as_failure([task_id], [exception_log])
+            stats = ex.stats if isinstance(ex, BotDetectedException) else None
+            await self.mark_tasks_as_failure([task_id], [exception_log], [stats])
 
     @db_retry
-    async def mark_tasks_as_failure(self, task_ids: list[int], exception_logs: list[str]):
+    async def mark_tasks_as_failure(
+        self, task_ids: list[int], exception_logs: list[str], stats: list[dict] | None = None
+    ):
         if not task_ids:
             return
         if len(task_ids) != len(exception_logs):
@@ -115,9 +116,14 @@ class TaskExecutor:
         async with get_async_session() as session:
             mapping = {
                 tid: bindparam(f"result_{tid}", {"error": log}, type_=JSON)
-                for tid, log in zip(task_ids, exception_logs, strict=False)
+                for tid, log in zip(task_ids, exception_logs, strict=True)
             }
             result_case = case(mapping, value=Task.id, else_=Task.result)
+            stats_mapping = {
+                tid: bindparam(f"stats_{tid}", stat, type_=JSON)
+                for tid, stat in zip(task_ids, stats, strict=True)
+            }
+            stats_case = case(stats_mapping, value=Task.id, else_=Task.stats)
             await session.execute(
                 update(Task)
                 .where(Task.id.in_(task_ids))
@@ -125,6 +131,7 @@ class TaskExecutor:
                     {
                         "status": TaskStatus.FAILED,
                         "finished_at": datetime.now(),
+                        "stats": stats_case,
                         "result": result_case,
                     }
                 )

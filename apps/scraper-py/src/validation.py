@@ -1,5 +1,5 @@
 from .errors import JsonHTTPResponse
-from .registry import REGISTRY
+from .scrapers import SCRAPERS
 
 
 def serialize(data):
@@ -17,7 +17,7 @@ def create_task_not_found_error(task_id):
 
 def validate_scraper_name(scraper_name):
     """Keep this for now as it's used in routes_db_logic"""
-    valid_scraper_names = REGISTRY.get_scrapers_names()
+    valid_scraper_names = SCRAPERS.keys()
 
     if scraper_name not in valid_scraper_names:
         valid_names_string = ", ".join(valid_scraper_names)

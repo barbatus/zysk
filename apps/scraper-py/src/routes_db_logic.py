@@ -14,7 +14,6 @@ from .models import (
     isoformat,
     serialize_task,
 )
-from .registry import REGISTRY
 from .settings import settings
 from .task_helper import TaskHelper
 from .temporal_client import run_scrape_workflow
@@ -82,10 +81,7 @@ async def execute_async_tasks(tasks: list[dict[str, Any]]):
         validate_scraper_name(scraper_name)
         scraper_data[scraper_name].append(task)
 
-    tasks = [
-        create_tasks(REGISTRY.get_scraper(scraper_name), task)
-        for scraper_name, task in scraper_data.items()
-    ]
+    tasks = [create_tasks(scraper_name, task) for scraper_name, task in scraper_data.items()]
     responses = await asyncio.gather(*tasks)
     tasks = [item for sublist in responses for item in sublist]
     await run_scrape_workflow(
@@ -94,9 +90,7 @@ async def execute_async_tasks(tasks: list[dict[str, Any]]):
     return tasks
 
 
-async def create_tasks(scraper, tasks_data):
-    scraper_name = scraper["scraper_name"]
-
+async def create_tasks(scraper_name, tasks_data):
     all_task_sort_id = int(datetime.now(UTC).timestamp())
 
     def create_task(task_data, cached_key: str, metadata: dict, sort_id: int):

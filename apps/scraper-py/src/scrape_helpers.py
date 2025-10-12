@@ -24,6 +24,14 @@ logger = get_logger(__name__)
 
 
 @dataclass
+class ScrapeStats:
+    duration_sec: float
+    proxy_used: bool
+    cdp_used: bool
+    attempts: int
+
+
+@dataclass
 class ScraperConfig:
     link: str
     use_wss: bool = False

@@ -1,4 +1,4 @@
-.PHONY: start
+.PHONY: start dev kill lint mypy ruff format
 
 dev:
 	@echo "Starting backend and worker..."
@@ -7,9 +7,12 @@ dev:
 	fi
 	@echo "Starting backend and worker in foreground..."
 	@echo "Press Ctrl+C to stop both processes"
-	@poetry run python run.py backend & poetry run python run.py worker & wait
-
-.PHONY: kill
+	@trap 'kill 0' SIGINT SIGTERM; \
+	poetry run python run.py backend & \
+	BACKEND_PID=$$!; \
+	poetry run python run.py worker & \
+	WORKER_PID=$$!; \
+	wait $$BACKEND_PID $$WORKER_PID
 
 kill:
 	@echo "Killing backend and worker..."
@@ -21,3 +24,21 @@ kill:
 	@echo "Freeing port 8000 if occupied..."
 	- lsof -ti:8000 | xargs kill -9 2>/dev/null || true
 	@echo "Done."
+
+lint:
+	@echo "Running linters..."
+	poetry run ruff check src/
+	poetry run mypy src/
+
+mypy:
+	@echo "Running mypy type checker..."
+	poetry run mypy src/
+
+ruff:
+	@echo "Running ruff linter..."
+	poetry run ruff check src/
+
+format:
+	@echo "Formatting code with ruff..."
+	poetry run ruff format src/
+	poetry run ruff check --fix src/
