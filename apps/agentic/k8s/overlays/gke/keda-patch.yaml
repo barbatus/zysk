@@ -1,0 +1,10 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: agentic-worker
+  namespace: agentic
+spec:
+  pollingInterval: 5
+  cooldownPeriod: 600
+  minReplicaCount: 0
+  maxReplicaCount: 10

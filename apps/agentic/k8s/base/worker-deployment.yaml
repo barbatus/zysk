@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentic-worker
+  namespace: agentic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agentic-worker
+  template:
+    metadata:
+      labels:
+        app: agentic-worker
+    spec:
+      containers:
+        - name: worker
+          image: IMAGE_PLACEHOLDER
+          command: ["node", "dist/worker.js"]
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          envFrom:
+            - configMapRef:
+                name: agentic-config

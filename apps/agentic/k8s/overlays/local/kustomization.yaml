@@ -1,0 +1,10 @@
+resources:
+  - ../../base
+
+patches:
+  - path: keda-patch.yaml
+
+images:
+  - name: IMAGE_PLACEHOLDER
+    newName: agentic
+    newTag: dev

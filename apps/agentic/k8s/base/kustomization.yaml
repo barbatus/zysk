@@ -1,0 +1,5 @@
+namespace: agentic
+resources:
+  - namespace.yaml
+  - worker-deployment.yaml
+  - keda/scaledobject-worker.yaml

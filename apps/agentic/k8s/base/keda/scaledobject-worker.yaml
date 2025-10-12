@@ -1,0 +1,25 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: agentic-worker
+  namespace: agentic
+spec:
+  scaleTargetRef:
+    name: agentic-worker
+  pollingInterval: 10
+  cooldownPeriod: 300
+  minReplicaCount: 1
+  maxReplicaCount: 10
+
+  triggers:
+    - type: temporal
+      metadata:
+        namespaceFromEnv: TEMPORAL_NAMESPACE
+        taskQueueFromEnv: TEMPORAL_TASK_QUEUE
+        targetQueueSize: "10"
+        activationTargetQueueSize: "0"
+        endpointFromEnv: TEMPORAL_ADDRESS
+        apiKeyFromEnv: TEMPORAL_API_KEY
+        queueTypes: "workflow,activity"
+        minConnectTimeout: "5"
+        unsafeSsl: "false"
