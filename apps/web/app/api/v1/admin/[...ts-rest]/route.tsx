@@ -15,13 +15,18 @@ const handler = createNextHandler(
       const script = getScript(body.name);
 
       try {
+        const parsedArgs = body.arguments.map((arg, index) => {
+          const argumentConfig = script.arguments[index];
+          if (argumentConfig.parseArg && arg.value) {
+            return argumentConfig.parseArg(arg.value, undefined);
+          }
+          return arg.value;
+        });
+
         return {
           status: 200,
           body: {
-            result: await script.handler(
-              ...body.arguments.map((arg) => arg.value),
-              body.options,
-            ),
+            result: await script.handler(...parsedArgs, body.options),
           },
         };
       } catch (error) {

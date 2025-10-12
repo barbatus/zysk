@@ -3,7 +3,7 @@ import "reflect-metadata";
 import path from "node:path";
 
 import { NativeConnection, Worker } from "@temporalio/worker";
-import { getAgenticConfigStatic } from "@zysk/services";
+import { getAgenticConfigStatic, getLogger } from "@zysk/services";
 import type { Configuration as WebpackConfiguration } from "webpack";
 
 import * as activities from "./activities";
@@ -55,11 +55,16 @@ async function run() {
 }
 
 run().catch((error: unknown) => {
+  const logger = getLogger();
   if (error instanceof Error) {
-    console.error(error.message);
-    if (error.stack) console.error(error.stack);
+    logger.error(
+      {
+        stack: error.stack,
+      },
+      `[Worker] ${error.message}`,
+    );
   } else {
-    console.error(error);
+    logger.error(error);
   }
   process.exit(1);
 });

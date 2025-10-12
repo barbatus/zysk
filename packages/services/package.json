@@ -18,9 +18,11 @@
     "@cubejs-client/core": "^1.0.0",
     "@mendable/firecrawl-js": "^1.25.0",
     "@neondatabase/serverless": "^1.0.0",
-    "@temporalio/workflow": "^1.11.3",
+    "@temporalio/client": "^1.13.1",
+    "@temporalio/workflow": "^1.13.1",
     "@zysk/cube": "workspace:*",
     "@zysk/db": "workspace:*",
+    "@zysk/shared": "workspace:*",
     "@zysk/ts-rest": "workspace:*",
     "axios": "catalog:axios",
     "axios-retry": "^3.4.0",
@@ -36,9 +38,9 @@
     "pg": "^8.13.0",
     "pino": "^9.6.0",
     "pino-pretty": "^13.0.0",
+    "reflect-metadata": "^0.2.2",
     "ws": "^8.18.2",
-    "zod": "catalog:zod",
-    "@zysk/shared": "workspace:*"
+    "zod": "catalog:zod"
   },
   "devDependencies": {
     "@total-typescript/ts-reset": "^0.6.1",

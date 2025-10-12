@@ -10,6 +10,7 @@ export * from "./news-insights.service";
 export * from "./portfolio.service";
 export * from "./prediction.service";
 export * from "./redis-client";
+export * from "./temporal.service";
 export * from "./ticker.service";
 export * from "./ticker-data.service";
 export * from "./ticker-news.service";

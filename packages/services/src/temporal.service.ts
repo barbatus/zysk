@@ -1,9 +1,11 @@
 import { Client, Connection } from "@temporalio/client";
-import { getAgenticConfigStatic } from "@zysk/services";
+import { injectable } from "inversify";
+
+import { getAgenticConfigStatic } from "./config";
 
 let clientInstance: Client | null = null;
 
-export async function getTemporalClient(): Promise<Client> {
+async function getTemporalClient(): Promise<Client> {
   if (clientInstance) {
     return clientInstance;
   }
@@ -32,19 +34,22 @@ export async function getTemporalClient(): Promise<Client> {
   return clientInstance;
 }
 
-export async function startWorkflow<T extends unknown[]>(
-  workflowName: string,
-  args: T,
-  workflowId?: string,
-) {
-  const config = getAgenticConfigStatic();
-  const client = await getTemporalClient();
+@injectable()
+export class TemporalService {
+  async startWorkflow<T extends unknown[]>(
+    workflowName: string,
+    args: T,
+    workflowId?: string,
+  ) {
+    const config = getAgenticConfigStatic();
+    const client = await getTemporalClient();
 
-  const handle = await client.workflow.start(workflowName, {
-    workflowId: workflowId ?? `${workflowName}-${Date.now()}`,
-    taskQueue: config.temporal.taskQueue,
-    args,
-  });
+    const workflowOptions = {
+      workflowId: workflowId ?? `${workflowName}-${Date.now()}`,
+      taskQueue: config.temporal.taskQueue,
+      args,
+    };
 
-  return handle;
+    return await client.workflow.start(workflowName, workflowOptions);
+  }
 }

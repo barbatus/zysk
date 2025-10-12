@@ -66,17 +66,17 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0(@langchain/core@0.3.49(openai@4.100.0(ws@8.18.2(bufferutil@4.0.9))(zod@3.25.17)))
       '@temporalio/activity':
-        specifier: ^1.11.8
-        version: 1.11.8
+        specifier: ^1.13.1
+        version: 1.13.1
       '@temporalio/client':
-        specifier: ^1.11.3
-        version: 1.11.3
+        specifier: ^1.13.1
+        version: 1.13.1
       '@temporalio/worker':
-        specifier: ^1.11.3
-        version: 1.11.3(@swc/helpers@0.5.5)
+        specifier: ^1.13.1
+        version: 1.13.1(@swc/helpers@0.5.5)
       '@temporalio/workflow':
-        specifier: ^1.11.3
-        version: 1.11.3
+        specifier: ^1.13.1
+        version: 1.13.1
       '@upstash/ratelimit':
         specifier: ^2.0.5
         version: 2.0.5(@upstash/redis@1.34.9)
@@ -137,6 +137,9 @@ importers:
       pino-pretty:
         specifier: ^13.0.0
         version: 13.0.0
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
       tiktoken:
         specifier: ^1.0.21
         version: 1.0.21
@@ -156,6 +159,9 @@ importers:
       '@types/lodash':
         specifier: ^4.17.10
         version: 4.17.10
+      '@types/node':
+        specifier: ^20
+        version: 20.16.10
       '@zysk/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
@@ -325,13 +331,13 @@ importers:
         version: 3.51.0(@types/node@20.16.10)(zod@3.25.17)
       '@ts-rest/next':
         specifier: ^3.51.0
-        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@babel/core@7.25.7)(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)
+        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)
       '@ts-rest/react-query':
         specifier: ^3.51.0
         version: 3.51.0(@tanstack/react-query@5.59.15(react@18.3.1))(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(react@18.3.1)(zod@3.25.17)
       '@ts-rest/serverless':
         specifier: ^3.51.0
-        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@babel/core@7.25.7)(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)
+        version: 3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)
       '@uiw/react-json-view':
         specifier: 2.0.0-alpha.32
         version: 2.0.0-alpha.32(@babel/runtime@7.27.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -370,7 +376,7 @@ importers:
         version: 5.3.6(@mui/material@7.1.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.11)(react@18.3.1)
       next:
         specifier: 14.2.13
-        version: 14.2.13(@babel/core@7.25.7)(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 14.2.13(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -491,7 +497,7 @@ importers:
         version: 12.1.1(eslint@8.57.1)
       eslint-plugin-unused-imports:
         specifier: ^4.1.4
-        version: 4.1.4(@typescript-eslint/eslint-plugin@8.8.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)
+        version: 4.1.4(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)
     devDependencies:
       eslint:
         specifier: ^8.56.0
@@ -618,9 +624,12 @@ importers:
       '@neondatabase/serverless':
         specifier: ^1.0.0
         version: 1.0.0
+      '@temporalio/client':
+        specifier: ^1.13.1
+        version: 1.13.1
       '@temporalio/workflow':
-        specifier: ^1.11.3
-        version: 1.11.3
+        specifier: ^1.13.1
+        version: 1.13.1
       '@zysk/cube':
         specifier: workspace:*
         version: link:../../apps/cube
@@ -675,6 +684,9 @@ importers:
       pino-pretty:
         specifier: ^13.0.0
         version: 13.0.0
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
       ws:
         specifier: ^8.18.2
         version: 8.18.2(bufferutil@4.0.9)
@@ -2979,36 +2991,37 @@ packages:
     resolution: {integrity: sha512-P9dF7XbibHph2PFRz8gfBKEXEY/HJPOhym8CHmjF8y3q5mWpKx9xtZapXQUWCgkqvsK0R46Azuz+VaxD4Xl+Tg==}
     engines: {node: '>=12'}
 
-  '@temporalio/activity@1.11.3':
-    resolution: {integrity: sha512-XH923/I7wvKSxrMiB/vF7Xuix3lBEd1vLGMtgkj0wF2t8WBITjbHXQLzpJUlQm8O0hjixI7bDqFNRCan3Ov1xQ==}
+  '@temporalio/activity@1.13.1':
+    resolution: {integrity: sha512-0qFTqvjMpcc0J8aVqnG2joF7drPcnMMG3BerfW5Y7RbR8xfdWLpndT3nHdblp+qCrbEmj3AchFluuShlQh8s0Q==}
+    engines: {node: '>= 18.0.0'}
 
-  '@temporalio/activity@1.11.8':
-    resolution: {integrity: sha512-XWjj/EL0YiKsnh0W4W5kBm+Xp1jhpUEaQMGA25+BxKEYBn8qJ+mLQOwuqWn6punS9a6bvnT7P/pUlnhjPxH6KQ==}
+  '@temporalio/client@1.13.1':
+    resolution: {integrity: sha512-EW++yWZhMhHOBCJ5hz4EZank9D5NskJO2zq25THXWGWRDNLeZPGT2rblOPz38Yexu7N6JcSLh8OglWRDohMCzg==}
+    engines: {node: '>= 18.0.0'}
 
-  '@temporalio/client@1.11.3':
-    resolution: {integrity: sha512-2x30xAXbUuqelrWe3Vd1FVC0+Z2Cfh6m2W5yDUZBjqTMdNP6qd8nH4S4mceRtZ4TipYSPmaONaiWoAU2VvwEIg==}
+  '@temporalio/common@1.13.1':
+    resolution: {integrity: sha512-Z8t+uN33gu0Hw0T6o0J0Lmn2v6KJ2j7rDBjPYJwRTqrzY8On8wCkgkrq0JaqNRoMzkSJCjj+eanuBswiltsZlg==}
+    engines: {node: '>= 18.0.0'}
 
-  '@temporalio/common@1.11.3':
-    resolution: {integrity: sha512-dzCrwiE9ox/Q16AjBsUKr4djg1ovYHNCjH36WZadwsemXINRWa5eW53j0WZOlmFF8/CbcHIhiD5N18rZqjiYkg==}
+  '@temporalio/core-bridge@1.13.1':
+    resolution: {integrity: sha512-GTkEnvCqpq8cPDRksn+TCU257cprU7j6nvQqHAmzDeKZ76aCs6NHarOmvyQytPEUqXkRawEpUDm4M4EHx1d+zw==}
+    engines: {node: '>= 18.0.0'}
 
-  '@temporalio/common@1.11.8':
-    resolution: {integrity: sha512-hB+TSB/P2Vm8chYyZGcKALdywGvcBSqzSUzFG1lOm/JPDh2d4uK6lvE2S8OneEndlJSdzE++d2Mt5B+iKe2ytA==}
+  '@temporalio/nexus@1.13.1':
+    resolution: {integrity: sha512-kA3m1USLorqHqtHh8eT0BW2plTmvaUNa0LT0kjkK095UDf07A0Xez5xMWN7TQRmDYgkvOULACt2bHACOAyCJDA==}
+    engines: {node: '>= 18.0.0'}
 
-  '@temporalio/core-bridge@1.11.3':
-    resolution: {integrity: sha512-dUPJiS/ZQtFnttmu0V1BLLjUE5wQxrwI0+xSvUc6JEiC1q9Z6BmhobSKbcEKCvJgh5OMZKh/jn6yu1N7oLsZPw==}
+  '@temporalio/proto@1.13.1':
+    resolution: {integrity: sha512-Lx7ge+XEk9Gk7z5gXX5VreSNLr4GfBxhe4wxmoDI618PilL0hA14nTh48fZxi72gfSFSfZmJCDBEak6lNdbA2A==}
+    engines: {node: '>= 18.0.0'}
 
-  '@temporalio/proto@1.11.3':
-    resolution: {integrity: sha512-X+xV75m11BvvS5MljagtYCybRNxpLNJM24eWyfv+uyU4WZSvgQCUh21fY4FOUDJS66DPvO1mefSPu0Nunp1PHg==}
+  '@temporalio/worker@1.13.1':
+    resolution: {integrity: sha512-YcB7WviQmmrruziT4xEXUBAkM3NiQLLMc92n7xvjE1cdEfmVuUD+MSzqhqQll004bcHQu67ZhCm9T0GNfErhIQ==}
+    engines: {node: '>= 18.0.0'}
 
-  '@temporalio/proto@1.11.8':
-    resolution: {integrity: sha512-L6QsIAq3PrnQpARAcqLCe4xMpbkpBEvA/9FQGddpzCESvViUOUAIHPwckL1DokYPedEAt19C+uuBGVBMCNx7vw==}
-
-  '@temporalio/worker@1.11.3':
-    resolution: {integrity: sha512-CwiqsiQ5pKIyEcYOlfjRudu4pXCHU9PXm3Qycn1owpgdL1fbbpFiJ8yCoTWqrlB23BsWMhOpUyaQLnTF8D+4aQ==}
-    engines: {node: '>= 16.0.0'}
-
-  '@temporalio/workflow@1.11.3':
-    resolution: {integrity: sha512-TT4TqzMveLY9UsWQUSkFyb9Qvoz4VvCcJCPCyKLQyrp5BuAsf7owOByOfs74gz2tgTQiPjk1TtV4YXXEPRb4yA==}
+  '@temporalio/workflow@1.13.1':
+    resolution: {integrity: sha512-Wbuvk3rK6F6hVQbXDHB5JuYZVEUWV6eSs1HoB9J15/N+1dOFLVykyBd8lw7Fn5dxNEI1F1nmS4VCJVV47AlZhQ==}
+    engines: {node: '>= 18.0.0'}
 
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
@@ -5288,8 +5301,8 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
-  heap-js@2.5.0:
-    resolution: {integrity: sha512-kUGoI3p7u6B41z/dp33G6OaL7J4DRqRYwVmeIlwLClx7yaaAy7hoDExnuejTKtuDwfcatGmddHDEOjf6EyIxtQ==}
+  heap-js@2.7.1:
+    resolution: {integrity: sha512-EQfezRg0NCZGNlhlDR3Evrw1FVL2G3LhU7EgPoxufQKruNBSYA8MiRPHeWbU+36o+Fhel0wMwM+sLEiBAlNLJA==}
     engines: {node: '>=10.0.0'}
 
   help-me@5.0.0:
@@ -6267,6 +6280,10 @@ packages:
         optional: true
       sass:
         optional: true
+
+  nexus-rpc@0.0.1:
+    resolution: {integrity: sha512-hAWn8Hh2eewpB5McXR5EW81R3pR/ziuGhKCF3wFyUVCklanPqrIgMNr7jKCbzXeNVad0nUDfWpFRqh2u+zxQtw==}
+    engines: {node: '>= 18.0.0'}
 
   nice-grpc-client-middleware-retry@3.1.11:
     resolution: {integrity: sha512-xW/imz/kNG2g0DwTfH2eYEGrg1chSLrXtvGp9fg2qkhTgGFfAS/Pq3+t+9G8KThcC4hK/xlEyKvZWKk++33S6A==}
@@ -10126,68 +10143,67 @@ snapshots:
 
   '@tanstack/table-core@8.20.5': {}
 
-  '@temporalio/activity@1.11.3':
+  '@temporalio/activity@1.13.1':
     dependencies:
-      '@temporalio/common': 1.11.3
+      '@temporalio/client': 1.13.1
+      '@temporalio/common': 1.13.1
       abort-controller: 3.0.0
 
-  '@temporalio/activity@1.11.8':
-    dependencies:
-      '@temporalio/common': 1.11.8
-      abort-controller: 3.0.0
-
-  '@temporalio/client@1.11.3':
+  '@temporalio/client@1.13.1':
     dependencies:
       '@grpc/grpc-js': 1.13.4
-      '@temporalio/common': 1.11.3
-      '@temporalio/proto': 1.11.3
+      '@temporalio/common': 1.13.1
+      '@temporalio/proto': 1.13.1
       abort-controller: 3.0.0
       long: 5.3.2
       uuid: 9.0.1
 
-  '@temporalio/common@1.11.3':
+  '@temporalio/common@1.13.1':
     dependencies:
-      '@temporalio/proto': 1.11.3
+      '@temporalio/proto': 1.13.1
       long: 5.3.2
       ms: 3.0.0-canary.1
+      nexus-rpc: 0.0.1
       proto3-json-serializer: 2.0.2
 
-  '@temporalio/common@1.11.8':
+  '@temporalio/core-bridge@1.13.1':
     dependencies:
-      '@temporalio/proto': 1.11.8
-      long: 5.3.2
-      ms: 3.0.0-canary.1
-      proto3-json-serializer: 2.0.2
-
-  '@temporalio/core-bridge@1.11.3':
-    dependencies:
-      '@temporalio/common': 1.11.3
+      '@grpc/grpc-js': 1.13.4
+      '@temporalio/common': 1.13.1
       arg: 5.0.2
       cargo-cp-artifact: 0.1.9
       which: 4.0.0
 
-  '@temporalio/proto@1.11.3':
+  '@temporalio/nexus@1.13.1':
+    dependencies:
+      '@temporalio/client': 1.13.1
+      '@temporalio/common': 1.13.1
+      '@temporalio/proto': 1.13.1
+      long: 5.3.2
+      nexus-rpc: 0.0.1
+
+  '@temporalio/proto@1.13.1':
     dependencies:
       long: 5.3.2
       protobufjs: 7.4.0
 
-  '@temporalio/proto@1.11.8':
+  '@temporalio/worker@1.13.1(@swc/helpers@0.5.5)':
     dependencies:
-      long: 5.3.2
-      protobufjs: 7.4.0
-
-  '@temporalio/worker@1.11.3(@swc/helpers@0.5.5)':
-    dependencies:
+      '@grpc/grpc-js': 1.13.4
       '@swc/core': 1.9.2(@swc/helpers@0.5.5)
-      '@temporalio/activity': 1.11.3
-      '@temporalio/client': 1.11.3
-      '@temporalio/common': 1.11.3
-      '@temporalio/core-bridge': 1.11.3
-      '@temporalio/proto': 1.11.3
-      '@temporalio/workflow': 1.11.3
+      '@temporalio/activity': 1.13.1
+      '@temporalio/client': 1.13.1
+      '@temporalio/common': 1.13.1
+      '@temporalio/core-bridge': 1.13.1
+      '@temporalio/nexus': 1.13.1
+      '@temporalio/proto': 1.13.1
+      '@temporalio/workflow': 1.13.1
       abort-controller: 3.0.0
-      heap-js: 2.5.0
+      heap-js: 2.7.1
       memfs: 4.14.0
+      nexus-rpc: 0.0.1
+      proto3-json-serializer: 2.0.2
+      protobufjs: 7.4.0
       rxjs: 7.8.1
       source-map: 0.7.4
       source-map-loader: 4.0.2(webpack@5.101.3(@swc/core@1.9.2(@swc/helpers@0.5.5)))
@@ -10201,10 +10217,11 @@ snapshots:
       - uglify-js
       - webpack-cli
 
-  '@temporalio/workflow@1.11.3':
+  '@temporalio/workflow@1.13.1':
     dependencies:
-      '@temporalio/common': 1.11.3
-      '@temporalio/proto': 1.11.3
+      '@temporalio/common': 1.13.1
+      '@temporalio/proto': 1.13.1
+      nexus-rpc: 0.0.1
 
   '@tokenizer/token@0.3.0': {}
 
@@ -10224,10 +10241,10 @@ snapshots:
       '@types/node': 22.15.19
       zod: 3.25.17
 
-  '@ts-rest/next@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@babel/core@7.25.7)(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)':
+  '@ts-rest/next@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)':
     dependencies:
       '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.25.17)
-      next: 14.2.13(@babel/core@7.25.7)(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      next: 14.2.13(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     optionalDependencies:
       zod: 3.25.17
 
@@ -10239,12 +10256,12 @@ snapshots:
     optionalDependencies:
       zod: 3.25.17
 
-  '@ts-rest/serverless@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@babel/core@7.25.7)(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)':
+  '@ts-rest/serverless@3.51.0(@ts-rest/core@3.51.0(@types/node@20.16.10)(zod@3.25.17))(next@14.2.13(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.17)':
     dependencies:
       '@ts-rest/core': 3.51.0(@types/node@20.16.10)(zod@3.25.17)
       itty-router: 5.0.18
     optionalDependencies:
-      next: 14.2.13(@babel/core@7.25.7)(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      next: 14.2.13(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       zod: 3.25.17
 
   '@tsconfig/node10@1.0.11': {}
@@ -10355,10 +10372,10 @@ snapshots:
       '@types/node': 20.16.10
     optional: true
 
-  '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)':
+  '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)':
     dependencies:
       '@eslint-community/regexpp': 4.11.1
-      '@typescript-eslint/parser': 7.18.0(eslint@8.57.1)(typescript@5.8.3)
+      '@typescript-eslint/parser': 8.8.0(eslint@8.57.1)(typescript@5.8.3)
       '@typescript-eslint/scope-manager': 7.18.0
       '@typescript-eslint/type-utils': 7.18.0(eslint@8.57.1)(typescript@5.8.3)
       '@typescript-eslint/utils': 7.18.0(eslint@8.57.1)(typescript@5.8.3)
@@ -10593,7 +10610,7 @@ snapshots:
       '@babel/core': 7.25.7
       '@babel/eslint-parser': 7.25.7(@babel/core@7.25.7)(eslint@8.57.1)
       '@rushstack/eslint-patch': 1.10.4
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
       '@typescript-eslint/parser': 7.18.0(eslint@8.57.1)(typescript@5.8.3)
       eslint-config-prettier: 9.1.0(eslint@8.57.1)
       eslint-import-resolver-alias: 1.1.2(eslint-plugin-import@2.31.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.1))
@@ -12180,7 +12197,7 @@ snapshots:
       '@typescript-eslint/utils': 5.62.0(eslint@8.57.1)(typescript@5.8.3)
       eslint: 8.57.1
     optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -12292,18 +12309,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-unused-imports@4.1.4(@typescript-eslint/eslint-plugin@8.8.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1):
+  eslint-plugin-unused-imports@4.1.4(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
     optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 8.8.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
 
   eslint-plugin-vitest@0.3.26(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3):
     dependencies:
       '@typescript-eslint/utils': 7.18.0(eslint@8.57.1)(typescript@5.8.3)
       eslint: 8.57.1
     optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@8.8.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -12951,7 +12968,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  heap-js@2.5.0: {}
+  heap-js@2.7.1: {}
 
   help-me@5.0.0: {}
 
@@ -13861,7 +13878,7 @@ snapshots:
 
   next-tick@1.1.0: {}
 
-  next@14.2.13(@babel/core@7.25.7)(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next@14.2.13(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@next/env': 14.2.13
       '@swc/helpers': 0.5.5
@@ -13871,7 +13888,7 @@ snapshots:
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.1(@babel/core@7.25.7)(react@18.3.1)
+      styled-jsx: 5.1.1(react@18.3.1)
     optionalDependencies:
       '@next/swc-darwin-arm64': 14.2.13
       '@next/swc-darwin-x64': 14.2.13
@@ -13886,6 +13903,8 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
+
+  nexus-rpc@0.0.1: {}
 
   nice-grpc-client-middleware-retry@3.1.11:
     dependencies:
@@ -15256,12 +15275,10 @@ snapshots:
       '@tokenizer/token': 0.3.0
       peek-readable: 4.1.0
 
-  styled-jsx@5.1.1(@babel/core@7.25.7)(react@18.3.1):
+  styled-jsx@5.1.1(react@18.3.1):
     dependencies:
       client-only: 0.0.1
       react: 18.3.1
-    optionalDependencies:
-      '@babel/core': 7.25.7
 
   stylis-plugin-rtl@2.1.1(stylis@4.2.0):
     dependencies:

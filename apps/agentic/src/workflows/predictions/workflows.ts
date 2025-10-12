@@ -200,47 +200,15 @@ export async function evaluatePredictions() {
   );
 }
 
-export async function testTicker() {
-  const symbols = [
-    "NBIS",
-    "RVMD",
-    "UBER",
-    "NFLX",
-    "JNJ",
-    "PFE",
-    "MRK",
-    "LLY",
-    // "ABBV",
-    // "UNH",
-    // "BAC",
-    // "WFC",
-    // "GS",
-    // "MS",
-    // "C",
-    // "AXP",
-    // "BLK",
-    // "SCHW",
-    // "TFC",
-    // "XOM",
-    // "CVX",
-    // "COP",
-    // "OXY",
-    // "PSX",
-    // "EOG",
-    // "MPC",
-    // "VLO",
-    // "ALL",
-    // "PLTR",
-    // "TSLA",
-    // "GOOG",
-    // "SONY",
-    // "AMZN",
-  ];
+export async function runTickersPredictionExperiment(
+  symbols: string[],
+  startWeek: string,
+) {
   await Promise.allSettled(
     symbols.map((symbol) =>
       predictSentimentWeekly({
         symbol,
-        startWeek: "2025-10-06",
+        startWeek,
       }),
     ),
   );

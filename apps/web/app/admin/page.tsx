@@ -25,7 +25,7 @@ const columns = [
         Total
       </Typography>
     ),
-    size: 100,
+    size: 150,
   },
   {
     id: "description",

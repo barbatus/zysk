@@ -24,6 +24,7 @@ import { PortfolioService } from "./portfolio.service";
 import { PredictionService } from "./prediction.service";
 import { getRedisClient, redisClientSymbol } from "./redis-client";
 import { StockNewsApiService } from "./stock-news-api.service";
+import { TemporalService } from "./temporal.service";
 import { TickerService } from "./ticker.service";
 import { TickerDataService } from "./ticker-data.service";
 import { TickerNewsService } from "./ticker-news.service";
@@ -68,6 +69,7 @@ const services = [
   PredictionService,
   NewsInsightsService,
   CrawlerService,
+  TemporalService,
 ] as const;
 
 services.forEach((service) => {

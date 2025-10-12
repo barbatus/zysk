@@ -1,15 +1,31 @@
 import {
   resolve,
+  TemporalService,
   TickerDataService,
   TickerNewsService,
   TickerService,
 } from "@zysk/services";
-import { Argument } from "commander";
-import { subYears } from "date-fns";
+import { Argument, InvalidArgumentError } from "commander";
+import { isValid, parse, subYears } from "date-fns";
 import { chunk } from "lodash";
 
 import { NEWS_SOURCES, SECTORS, SUPPORTED_TICKERS } from "./defaults";
 import { createScript } from "./utils";
+
+const parseStartWeek = (val: string) => {
+  const parsed = parse(val, "yyyy-MM-dd", new Date());
+  if (!isValid(parsed)) {
+    throw new InvalidArgumentError("startWeek must be in format yyyy-MM-dd");
+  }
+  return val;
+};
+
+const parseTickers = (val: string): string[] => {
+  return val
+    .split(/[,\s]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+};
 
 export const syncTickerQuotes = createScript<[]>({
   name: "sync-current-quote",
@@ -116,5 +132,28 @@ export const syncSectors = createScript<[]>({
 })(async () => {
   const tickerService = resolve(TickerService);
   await tickerService.updateSectors(SECTORS);
+  return "OK";
+});
+
+export const runTickersPredictionExperiment = createScript<[string, string[]]>({
+  name: "run-tickers-prediction-experiment",
+  description: "Run tickers prediction experiment",
+  arguments: [
+    new Argument("startWeek", "Start week for prediction experiment")
+      .argRequired()
+      .argParser(parseStartWeek),
+    new Argument(
+      "tickers",
+      "Tickers to run prediction experiment for (comma or space separated)",
+    )
+      .argRequired()
+      .argParser(parseTickers),
+  ],
+})(async (startWeek: string, tickers: string[]) => {
+  const temporalService = resolve(TemporalService);
+  await temporalService.startWorkflow("runTickersPredictionExperiment", [
+    tickers,
+    startWeek,
+  ]);
   return "OK";
 });
